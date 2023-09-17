@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "speechless"
+version = "0.1.0"
+description = ""
+authors = ["uukuguy <uukuguy@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+transformers = "^4.33.2"
+
+[tool.poetry.group.dev.dependencies]
+fschat = "^0.2.28"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
