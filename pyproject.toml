@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "speechless"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["uukuguy <uukuguy@gmail.com>"]
-license = "MIT"
+license = "Apache-2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-transformers = "^4.33.2"
+transformers = "^4.31.0"
 
 [tool.poetry.group.dev.dependencies]
 fschat = "^0.2.28"
