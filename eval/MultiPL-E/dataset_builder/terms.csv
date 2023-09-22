@@ -1,0 +1,23 @@
+Python,py,array,list,tuple,dictionary,None,True,False
+Bash,sh,array,list,list,CSV,None,true,false
+C#,cs,list,list,tuple,dictionary,null,true,false
+C++,cpp,vector,vector,tuple,map,None,true,false
+D,d,array,array,tuple,associative array,null,true,false
+Go,go,list,list,list,map,nil,true,false
+Java,java,array list,array list,pair,hash map,null,true,false
+JavaScript,js,array,array,array,object,undefined,true,false
+Julia,jl,vector,vector,tuple,dictionary,nothing,true,false
+Lua,lua,table,table,table,table,nil,true,false
+Luau,luau,table,table,table,table,nil,true,false
+Perl,pl,array,array,array,hash,undef,1,''
+PHP,php,array,array,array,array,null,true,false
+Python,py,array,list,tuple,dictionary,None,True,False
+R,r,vector,list,list,named list,NULL,TRUE,FALSE
+Racket,rkt,list,list,list,hash,#f,#t,#f
+Ruby,rb,array,array,array,hash,nil,true,false
+Rust,rs,vector,vector,tuple,HashMap,None,true,false
+Scala,scala,list,list,tuple,map,None,true,false
+Swift,swift,array,array,tuple,dictionary,nil,true,false
+TypeScript,ts,array,array,array,object,undefined,true,false
+OCaml,ml,list,list,tuple,association list,None,true,false
+Matlab,m,array,array,array,dictionary,<missing>,true,false
