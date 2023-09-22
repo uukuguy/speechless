@@ -43,19 +43,19 @@ human_eval_gen:
 human_eval_speechless_13b:
 	PYTHONPATH=${PWD}/eval \
 	python eval/run_human_eval.py \
-		./results/human-eval/speechless-codellama-airoboros-orca-platypus-13b.local_vllm/human_eval_samples.jsonl \
+		./eval_results/human_eval/speechless-codellama-airoboros-orca-platypus-13b.local_vllm/human_eval_samples.jsonl \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
 human_eval_speechless_34b:
 	PYTHONPATH=${PWD}/eval \
 	python eval/run_human_eval.py \
-		./results/human-eval/speechless-codellama-34b-v1.0_vllm/human_eval_samples.jsonl \
+		./eval_results/human_eval/speechless-codellama-34b-v1.0_vllm/human_eval_samples.jsonl \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
 human_eval_phi:
 	PYTHONPATH=${PWD}/eval \
 	python eval/run_human_eval.py \
-		./results/human-eval/phi-1_5/human_eval_samples.jsonl \
+		./eval_results/human_eval/phi-1_5/human_eval_samples.jsonl \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
 
@@ -63,7 +63,8 @@ human_eval_phi:
 
 # https://huggingface.co/spaces/bigcode/bigcode-models-leaderboard
 
-MULTIPL_E_RESULTS_DIR=multiple_e_results
+MULTIPL_E_RESULTS_DIR=eval_results/multipl_e
+#MULTIPL_E_NAME=$(shell basename ${MERGED_MODEL_NAME})
 
 MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
 	python eval/MultiPL-E/automodel.py \
@@ -94,9 +95,15 @@ multipl_e_rust:
 	${MULTIPLE_E_LANG} \
 		--lang rs \
 
+multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust
+	@echo "multipl_e_gen done"
+
 multipl_e_eval:
 	cd ${MULTIPL_E_RESULTS_DIR} && \
-	bash run eval/run_multipl_e_eval.sh
+	bash ${PWD}/eval/run_multipl_e_eval.sh
+
+multipl_e_results:
+	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 
 
 # -------------------- lm-evaluation-harness --------------------
@@ -112,7 +119,7 @@ lm_eval_arc:
 		--limit 10 \
 		--no_cache \
 		--write_out \
-		--output_path results/${TASK_NAME}/arc_challenge_25shot.json \
+		--output_path eval_results/lm_eval/${TASK_NAME}/arc_challenge_25shot.json \
 		--device cuda \
 		--num_fewshot 25
 
@@ -125,7 +132,7 @@ lm_eval_hellaswag:
 		--limit 10 \
 		--no_cache \
 		--write_out \
-		--output_path results/${TASK_NAME}/hellaswag_10shot.json \
+		--output_path eval_results/lm_eval/${TASK_NAME}/hellaswag_10shot.json \
 		--device cuda \
 		--num_fewshot 100
 
@@ -138,7 +145,7 @@ lm_eval_mmlu:
 		--limit 10 \
 		--no_cache \
 		--write_out \
-		--output_path results/${TASK_NAME}/mmlu_5shot.json \
+		--output_path eval_results/lm_eval/${TASK_NAME}/mmlu_5shot.json \
 		--device cuda \
 		--num_fewshot 5
 
@@ -151,7 +158,7 @@ lm_eval_truthfulqa:
 		--limit 10 \
 		--no_cache \
 		--write_out \
-		--output_path results/${TASK_NAME}/truthfullqa_0shot.json \
+		--output_path eval_results/lm_eval/${TASK_NAME}/truthfullqa_0shot.json \
 		--device cuda \
 		--num_fewshot 0
 
@@ -165,6 +172,9 @@ TARGET_DIR=./sandbox/LLM/speechless.ai/${BASENAME}/
 define push_to_remote
 	@echo "push to remote: $(1), port: $(2), target: $(3)"
 	rsync -rav \
+		--exclude=tmp \
+		--exclude=outputs \
+		--exclude=saved_models \
 		--exclude=.git \
 		--exclude=__pycache__ \
 		--rsh='ssh -p $(2)' \
@@ -175,6 +185,9 @@ endef
 define pull_from_remote
 	@echo "pull from remote: $(1), port: $(2), source: $(3)"
 	rsync -rav \
+		--exclude=tmp \
+		--exclude=outputs \
+		--exclude=saved_models \
 		--exclude=.git \
 		--exclude=__pycache__ \
 		--rsh='ssh -p $(2)' \
@@ -196,5 +209,8 @@ push_gpushare_xn_4090x1:
 	$(call push_to_remote,root@i-2.gpushare.com,48296,$(TARGET_DIR))
 
 # ----- pull from remote -----
+pull_autodl_nm799_a40_1:
+	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
+
 pull_gpushare_hd_4090x1:
 	$(call pull_from_remote,root@i-1.gpushare.com,55296,$(TARGET_DIR))

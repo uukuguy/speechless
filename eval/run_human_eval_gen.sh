@@ -16,7 +16,7 @@ max_len=2048
 pred_num=1
 num_seqs_per_iter=1
 
-# output_path=results/human-eval/$(basename ${model})
+# output_path=eval_results/human_eval/$(basename ${model})
 # mkdir -p ${output_path}
 # echo 'Output path: '$output_path
 # echo 'Model to eval: '$model
@@ -33,7 +33,7 @@ num_seqs_per_iter=1
 #     --output_path ${output_path} 
 
 
-output_path=results/human-eval/$(basename ${model})_vllm
+output_path=eval_results/human_eval/$(basename ${model})_vllm
 mkdir -p ${output_path}
 echo 'Output path: '$output_path
 echo 'Model to eval: '$model

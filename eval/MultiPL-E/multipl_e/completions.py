@@ -1,3 +1,4 @@
+import os
 import datasets
 import argparse
 import gzip
@@ -77,11 +78,11 @@ def make_main(args, model_name, gen_completions):
     if args.output_dir is None:
         args.output_dir = (
             (
-                f"{args.root_dataset}-{args.lang}-{model_name}-{args.temperature}-reworded"
+                f"{args.root_dataset}-{args.lang}-{os.path.basename(model_name)}-{args.temperature}-reworded"
             )
             if not args.use_local
             else (
-                f"{args.dataset.split('/')[-1].split('.')[0]}-{model_name}-{args.temperature}-reworded"
+                f"{args.dataset.split('/')[-1].split('.')[0]}-{os.path.basename(model_name)}-{args.temperature}-reworded"
             )
         )
 
