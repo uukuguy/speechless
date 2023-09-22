@@ -1,0 +1,6 @@
+To update this dataset:
+
+1. Edit the commit hash in MultiPL-E.py (line 106)
+
+2. Run `datasets-cli test MultiPL-E.py --save_info --all_configs` to regenerate
+   `dataset_infos.json`.
