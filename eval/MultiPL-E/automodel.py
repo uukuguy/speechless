@@ -10,7 +10,8 @@ class Model:
         dtype = torch.float16
         if torch.cuda.is_bf16_supported():
             dtype = torch.bfloat16
-        self.model = AutoModelForCausalLM.from_pretrained(name, revision=revision, torch_dtype=dtype, trust_remote_code=True).cuda()
+        # self.model = AutoModelForCausalLM.from_pretrained(name, revision=revision, torch_dtype=dtype, trust_remote_code=True).cuda()
+        self.model = AutoModelForCausalLM.from_pretrained(name, revision=revision, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name or name, revision=tokenizer_revision or revision, padding_side="left", trust_remote_code=True)
         self.tokenizer.pad_token = "<|endoftext|>"
         
