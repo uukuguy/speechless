@@ -162,6 +162,10 @@ lm_eval_truthfulqa:
 		--device cuda \
 		--num_fewshot 0
 
+api_server:
+	PYTHONPATH=${PWD}/.. \
+	python api/server.py
+
 
 # -------------------- Sync Remote --------------------
 
