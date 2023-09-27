@@ -1,11 +1,12 @@
 # vllm/examples/offline_inference.py
 import sys, os
 from typing import Dict, List, AsyncIterator
+from loguru import logger
 import torch
-from vllm import LLM, SamplingParams
-from vllm import EngineArgs, LLMEngine, SamplingParams
+from vllm import LLM, EngineArgs, LLMEngine, SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
+
 
 import uuid
 def random_uuid() -> str:
@@ -14,6 +15,49 @@ from .base_llm import BaseLLM
 
 os.environ['RAY_memory_monitor_refresh_ms'] = '0'
 
+
+# LLM
+def create_vllm_llm(model_name_or_path, tensor_parallel_size=1, trust_remote_code=True):
+    if tensor_parallel_size < 1:
+        tensor_parallel_size = torch.cuda.device_count()
+    llm = LLM(model=model_name_or_path, \
+            trust_remote_code=True, \
+            tensor_parallel_size=tensor_parallel_size
+    )
+    return llm
+
+# LLMEngine
+def create_vllm_engine(model_name_or_path, tensor_parallel_size=1, trust_remote_code=True):
+    if tensor_parallel_size < 1:
+        tensor_parallel_size = torch.cuda.device_count()
+
+    params = dict(
+        model = model_name_or_path,
+        tensor_parallel_size = tensor_parallel_size,
+        trust_remote_code = trust_remote_code,
+    )
+    engine_args = EngineArgs(**params)
+
+    engine = LLMEngine.from_engine_args(engine_args)
+
+    return engine
+
+# AsyncLLMEngine
+def create_vl_async_engine(model_name_or_path, tensor_parallel_size=1, trust_remote_code=True):
+    if tensor_parallel_size < 1:
+        tensor_parallel_size = torch.cuda.device_count()
+
+    params = dict(
+        model = model_name_or_path,
+        tensor_parallel_size = tensor_parallel_size,
+        trust_remote_code = trust_remote_code,
+    )
+    engine_args = AsyncEngineArgs(**params)
+
+    engine = AsyncLLMEngine.from_engine_args(engine_args)
+
+    return engine
+
 # ==================== class VllmLLM ====================
 class VllmLLM(BaseLLM):
     """
@@ -21,59 +65,45 @@ class VllmLLM(BaseLLM):
     """
 
     def __init__(self, settings) -> None:
-        params = settings.model_params or {}
+        # params = settings.model_params or {}
+
         model_name_or_path = settings.setup_params["repo_id"]
         model_dir = super().get_model_dir(settings.models_dir, settings.model_family, model_name_or_path)
 
-        setup_params = {
-            k: v
-            for k, v in settings.setup_params.items()
-            if k not in ("repo_id", "tokenizer_repo_id", "config_params")
-        }
+        # setup_params = {
+        #     k: v
+        #     for k, v in settings.setup_params.items()
+        #     if k not in ("repo_id", "tokenizer_repo_id", "config_params")
+        # }
         # self.device = params.get("device_map", "cpu")
-        self.device = "cuda"
+        # self.device = "cuda"
 
+        num_gpus = torch.cuda.device_count()
         # # LLM
-        # self.llm = LLM(model=model_name_or_path, \
-        #         trust_remote_code=True, \
-        #         tensor_parallel_size=2,
-        # )
+        # self.llm = create_vllm_llm(model_name_or_path, tensor_parallel_size=num_gpus, trust_remote_code=True)
 
         # # LLMEngine
-        # params['model'] = model_name_or_path
-        # params['tensor_parallel_size'] = 2
-        # params.pop("device_map", None)
-        # params.pop("trust_remote_code", None)
-        # # # engine_args = EngineArgs.from_cli_args(args)
-        # # engine_args = EngineArgs(**params)
-        # # self.engine = LLMEngine.from_engine_args(engine_args)
+        # self.engine = create_vllm_engine(model_name_or_path, tensor_parallel_size=num_gpus, trust_remote_code=True)
 
-        # # engine_args = AsyncEngineArgs.from_cli_args(args)
-        # engine_args = AsyncEngineArgs(**params)
-        # self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-
-        # AsyncEngine
-        from vllm.engine.arg_utils import AsyncEngineArgs
-        from vllm.engine.async_llm_engine import AsyncLLMEngine
-        from vllm.sampling_params import SamplingParams
-
+        # AsyncLLMEngine
         params = settings.model_params or {}
         model_name_or_path = settings.setup_params["repo_id"]
 
         params['model'] = model_name_or_path
-        params['tensor_parallel_size'] = 2
+        params['tensor_parallel_size'] = torch.cuda.device_count()
         params.pop("device_map", None)
         params.pop("trust_remote_code", None)
 
         # FIXME
         # for GPTQ
         # params['dtype'] = "float16"
+        params['dtype'] = settings.setup_params['dtype']
 
         engine_args = AsyncEngineArgs(**params)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
 
     # -------------------- generate() --------------------
-    def generate(self, prompt: str, sampling_params: Dict[str, str]) -> str:
+    def generate(self, prompt: str, request_dict: Dict[str, str]) -> str:
         """
         Generate text from Huggingface model using the input prompt and parameters
         n: int = 1,
@@ -93,19 +123,18 @@ class VllmLLM(BaseLLM):
         # sampling_params.pop('max_new_tokens', None)
 
         # params['temperature'] = 0.0 #params.get('temperature', 1.0)
-        sampling_params = SamplingParams(**sampling_params)
 
         # LLM
-        outputs = self.llm.generate([prompt], sampling_params)
+        # outputs = self.llm.generate([prompt], sampling_params)
 
         # for output in outputs:
         #     prompt = output.prompt
         #     generated_text = output.outputs[0].text
         #     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
 
-        print(f"{outputs=}")
+        # print(f"{outputs=}")
 
-        generated_text = outputs[0].outputs[0].text
+        # generated_text = outputs[0].outputs[0].text
 
         # # LLMEngine
 
@@ -129,27 +158,64 @@ class VllmLLM(BaseLLM):
         #     # if not (self.engine.has_unfinished_requests() or test_prompts):
         #     #     break
 
-        return generated_text
+        return {
+            'text': generated_text,
+        }
 
     async def async_generate(
-        self, prompt: str, sampling_params: Dict[str, str], request_id: str
+        self, prompt: str, request_dict: Dict[str, str], request_id: str
     ) -> AsyncIterator[str]:
         """
         asynchronously generate text using LLM based on an input prompt
         """
+        # Construct OpenAI API parammeters from request.
+        from ..protocol.openai import CompletionParams as OpenAICompletionParams, CompletionResponse as OpenAICompletionResponse
+        from ..protocol.openai import ChatCompletionParams as OpenAIChatCompletionParams, ChatCompletionResponse as OpenAIChatCompletionResponse
+
+        def update_attrs(target, source):
+            for k, v in source.__dict__.items():
+                if hasattr(target, k):
+                    setattr(target, k, v)
+
+        openai_completion_params = OpenAICompletionParams.from_request(request_dict)
+        # model = openai_completion_params.model
+        # prompt = openai_completion_params.prompt
+        # stream = openai_completion_params.stream
+
+        # -------------------- sampling_params --------------------
+        # The sampling parameters for VLLM
+        from ..protocol.sampling_params import VLLMSamplingParams
+        sampling_params = VLLMSamplingParams()
+        # Update attributes in sampling_params from openai_completion_params
+        update_attrs(sampling_params, openai_completion_params)
+        # Use property sampling method according to the protocol of VLLM.
+        sampling_method = request_dict.pop("sampling_method", "normal")
+        try:
+            sampling_params.use_sampling_method(sampling_method)
+        except Exception as e:
+            logger.warning(f"An exception is occurred when using sampling method '{sampling_method}'. Using normal sampling. Exception: {e}")
+            sampling_params.use_normal_sampling()
+
+        sampling_params_dict = sampling_params.__dict__
 
         # sampling_params['temperature'] = 0.0 #sampling_params.get('temperature', 1.0)
 
         # Beam Search
         # vllm/sampling_params.py
         # ----- Best for 34b -----
-        sampling_params['use_beam_search'] = True
-        sampling_params['n'] = 4
-        sampling_params['best_of'] = 4
-        sampling_params['temperature'] = 0.0
-        sampling_params['top_p'] = 1.0
-        sampling_params['top_k'] = -1
-        sampling_params['early_stopping'] = False # must be in [True, False, 'never']
+        # sampling_params.use_beam_search_sampling(n=4, best_of=4)
+
+        sampling_params_dict = {k: v for k, v in request_dict.items() if k in ['temperature', 'max_tokens', 'n', 'best_of', 'stop']}
+        sampling_params_dict['stop'] = ["````"]
+
+        sampling_params_dict['use_beam_search'] = True
+        sampling_params_dict['n'] = 4
+        sampling_params_dict['best_of'] = 4
+        sampling_params_dict['early_stopping'] = False # must be in [True, False, 'never']
+        sampling_params_dict['temperature'] = 0.0
+        sampling_params_dict['top_p'] = 1.0
+        sampling_params_dict['top_k'] = -1
+
         # ------ Best for 13b -----
         # sampling_params['use_beam_search'] = True
         # sampling_params['n'] = 5
@@ -171,11 +237,14 @@ class VllmLLM(BaseLLM):
         # sampling_params['early_stopping'] = False
         # sampling_params['length_penalty'] = 1.0
 
-        sampling_params = SamplingParams(**sampling_params)
+        vllm_sampling_params = SamplingParams(**sampling_params_dict)
         # final_output = await self.engine.generate(prompt, sampling_params, request_id)
-        async for request_output in self.engine.generate(prompt, sampling_params, request_id):
+        async for request_output in self.engine.generate(prompt, vllm_sampling_params, request_id):
             # yield request_output
-            yield request_output.outputs[0].text
+            generated_text = request_output.outputs[0].text
+            yield {
+                'text': generated_text,
+            }
 
         # prompt = final_output.prompt
         # text = "".join([prompt + output.text for output in final_output.outputs])

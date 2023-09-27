@@ -18,8 +18,8 @@ class Settings:
 
     def __post_init__(self):
         self.setup_params = dict(
-            repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b",
-            # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b",
+            # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b",
+            repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/Phind-CodeLlama-34B-v2-GPTQ",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/CodeLlama-34B-Instruct-GPTQ",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/Xwin-LM-70B-V0.1-GPTQ",
@@ -29,12 +29,13 @@ class Settings:
         if 'GPTQ' in self.setup_params['repo_id']:
             dtype = "float16"
         else:
-            dtype = "bfloat16"
+            dtype = "auto"
+
+        self.setup_params['dtype'] = dtype
 
         self.model_params = dict(
                 device_map = "auto",
                 trust_remote_code = True,
-                dtype = dtype,
         ) if len(self.model_params) == 0 else self.model_params 
 
         assert self.setup_params['repo_id'] is not None, "setup_params.repo_id must be set"

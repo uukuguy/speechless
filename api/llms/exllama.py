@@ -184,21 +184,16 @@ class ExllamaV2LLM(BaseLLM):
         # prompt = llama_prompt \
         #     .replace("<|system_prompt|>", system_prompt) \
         #     .replace("<|user_prompt|>", prompt)
+
         active_context = self.tokenizer.encode(prompt, add_bos = True)
         self.generator.begin_stream(active_context, settings)
 
         response_tokens = 0
-        response_text = ""
+        generated_text = ""
         while True:
             chunk, eos, tokens = self.generator.stream()
-            if len(response_text) == 0: chunk = chunk.lstrip()
-            response_text += chunk
-
-            # if self.generator.full():
-            #     # active_context = get_tokenized_context(model.config.max_seq_len - min_space_in_context)
-            #     active_context = torch.empty((1, 0), dtype=torch.long)
-            #     self.generator.begin_stream(active_context, settings)
-
+            if len(generated_text) == 0: chunk = chunk.lstrip()
+            generated_text += chunk
             response_tokens += 1
 
             if response_tokens >= max_new_tokens:
@@ -207,73 +202,11 @@ class ExllamaV2LLM(BaseLLM):
             if eos:
                 break
 
-        return response_text
-
+        return generated_text
 
     async def async_generate(self, prompt: str, sampling_params: Dict[str, str], request_id: str) -> str:
-        """
-        Generate text from Huggingface model using the input prompt and parameters
-        """
-
-        if 'max_new_tokens' not in sampling_params:
-            max_new_tokens = sampling_params.pop("max_tokens", 1024)
-            sampling_params['max_new_tokens'] = max_new_tokens
-        max_new_tokens = sampling_params['max_new_tokens']
-
-        for k in ['model', 'max_tokens', 'stop']:
-            sampling_params.pop(k, None)
-
-        stop = sampling_params.get('stop', [self.tokenizer.eos_token_id])
-
-        settings = ExLlamaV2Sampler.Settings()
-        settings.temperature = sampling_params.get('temperature', 0.85)
-        settings.top_k = sampling_params.get('top_k', 50)
-        settings.top_p = sampling_params.get('top_p', 0.8)
-        settings.token_repetition_penalty = sampling_params.get('repetition_penalty', 1.15)
-        # settings.disallow_tokens(self.tokenizer, [self.tokenizer.eos_token_id])
-
-        self.generator.set_stop_conditions(stop)
-
-        # text = self.generator.generate_simple(prompt, settings, max_new_tokens, seed = 1234)
-
-        # active_context = get_tokenized_context(model.config.max_seq_len - min_space_in_context)
-        # active_context = torch.empty((1, 0), dtype=torch.long)
-
-        # instruction, input, response = split_user_prompt(prompt)
-        # if len(instruction) == 0:
-        #     instruction = system_prompt
-        # prompt = llama_prompt \
-        #     .replace("<|system_prompt|>", instruction) \
-        #     .replace("<|user_prompt|>", input)
-
-        # prompt = llama_prompt \
-        #     .replace("<|system_prompt|>", system_prompt) \
-        #     .replace("<|user_prompt|>", prompt)
-
-        active_context = self.tokenizer.encode(prompt, add_bos = True)
-        self.generator.begin_stream(active_context, settings)
-
-        response_tokens = 0
-        response_text = ""
-        while True:
-            chunk, eos, tokens = self.generator.stream()
-            if len(response_text) == 0: chunk = chunk.lstrip()
-            response_text += chunk
-
-            # if self.generator.full():
-            #     # active_context = get_tokenized_context(model.config.max_seq_len - min_space_in_context)
-            #     active_context = torch.empty((1, 0), dtype=torch.long)
-            #     self.generator.begin_stream(active_context, settings)
-
-            response_tokens += 1
-
-            if response_tokens >= max_new_tokens:
-                break
-
-            if eos:
-                break
-
-        yield response_text
+        generated_text = self.generate(prompt, sampling_params)
+        yield generated_text
 
 
     async def agenerate(
