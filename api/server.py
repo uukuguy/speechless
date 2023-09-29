@@ -65,6 +65,7 @@ class EmbeddingsRequest(BaseModel):  # pylint: disable=too-few-public-methods
 
 # -------------------- get_llm() --------------------
 from speechless.api.llms import HuggingFaceLLM, VllmLLM, ExllamaV2LLM
+
 available_models = {
     'huggingface': HuggingFaceLLM,
     'vllm': VllmLLM,
@@ -79,36 +80,12 @@ def get_llm():
     return llm
 
 llm = None
-engine = None
 
 llm = get_llm()
 
-from speechless.api.protocol.openai import CompletionResponse
-# @dataclass
-# class CompletionResponse:
-#     id: str
-#     object: str # Which is always 'text_completion'
-#     created: int # The Unix timestamp (in seconds) of when the completion was created.
-#     model: str # The model used for completion.
-#     # choices - The list of completion choices the model generated for the input prompt.
-#     # "choices": [
-#     #     {
-#     #     "text": "\n\nThis is indeed a test",
-#     #     "index": 0,
-#     #     "logprobs": null,
-#     #     "finish_reason": "length" # 'stop', 'length' (maximum tokens reached), 'content_filter'
-#     #     }
-#     # ]
-#     choices: List[Dict[str, Any]] 
-#     # usage - The usage statistics for the model at the time of completion.
-#     # "usage": {
-#     #     "prompt_tokens": 5,
-#     #     "completion_tokens": 7,
-#     #     "total_tokens": 12
-#     # }
-#     usage: Dict[str, int]
-
 # -------------------- API /v1/completions --------------------
+from speechless.api.protocol.openai import CompletionResponse
+
 @app.post("/v1/completions")
 async def comletions(request: Request):
     """
@@ -132,16 +109,9 @@ async def comletions(request: Request):
         # Streaming case
         async def stream_results() -> AsyncGenerator[bytes, None]:
             async for generated_output in completion_generator:
-                # prompt = generated_output.prompt
-                # text_outputs = [
-                #     prompt + output.text for output in request_output.outputs
-                # ]
-                # ret = {"text": text_outputs}
-                # yield (json.dumps(ret) + "\0").encode("utf-8")
                 yield generated_output['text']
 
         async def abort_request() -> None:
-            # await engine.abort(request_id)
             await llm.abort(request_id)
 
         background_tasks = BackgroundTasks()
