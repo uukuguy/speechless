@@ -1,0 +1,7 @@
+data/postgres
+data/ner_metadata.pkl
+data/embeddings.pkl
+
+# pycache
+**/__pycache__/
+.pytest_cache

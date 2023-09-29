@@ -1,0 +1,13 @@
+argparse
+func_timeout
+openai
+pandas
+psycopg2-binary
+pyyaml
+sentence-transformers
+spacy
+sqlalchemy
+tiktoken
+torch
+transformers
+tqdm
