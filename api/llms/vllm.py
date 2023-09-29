@@ -58,129 +58,28 @@ def create_vl_async_engine(model_name_or_path, tensor_parallel_size=1, trust_rem
 
     return engine
 
+from ..protocol.openai import CompletionParams as OpenAICompletionParams, CompletionResponse as OpenAICompletionResponse
+from ..protocol.openai import ChatCompletionParams as OpenAIChatCompletionParams, ChatCompletionResponse as OpenAIChatCompletionResponse
 # ==================== class VllmLLM ====================
 class VllmLLM(BaseLLM):
     """
     VllmLLM Implementation
     """
 
+
     def __init__(self, settings) -> None:
-        # params = settings.model_params or {}
-
-        model_name_or_path = settings.setup_params["repo_id"]
-        model_dir = super().get_model_dir(settings.models_dir, settings.model_family, model_name_or_path)
-
-        # setup_params = {
-        #     k: v
-        #     for k, v in settings.setup_params.items()
-        #     if k not in ("repo_id", "tokenizer_repo_id", "config_params")
-        # }
-        # self.device = params.get("device_map", "cpu")
-        # self.device = "cuda"
-
-        num_gpus = torch.cuda.device_count()
-        # # LLM
-        # self.llm = create_vllm_llm(model_name_or_path, tensor_parallel_size=num_gpus, trust_remote_code=True)
-
-        # # LLMEngine
-        # self.engine = create_vllm_engine(model_name_or_path, tensor_parallel_size=num_gpus, trust_remote_code=True)
-
-        # AsyncLLMEngine
-        params = settings.model_params or {}
-        model_name_or_path = settings.setup_params["repo_id"]
-
-        params['model'] = model_name_or_path
-        params['tensor_parallel_size'] = torch.cuda.device_count()
-        params.pop("device_map", None)
-        params.pop("trust_remote_code", None)
-
-        # FIXME
-        # for GPTQ
-        # params['dtype'] = "float16"
-        params['dtype'] = settings.setup_params['dtype']
-
-        engine_args = AsyncEngineArgs(**params)
+        engine_args = AsyncEngineArgs(**settings.vllm_engine_params)
         self.engine = AsyncLLMEngine.from_engine_args(engine_args)
 
-    # -------------------- generate() --------------------
-    def generate(self, prompt: str, request_dict: Dict[str, str]) -> str:
-        """
-        Generate text from Huggingface model using the input prompt and parameters
-        n: int = 1,
-        best_of: Optional[int] = None,
-        presence_penalty: float = 0.0,
-        frequency_penalty: float = 0.0,
-        temperature: float = 1.0,
-        top_p: float = 1.0,
-        top_k: int = -1,
-        use_beam_search: bool = False,
-        stop: Union[None, str, List[str]] = None,
-        ignore_eos: bool = False,
-        max_tokens: int = 16,
-        logprobs: Optional[int] = None,
-        """
-        # sampling_params['max_tokens'] = sampling_params.get('max_new_tokens', 1024)
-        # sampling_params.pop('max_new_tokens', None)
 
-        # params['temperature'] = 0.0 #params.get('temperature', 1.0)
+    def generate_sampling_params_from_request(self, request_dict: Dict[str, str]):
 
-        # LLM
-        # outputs = self.llm.generate([prompt], sampling_params)
-
-        # for output in outputs:
-        #     prompt = output.prompt
-        #     generated_text = output.outputs[0].text
-        #     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
-
-        # print(f"{outputs=}")
-
-        # generated_text = outputs[0].outputs[0].text
-
-        # # LLMEngine
-
-        # request_id = random_uuid()
-        # generated_text = ""
-        # request_id = random_uuid()
-        # self.engine.add_request(request_id, prompt, sampling_params)
-        # while True:
-        #     request_outputs = self.engine.step()
-        #     request_output = request_outputs[0]
-        #     # print(f"{type(request_output)=}")
-        #     # print(f"{request_output=}")
-        #     if request_output.finished:
-        #         generated_text = request_output.outputs[0].text
-        #     # for request_output in request_outputs:
-        #     #     if request_output.finished:
-        #     #         print(request_output)
-
-        #     if not self.engine.has_unfinished_requests():
-        #         break
-        #     # if not (self.engine.has_unfinished_requests() or test_prompts):
-        #     #     break
-
-        return {
-            'text': generated_text,
-        }
-
-    async def async_generate(
-        self, prompt: str, request_dict: Dict[str, str], request_id: str
-    ) -> AsyncIterator[str]:
-        """
-        asynchronously generate text using LLM based on an input prompt
-        """
-        # Construct OpenAI API parammeters from request.
-        from ..protocol.openai import CompletionParams as OpenAICompletionParams, CompletionResponse as OpenAICompletionResponse
-        from ..protocol.openai import ChatCompletionParams as OpenAIChatCompletionParams, ChatCompletionResponse as OpenAIChatCompletionResponse
+        openai_completion_params = OpenAICompletionParams.from_request(request_dict)
 
         def update_attrs(target, source):
             for k, v in source.__dict__.items():
                 if hasattr(target, k):
                     setattr(target, k, v)
-
-        openai_completion_params = OpenAICompletionParams.from_request(request_dict)
-        # model = openai_completion_params.model
-        # prompt = openai_completion_params.prompt
-        # stream = openai_completion_params.stream
 
         # -------------------- sampling_params --------------------
         # The sampling parameters for VLLM
@@ -196,25 +95,74 @@ class VllmLLM(BaseLLM):
             logger.warning(f"An exception is occurred when using sampling method '{sampling_method}'. Using normal sampling. Exception: {e}")
             sampling_params.use_normal_sampling()
 
-        sampling_params_dict = sampling_params.__dict__
+        return sampling_params
 
-        # sampling_params['temperature'] = 0.0 #sampling_params.get('temperature', 1.0)
+
+    # -------------------- generate() --------------------
+    def generate(self, prompt: str, request_dict: Dict[str, str]) -> str:
+        sampling_params = self.generate_sampling_params_from_request(request_dict)
+        sampling_params_dict = sampling_params.__dict__
+        vllm_sampling_params = SamplingParams(**sampling_params_dict)
+
+        # LLM
+        # outputs = self.llm.generate([prompt], sampling_params)
+        # for output in outputs:
+        #     prompt = output.prompt
+        #     generated_text = output.outputs[0].text
+        #     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+        # generated_text = outputs[0].outputs[0].text
+
+        # LLMEngine
+        request_id = random_uuid()
+        generated_text = ""
+        request_id = random_uuid()
+        self.engine.add_request(request_id, prompt, vllm_sampling_params)
+        while True:
+            request_outputs = self.engine.step()
+            request_output = request_outputs[0]
+            # print(f"{type(request_output)=}")
+            # print(f"{request_output=}")
+            if request_output.finished:
+                generated_text = request_output.outputs[0].text
+            # for request_output in request_outputs:
+            #     if request_output.finished:
+            #         print(request_output)
+
+            if not self.engine.has_unfinished_requests():
+                break
+            # if not (self.engine.has_unfinished_requests() or test_prompts):
+            #     break
+
+        return {
+            'text': generated_text,
+        }
+    
+
+    async def async_generate(
+        self, prompt: str, request_dict: Dict[str, str], request_id: str
+    ) -> AsyncIterator[str]:
+        """
+        asynchronously generate text using LLM based on an input prompt
+        """
+
+        sampling_params = self.generate_sampling_params_from_request(request_dict)
+        sampling_params_dict = sampling_params.__dict__
 
         # Beam Search
         # vllm/sampling_params.py
         # ----- Best for 34b -----
         # sampling_params.use_beam_search_sampling(n=4, best_of=4)
 
-        sampling_params_dict = {k: v for k, v in request_dict.items() if k in ['temperature', 'max_tokens', 'n', 'best_of', 'stop']}
-        sampling_params_dict['stop'] = ["````"]
+        # sampling_params_dict = {k: v for k, v in request_dict.items() if k in ['temperature', 'max_tokens', 'n', 'best_of', 'stop']}
+        # # sampling_params_dict['stop'] = ["````"]
 
-        sampling_params_dict['use_beam_search'] = True
-        sampling_params_dict['n'] = 4
-        sampling_params_dict['best_of'] = 4
-        sampling_params_dict['early_stopping'] = False # must be in [True, False, 'never']
-        sampling_params_dict['temperature'] = 0.0
-        sampling_params_dict['top_p'] = 1.0
-        sampling_params_dict['top_k'] = -1
+        # sampling_params_dict['use_beam_search'] = True
+        # sampling_params_dict['n'] = 4
+        # sampling_params_dict['best_of'] = 4
+        # sampling_params_dict['early_stopping'] = False # must be in [True, False, 'never']
+        # sampling_params_dict['temperature'] = 0.0
+        # sampling_params_dict['top_p'] = 1.0
+        # sampling_params_dict['top_k'] = -1
 
         # ------ Best for 13b -----
         # sampling_params['use_beam_search'] = True
@@ -238,19 +186,11 @@ class VllmLLM(BaseLLM):
         # sampling_params['length_penalty'] = 1.0
 
         vllm_sampling_params = SamplingParams(**sampling_params_dict)
-        # final_output = await self.engine.generate(prompt, sampling_params, request_id)
         async for request_output in self.engine.generate(prompt, vllm_sampling_params, request_id):
-            # yield request_output
             generated_text = request_output.outputs[0].text
             yield {
                 'text': generated_text,
             }
-
-        # prompt = final_output.prompt
-        # text = "".join([prompt + output.text for output in final_output.outputs])
-        # text = final_output.outputs[0].text
-
-        # return text
 
     async def agenerate(
         self, prompt: str, sampling_params: Dict[str, str], request_id: str
