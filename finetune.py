@@ -31,6 +31,10 @@ import logging
 import bitsandbytes as bnb
 import pandas as pd
 
+# logger = logging.getLogger(__name__)
+from loguru import logger
+
+
 import torch
 import transformers
 from torch.nn.utils.rnn import pad_sequence
@@ -58,8 +62,6 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
 torch.backends.cuda.matmul.allow_tf32 = True
-
-logger = logging.getLogger(__name__)
 
 IGNORE_INDEX = -100
 
@@ -255,7 +257,7 @@ def find_all_linear_names(args, model):
 
 class SavePeftModelCallback(transformers.TrainerCallback):
     def save_model(self, args, state, kwargs):
-        print('Saving PEFT checkpoint...')
+        logger.info('Saving PEFT checkpoint...')
         if state.best_model_checkpoint is not None:
             checkpoint_folder = os.path.join(state.best_model_checkpoint, "adapter_model")
         else:
@@ -296,7 +298,7 @@ def get_accelerate_model(args, checkpoint_dir):
 
     if args.full_finetune: assert args.bits in [16, 32]
 
-    print(f'loading base model {args.model_name_or_path}...')
+    logger.info(f'loading base model {args.model_name_or_path}...')
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
         "cache_dir": args.cache_dir,
@@ -339,10 +341,10 @@ def get_accelerate_model(args, checkpoint_dir):
 
     if not args.full_finetune:
         if checkpoint_dir is not None:
-            print("Loading adapters from checkpoint.")
+            logger.info("Loading adapters from checkpoint.")
             model = PeftModel.from_pretrained(model, join(checkpoint_dir, 'adapter_model'), is_trainable=True)
         else:
-            print(f'adding LoRA modules...')
+            logger.info(f'adding LoRA modules...')
             modules = find_all_linear_names(args, model)
             config = LoraConfig(
                 r=args.lora_r,
@@ -575,6 +577,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 'output': x['text'],
             })
         elif dataset_format == 'airoboros':
+            logger.info("---------- Formatting dataset for Airoboros. ----------")
             def _format_airoboros(instruction):
                 in_ = None
                 if instruction.get("skip_prompt_formatting"):
@@ -607,13 +610,14 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     dataset = format_dataset(dataset, args.dataset_format)
 
     # Split train/eval, reduce size
+    logger.info(f"---------- Splitting dataset into train/eval ----------")
     if args.do_eval or args.do_predict:
         if 'eval' in dataset:
             eval_dataset = dataset['eval']
         elif 'test' in dataset:
             eval_dataset = dataset['test']
         else:
-            print('Splitting train dataset in train and validation according to `eval_dataset_size`')
+            logger.info('Splitting train dataset in train and validation according to `eval_dataset_size`')
             if 'category' in dataset["train"].column_names:
                 dataset["train"] = dataset["train"].class_encode_column('category')
                 dataset = dataset["train"].train_test_split(
@@ -647,6 +651,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             ).input_ids
         )
     if args.force_remove_overlength_samples:
+        logger.info(f"---------- Filtering out samples longer than {args.model_max_len} ----------")  
         train_dataset = train_dataset.filter(
             lambda x: _get_data_length(x) < args.model_max_len - 10
         )
@@ -672,7 +677,7 @@ def get_last_checkpoint(checkpoint_dir):
                 max_step = max(max_step, int(filename.replace('checkpoint-', '')))
         if max_step == 0: return None, is_completed # training started, but no checkpoint
         checkpoint_dir = join(checkpoint_dir, f'checkpoint-{max_step}')
-        print(f"Found a previous checkpoint at: {checkpoint_dir}")
+        logger.info(f"Found a previous checkpoint at: {checkpoint_dir}")
         return checkpoint_dir, is_completed # checkpoint found!
     return None, False # first training
 
@@ -779,29 +784,32 @@ def train():
     if args.task_name is None:
         args.task_name = os.path.basename(os.curdir)
         
+    from datetime import datetime
+    logger.add(f"logs/finetune_{args.task_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", level="INFO")
+
     # setup_wandb(args)
 
     if args.flash_attention:
         from patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
         replace_llama_attn_with_flash_attn(packed=args.sample_packing)
-        print(f"Enabled flash attention monkey patching.")
+        logger.info(f"Enabled flash attention monkey patching.")
 
     if args.rerope:
         from patches.rerope_monkey_patch import replace_llama_attention_forword_with_rerope
         rerope_window = args.rerope_window or int(args.model_max_Len * 3 / 8) // 16 * 16
         replace_llama_attention_forword_with_rerope(training_length=args.model_max_len, window=rerope_window)
-        print(f"Enabled rerope monkey patching.")
+        logger.info(f"Enabled rerope monkey patching.")
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
     if completed_training:
-        print('Detected that training was already completed!')
+        logger.warning('Detected that training was already completed!')
 
     model = get_accelerate_model(args, checkpoint_dir)
 
     model.config.use_cache = False
     if not args.deepspeed:
         print_trainable_parameters(args, model)
-    print('loaded model')
+    logger.info('loaded model')
     set_seed(args.seed)
 
     # Tokenizer

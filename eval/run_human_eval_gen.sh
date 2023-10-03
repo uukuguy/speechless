@@ -5,11 +5,13 @@
 #    which evaluate_functional_correctness
 #"""
 
+model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b"
 # model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b.local"
+# model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-baichuan2-dolphin-orca-platypus-13b"
 # model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v1.0"
 # model="/opt/local/llm_models/huggingface.co/TheBloke/Phind-CodeLlama-34B-v2-GPTQ"
 # model="/opt/local/llm_models/huggingface.co/codellama/CodeLlama-13b-hf"
-model="/opt/local/llm_models/huggingface.co/microsoft/phi-1_5"
+# model="/opt/local/llm_models/huggingface.co/microsoft/phi-1_5"
 
 temp=0.2
 max_len=2048
