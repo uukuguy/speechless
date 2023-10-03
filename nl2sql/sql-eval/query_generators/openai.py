@@ -199,7 +199,7 @@ class OpenAIQueryGenerator(QueryGenerator):
             package = prompt
 
         try:
-            # print(f"{package=}")
+            print(f"{package=}")
             self.completion = func_timeout(
                 self.timeout,
                 function_to_run,
