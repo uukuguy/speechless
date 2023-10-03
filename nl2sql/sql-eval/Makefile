@@ -161,8 +161,8 @@ codellama:
 	--temperature 0.01 \
 	--max_tokens 600 \
 	--sampling_method beam_search \
-	--num_beams 4 \
-	--best_of 4 \
+	--num_beams 2 \
+	--best_of 2 \
 	--stop "\`\`\`" \
 	-n 175 \
 	-p 50

@@ -8,8 +8,14 @@ help:
 prepare_data:
 	python ./scripts/prepare_data.py
 
-finetune:
+finetune_13b:
 	bash ./scripts/finetune_speechless_codellam_13b.sh
+
+finetune_34b:
+	bash ./scripts/finetune_speechless_codellam_34b.sh
+
+full_finetune_34b:
+	bash ./scripts/full_finetune_speechless_codellam_34b.sh
 
 merge_peft_adapters:
 	PYTHONPATH=. \
@@ -40,10 +46,22 @@ inference_with_lora:
 human_eval_gen:
 	bash ./eval/run_human_eval_gen.sh
 
-human_eval_speechless_13b:
+human_eval_speechless_airoboros_13b:
 	PYTHONPATH=${PWD}/eval \
 	python eval/run_human_eval.py \
 		./eval_results/human_eval/speechless-codellama-airoboros-orca-platypus-13b.local_vllm/human_eval_samples.jsonl \
+		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+
+human_eval_speechless_dolphin_13b:
+	PYTHONPATH=${PWD}/eval \
+	python eval/run_human_eval.py \
+		./eval_results/human_eval/speechless-codellama-dolphin-orca-platypus-13b_vllm/human_eval_samples.jsonl \
+		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+
+human_eval_baichuan2_13b:
+	PYTHONPATH=${PWD}/eval \
+	python eval/run_human_eval.py \
+		./eval_results/human_eval/speechless-baichuan2-dolphin-orca-platypus-13b_vllm/human_eval_samples.jsonl \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
 human_eval_speechless_34b:
@@ -209,12 +227,19 @@ push_autodl_nm799_a40_1:
 push_gpushare_a100_2:
 	$(call push_to_remote,root@i-2.gpushare.com,59028,$(TARGET_DIR))
 
-push_gpushare_xn_4090x1:
-	$(call push_to_remote,root@i-2.gpushare.com,48296,$(TARGET_DIR))
+push_gpushare_a100x1:
+	$(call push_to_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR))
+	
+push_gpushare_h800x2:
+	$(call push_to_remote,root@i-1.gpushare.com,48068,$(TARGET_DIR))
+
+push_gpushare_a800x2:
+	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
+
 
 # ----- pull from remote -----
 pull_autodl_nm799_a40_1:
 	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
 
-pull_gpushare_hd_4090x1:
-	$(call pull_from_remote,root@i-1.gpushare.com,55296,$(TARGET_DIR))
+pull_gpushare_a100x1:
+	$(call pull_from_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR))
