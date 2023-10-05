@@ -1,10 +1,14 @@
 #!/bin/bash
 export MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
-export TASK_NAME=speechless-codellama-34b-2.0
+export TASK_NAME=speechless-codellama-34b-v2.1
+export BASE_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
+# export BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # export WANDB_PROJECT=${TASK_NAME}
 export OUTPUT_DIR=./outputs
 # export DATASET=/opt/local/datasets/jondurbin/airoboros-2.2/instructions-clean.jsonl 
-export DATASET=/opt/local/datasets/Speechless/airoboros-orca-platypus-instructions.jsonl
+# export DATASET=/opt/local/datasets/Speechless/airoboros-orca-platypus-instructions.jsonl
+export DATASET=/opt/local/datasets/Speechless/speechless-reasoning.jsonl
+# export DATASET=/opt/local/datasets/Speechless/speechless-thoughts-200k.jsonl
 export TORCH_DISTRIBUTED_DEBUG=DETAIL 
 
 # export ENABLE_FLASH_ATTENTION=True
@@ -14,11 +18,12 @@ export TORCH_DISTRIBUTED_DEBUG=DETAIL
 #     --deepspeed config/deepspeed-13b-stage2.json \
 # python
 
+PYTHONPATH=${PWD}/../.. \
 torchrun --nnodes=1 --nproc_per_node=2 \
-    ./finetune.py \
+    ../../finetune.py \
     --task_name ${TASK_NAME} \
     --run_name $(date +%Y%m%d-%H%M%S) \
-    --model_name_or_path ${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2 \
+    --model_name_or_path ${BASE_MODEL_PATH} \
     --output_dir ${OUTPUT_DIR}/${TASK_NAME} \
     --num_train_epochs 3 \
     --data_seed 10042 \
@@ -28,7 +33,7 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --eval_dataset_size 0.005 \
     --save_steps 100 \
     --eval_steps 100 \
-    --warmup_steps 40 \
+    --warmup_steps 20 \
     --max_eval_samples 200 \
     --max_new_tokens 8192 \
     --dataloader_num_workers 3 \
@@ -48,8 +53,8 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --dataset ${DATASET} \
     --dataset_format airoboros \
     --model_max_len 8192 \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 32 \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 1 \
     --per_device_eval_batch_size 1 \
     --learning_rate 2e-4 \
     --lr_scheduler_type cosine \
@@ -59,6 +64,7 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --gradient_checkpointing True \
     --group_by_length False \
     --ddp_find_unused_parameters False \
-    --force_remove_overlength_samples True \
+    --force_remove_overlength_samples False \
     --flash_attention True \
-    --rerope False
+    --rerope False \
+    --repeat_steps 0
