@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from rich import print
+#from rich import print
 
 # if os.environ.get('ENABLE_FLASH_ATTENTION', 'False') == 'True': 
 #     from flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
@@ -112,7 +112,7 @@ class DataArguments:
     )
     dataset_format: Optional[str] = field(
         default=None,
-        metadata={"help": "Which dataset format is used. [alpaca|chip2|self-instruct|hh-rlhf]"}
+        metadata={"help": "Which dataset format is used. [alpaca|chip2|self-instruct|hh-rlhf|mistral]"}
     )
 
 @dataclass
@@ -208,6 +208,8 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     save_total_limit: int = field(default=40, metadata={"help": 'How many checkpoints to save before the oldest is overwritten'})
     deepspeed: str = field(default=None, metadata={"help": "deepspeed configuration path"})
     max_shard_size: str = field(default="5GB", metadata={"help": "Max shard size when saving model after full finetune."})
+
+    repeat_steps: int = field(default=0, metadata={"help": "How many times to repeat the same batch."})
 
 @dataclass
 class GenerationArguments:
@@ -500,6 +502,55 @@ def local_dataset(dataset_name):
         return full_dataset.train_test_split(test_size=0.02, stratify_by_column='category')
     return full_dataset.train_test_split(test_size=0.02)
 
+class RepeatDataset():
+    def __init__(self, ds, repeat_batch_size, repeat_steps):
+        self.ds = ds
+        self.batch_size = repeat_batch_size * repeat_steps
+        self.in_cache = []
+        self.out_cache = []
+        self.first_count = 0
+
+    def __len__(self):
+        return len(self.ds) * 2
+
+    def __getitem__(self, idx):
+        # new_idx = self.get_new_idx(idx)
+        new_idx = idx % self.batch_size
+        self.in_cache.append(new_idx)
+
+        if self.first_count < self.batch_size:
+            self.first_count += 1
+            ret_idx = self.in_cache.pop(0)
+            self.out_cache.append(ret_idx)
+        elif self.first_count < self.batch_size * 2:
+            self.first_count += 1
+            ret_idx = self.out_cache.pop(0)
+        else:
+            self.first_count = 0
+            ret_idx = self.in_cache.pop(0)
+            self.out_cache.append(ret_idx)
+
+
+        return self.ds[ret_idx]
+
+    def get_new_idx(self, idx):
+        n = idx // (self.batch_size * 2)
+        d = idx % (self.batch_size * 2)
+        if n < len(self.ds) // self.batch_size:
+            new_idx = self.batch_size * n + d % self.batch_size
+        else:
+            d0 = len(self.ds) % self.batch_size
+            if d0 > 0:
+                new_idx = self.batch_size * n + d % d0
+            else:
+                new_idx = self.batch_size * n + d % self.batch_size
+        assert new_idx < len(self.ds), f"{idx=}, {new_idx=}, {len(self.ds)=}, {self.batch_size=}, {n=}, {d=}"
+        return new_idx
+
+    # def __getitem__(self, idx):
+    #     new_idx = self.get_new_idx(idx)
+    #     return self.ds[new_idx]
+
 def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     """
     Make dataset and collator for supervised fine-tuning.
@@ -579,26 +630,88 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         elif dataset_format == 'airoboros':
             logger.info("---------- Formatting dataset for Airoboros. ----------")
             def _format_airoboros(instruction):
-                in_ = None
-                if instruction.get("skip_prompt_formatting"):
-                    in_ = instruction["instruction"].strip() + "\n"
+                # FIXME - for Spider prompt
+                if "### Instructions:" in instruction["instruction"]:
+                    in_ = instruction["instruction"]
+                    out_ = instruction['response']
+                    return {
+                        'input': in_,
+                        'output': out_,
+                    }
                 else:
-                    in_ = "\n".join([
-                        (instruction.get('system') or 'A chat.').strip(),
-                        f"USER: {instruction['instruction'].strip()}",
-                    ])
-                    if in_.endswith("PLAINFORMAT"):
-                        in_ = re.sub(r"\s+PLAINFORMAT$", "", in_, re.DOTALL)
-                        in_ += " PLAINFORMAT"
-                    in_ = "\n".join([in_.strip(), "ASSISTANT: "])
+                    in_ = None
+                    if instruction.get("skip_prompt_formatting"):
+                        in_ = instruction["instruction"].strip() + "\n"
+                    else:
+                        in_ = "\n".join([
+                            (instruction.get('system') or 'A chat.').strip(),
+                            f"USER: {instruction['instruction'].strip()}",
+                        ])
+                        if in_.endswith("PLAINFORMAT"):
+                            in_ = re.sub(r"\s+PLAINFORMAT$", "", in_, re.DOTALL)
+                            in_ += " PLAINFORMAT"
+                        in_ = "\n".join([in_.strip(), "ASSISTANT: "])
+                    return {
+                        'input': in_,
+                        'output': instruction['response'].strip() + "\n",
+                    }
+            dataset = dataset.map(_format_airoboros)
+        elif dataset_format == 'mistral':
+            logger.info("---------- Formatting dataset for Mistral. ----------")
+            def _format_mistral(instruction):
+                # FIXME - for Spider prompt
+                if "### Instructions:" in instruction["instruction"]:
+                    in_ = instruction["instruction"]
+                    inst = instruction["instruction"]
+                    toks = inst.split("### Input:\n")
+                    if len(toks) == 2:
+                        first = toks[0]
+                        first = first.replace("### Instructions:\n", "")
+                        second = toks[1]
+                        second_toks = second.split("### Response:\n")
+                        if len(second_toks) == 2:
+                            input = second_toks[0]
+                            response = second_toks[1]
+                            in_ = "<s>[INST] " + first + " [/INST]\n" + input + "</s> " + "[INST] " + response + " [/INST]"
+
+                    out_ = instruction['response'] + "</s>"
+                    print(f"{in_=}")
+                    print(f"{out_=}")
+                    return {
+                        'input': in_,
+                        'output': out_,
+                    }
+                else:
+                    in_ = f"<s>[INST] {instruction['instruction']} [/INST]"
+                    out_ = f"{instruction['response']}</s>"
+                    return {
+                        'input': in_,
+                        'output': out_,
+                    }
+            dataset = dataset.map(_format_mistral)
+        elif dataset_format == 'llama2':
+            logger.info("---------- Formatting dataset for Llama2. ----------")
+            def _format_llama2(instruction):
+                sys_msg = instruction.get('system', 'A chat.')
+                user_msg = instruction['instruction']
+                mode_msg = instruction['response']
+                in_ = f"<s>[INST] <<SYS>>\n{sys_msg}\n<</SYS>>\n{user_msg}[/INST]"
+                out_ = f"{instruction['response']}</s>"
                 return {
                     'input': in_,
-                    'output': instruction['response'].strip() + "\n",
+                    'output': out_,
                 }
-            dataset = dataset.map(_format_airoboros)
+            dataset = dataset.map(_format_llama2)
         elif dataset_format == 'input-output':
             # leave as is
             pass
+            def _format_input_output(instruction):
+                return {
+                    'input': instruction['instruction'],
+                    'output': instruction['response'],
+                }
+            dataset = dataset.map(_format_input_output)
+
         # Remove unused columns.
         dataset = dataset.remove_columns(
             [col for col in dataset.column_names['train'] if col not in ['input', 'output']]
@@ -652,14 +765,22 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         )
     if args.force_remove_overlength_samples:
         logger.info(f"---------- Filtering out samples longer than {args.model_max_len} ----------")  
+        prev_len = len(train_dataset)
         train_dataset = train_dataset.filter(
             lambda x: _get_data_length(x) < args.model_max_len - 10
         )
-    
+        logger.info(f"Filtered out {prev_len - len(train_dataset)} samples. ({len(train_dataset)}/{prev_len})")
+
     data_collator = DataCollatorForCausalLM(
         tokenizer=tokenizer,
         model_max_len=args.model_max_len,
     )
+
+    # FIXME
+    if args.repeat_steps > 0:
+        one_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps * torch.cuda.device_count()
+        train_dataset = RepeatDataset(train_dataset, repeat_batch_size= one_batch_size, repeat_steps = args.repeat_steps)
+    
     return dict(
         train_dataset=train_dataset if args.do_train else None,
         eval_dataset=eval_dataset if args.do_eval else None,

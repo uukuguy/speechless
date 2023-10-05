@@ -17,6 +17,16 @@ finetune_34b:
 full_finetune_34b:
 	bash ./scripts/full_finetune_speechless_codellam_34b.sh
 
+finetune_v2.1:
+	# bash ./scripts/finetune_speechless_codellam_34b_v2.1.sh
+	cd tasks/speechless_codellama_34b_v2.1 && \
+		bash ./finetune_speechless_codellama_34b_v2.1.sh
+
+finetune_mistral_7b:
+	# bash ./scripts/finetune_speechless_mistral_7b_v0.1.sh
+	cd tasks/speechless_mistral_7b_v0.1 && \
+		bash ./finetune_speechless_mistral_7b_v0.1.sh
+
 merge_peft_adapters:
 	PYTHONPATH=. \
 	python scripts/merge_peft_adapters.py \
@@ -199,6 +209,7 @@ define push_to_remote
 		--exclude=saved_models \
 		--exclude=.git \
 		--exclude=__pycache__ \
+		--exclude=tasks \
 		--rsh='ssh -p $(2)' \
 		* \
 		$(1):$(3)
