@@ -5,7 +5,11 @@
 #    which evaluate_functional_correctness
 #"""
 
-model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b"
+model=$1
+output_file=$2
+output_path=$(dirname ${output_file})
+
+# model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b"
 # model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b.local"
 # model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-baichuan2-dolphin-orca-platypus-13b"
 # model="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v1.0"
@@ -35,9 +39,8 @@ num_seqs_per_iter=1
 #     --output_path ${output_path} 
 
 
-output_path=eval_results/human_eval/$(basename ${model})_vllm
 mkdir -p ${output_path}
-echo 'Output path: '$output_path
+echo 'Output file: '$output_file
 echo 'Model to eval: '$model
 python eval/humaneval_gen_vllm.py \
     --model ${model} \
@@ -47,5 +50,4 @@ python eval/humaneval_gen_vllm.py \
     --num_seqs_per_iter ${num_seqs_per_iter} \
     --N ${pred_num} \
     --max_len ${max_len} \
-    --output_path ${output_path} \
-    --num_gpus 2
+    --output_file ${output_file} 

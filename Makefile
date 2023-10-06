@@ -50,53 +50,39 @@ inference_with_lora:
 		--lora_weights ${CHECKPOINT_DIR} \
 		--test_file_path ${TEST_FILE} \
 
-
 # -------------------- HumanEval --------------------
+# pass@1: 75.61
+# TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v2.0
+# pass@1: 70.73
+TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v1.9
+SERVED_MODEL_NAME=$(shell basename ${TEST_MODEL_PATH})
+HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${SERVED_MODEL_NAME}/humaneval_samples.jsonl
 
-human_eval_gen:
-	bash ./eval/run_human_eval_gen.sh
+humaneval_gen:
+	bash ./eval/run_humaneval_gen.sh \
+		${TEST_MODEL_PATH} \
+		${HUMANEVAL_GEN_OUTPUT_FILE}
 
-human_eval_speechless_airoboros_13b:
-	PYTHONPATH=${PWD}/eval \
-	python eval/run_human_eval.py \
-		./eval_results/human_eval/speechless-codellama-airoboros-orca-platypus-13b.local_vllm/human_eval_samples.jsonl \
+	# PYTHONPATH=${PWD}/eval \
+
+extract_code:
+	python eval/extract_code.py ${HUMANEVAL_GEN_OUTPUT_FILE}
+
+humaneval:
+	python eval/run_humaneval.py \
+		${HUMANEVAL_GEN_OUTPUT_FILE} \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-human_eval_speechless_dolphin_13b:
-	PYTHONPATH=${PWD}/eval \
-	python eval/run_human_eval.py \
-		./eval_results/human_eval/speechless-codellama-dolphin-orca-platypus-13b_vllm/human_eval_samples.jsonl \
-		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-human_eval_baichuan2_13b:
-	PYTHONPATH=${PWD}/eval \
-	python eval/run_human_eval.py \
-		./eval_results/human_eval/speechless-baichuan2-dolphin-orca-platypus-13b_vllm/human_eval_samples.jsonl \
-		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-human_eval_speechless_34b:
-	PYTHONPATH=${PWD}/eval \
-	python eval/run_human_eval.py \
-		./eval_results/human_eval/speechless-codellama-34b-v1.0_vllm/human_eval_samples.jsonl \
-		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-human_eval_phi:
-	PYTHONPATH=${PWD}/eval \
-	python eval/run_human_eval.py \
-		./eval_results/human_eval/phi-1_5/human_eval_samples.jsonl \
-		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-
+		
 # -------------------- MultiPL-E --------------------
 
 # https://huggingface.co/spaces/bigcode/bigcode-models-leaderboard
 
-MULTIPL_E_RESULTS_DIR=eval_results/multipl_e
+MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${SERVED_MODEL_NAME}
 #MULTIPL_E_NAME=$(shell basename ${MERGED_MODEL_NAME})
 
 MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
 	python eval/MultiPL-E/automodel.py \
-		--name ${MERGED_MODEL_NAME} \
+		--name ${TEST_MODEL_PATH} \
 		--root-dataset humaneval \
 		--temperature 0.2 \
 		--batch-size 20 \
@@ -123,7 +109,11 @@ multipl_e_rust:
 	${MULTIPLE_E_LANG} \
 		--lang rs \
 
-multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust
+multipl_e_go:
+	${MULTIPLE_E_LANG} \
+		--lang go \
+
+multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust multipl_e_go
 	@echo "multipl_e_gen done"
 
 multipl_e_eval:
@@ -190,6 +180,18 @@ lm_eval_truthfulqa:
 		--device cuda \
 		--num_fewshot 0
 
+# -------------------- vllm --------------------
+
+# Run this command on the remote server which has the model.
+# vllm:
+# 	python -m vllm.entrypoints.openai.api_server \
+# 		--host 0.0.0.0 \
+# 		--port 8009 \
+# 		--served-model-name ${SERVED_MODEL_NAME} \
+# 		--dtype half \
+# 		--trust-remote-code \
+# 		--model ${TEST_MODEL_PATH}
+
 api_server:
 	PYTHONPATH=${PWD}/.. \
 	python api/server.py
@@ -216,27 +218,25 @@ define push_to_remote
 endef
 
 define pull_from_remote
-	@echo "pull from remote: $(1), port: $(2), source: $(3)"
+	@echo "pull from remote: $(1), port: $(2), source: $(3), subdir: $(4)"
 	rsync -rav \
 		--exclude=tmp \
 		--exclude=outputs \
 		--exclude=saved_models \
 		--exclude=.git \
 		--exclude=__pycache__ \
+		--exclude=checkpoint* \
 		--rsh='ssh -p $(2)' \
-		$(1):$(3) \
-		.
+		$(1):$(3)/$(4)/ \
+		$(4)/
 endef
 
 # ----- push to remote -----
-push_autodl_nm800_a40_2:
+push_autodl_nm800_a40x2:
 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,54192,$(TARGET_DIR))
 
-push_autodl_nm799_a40_1:
+push_autodl_nm799_a40x2:
 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
-
-push_gpushare_a100_2:
-	$(call push_to_remote,root@i-2.gpushare.com,59028,$(TARGET_DIR))
 
 push_gpushare_a100x1:
 	$(call push_to_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR))
@@ -249,8 +249,9 @@ push_gpushare_a800x2:
 
 
 # ----- pull from remote -----
-pull_autodl_nm799_a40_1:
-	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
+pull_autodl_nm799_a40x2_eval_results:
+	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
 
-pull_gpushare_a100x1:
-	$(call pull_from_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR))
+pull_gpushare_a100x2_eval_results:
+	$(call pull_from_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR),eval_results)
+

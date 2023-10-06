@@ -22,6 +22,7 @@ from pathlib import Path
 import itertools
 import argparse
 from multipl_e.util import gunzip_json, eprint
+from tqdm import tqdm
 
 
 def estimator(n: int, c: int, k: int) -> float:
@@ -60,7 +61,7 @@ def main():
     args = parser.parse_args()
     if not args.suppress_header:
         print("Dataset,Pass@k,Estimate,NumProblems,MinCompletions,MaxCompletions")
-    for d in args.dirs:
+    for d in tqdm(args.dirs):
         results = [for_file(p) for p in itertools.chain(
             Path(d).glob("*.results.json"), Path(d).glob("*.results.json.gz"))]
         results = [r for r in results if r is not None]
