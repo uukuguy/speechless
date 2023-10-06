@@ -675,8 +675,8 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                             in_ = "<s>[INST] " + first + " [/INST]\n" + input + "</s> " + "[INST] " + response + " [/INST]"
 
                     out_ = instruction['response'] + "</s>"
-                    print(f"{in_=}")
-                    print(f"{out_=}")
+                    # print(f"{in_=}")
+                    # print(f"{out_=}")
                     return {
                         'input': in_,
                         'output': out_,

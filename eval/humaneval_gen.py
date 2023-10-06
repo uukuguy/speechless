@@ -68,6 +68,13 @@ def get_model(
     
     return tokenizer, model
 
+def extract_code(completion):
+    toks = completion.split("```")
+    if len(toks) >= 3:
+        code = "```" + toks[1] + "```"
+    else:
+        code = completion
+    return code
 
 def main():
     parser = argparse.ArgumentParser()
@@ -109,7 +116,7 @@ def main():
 
     print(f"Loaded {args.model}.")
     output_file = args.output_path + '/human_eval_samples.jsonl'
-    for i in tqdm(range(num_samples), ncols=100, total=num_samples):
+    for i in tqdm(range(num_samples), ncols=50, total=num_samples):
         # output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
         # if os.path.exists(output_file) and not args.overwrite:
@@ -133,8 +140,8 @@ def main():
         else:
             loops = 1
 
-        # for _ in tqdm(range(loops), total=loops, leave=False, ncols=0):
-        for _ in range(loops):
+        for _ in tqdm(range(loops), total=loops, leave=False, ncols=0):
+        # for _ in range(loops):
 
             with torch.no_grad():
                 gen_tokens = model.generate(
@@ -153,7 +160,10 @@ def main():
 
                 for seq_idx, gen_seq in enumerate(gen_seqs):
                     completion_seq = gen_seq.split("### Response:")[1]
+
                     completion_seq = completion_seq.replace('\t', '    ')
+                    completion_seq = extract_code(completion_seq)
+
                     all_code = gen_seq.replace('\t', '    ')
 
                     completion_seqs.append(

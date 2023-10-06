@@ -149,7 +149,7 @@ def make_main(args, model_name, gen_completions):
     problem_list = [ problem_list[i:i+args.batch_size] for i in range(0, len(problem_list), args.batch_size) ]
 
     
-    for batch in tqdm(problem_list, unit="batch"):
+    for batch in tqdm(problem_list, unit="batch", desc=f"{args.lang}"):
         new_completions = gen_completions(
                 prompts=[item["prompt"] for item in batch],
                 max_tokens=MAX_TOKENS,
