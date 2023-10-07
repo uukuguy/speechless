@@ -12,6 +12,7 @@ source ${SCRIPT_PATH}/task.env
 PYTHONPATH=${PWD}/../.. \
 torchrun --nnodes=1 --nproc_per_node=2 \
     ../../finetune.py \
+    ${DEEPSPEED_STAGE2} \
     --task_name ${TASK_NAME} \
     --run_name $(date +%Y%m%d-%H%M%S) \
     --model_name_or_path ${BASE_MODEL_PATH} \
@@ -48,7 +49,7 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --per_device_train_batch_size ${PER_DEVICE_TRAIN_BATCH_SIZE} \
     --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
     --per_device_eval_batch_size 1 \
-    --learning_rate 2e-4 \
+    --learning_rate ${LEARNING_RATE} \
     --lr_scheduler_type cosine \
     --weight_decay 0.0 \
     --seed 10042 \
