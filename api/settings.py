@@ -6,6 +6,7 @@ import torch
 class Settings:
     models_dir: str = "./models"
 
+    model_name_or_path: str = None
     # model_family: str = "huggingface"
     model_family: str = "vllm"
     # model_family: str = "exllamav2"
@@ -23,13 +24,21 @@ class Settings:
 
     def __post_init__(self):
         self.setup_params = dict(
-            repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b",
+            
+            repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-nl2sql-mistral-7b-v0.1",
+            # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-mistral-7b-v0.1",
+            # repo_id="/opt/local/llm_models/huggingface.co/mistralai/Mistral-7B-v0.1",
+            # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v2.0",
+            # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b",
             # repo_id="/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-dolphin-orca-platypus-13b",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/Phind-CodeLlama-34B-v2-GPTQ",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/CodeLlama-34B-Instruct-GPTQ",
             # repo_id="/opt/local/llm_models/huggingface.co/TheBloke/Xwin-LM-70B-V0.1-GPTQ",
             tokenizer_repo_id=None,
         ) if len(self.setup_params) == 0 else self.setup_params
+
+        if self.model_name_or_path is not None:
+            self.setup_params['repo_id'] = self.model_name_or_path
 
         # --------------------- setup_params ---------------------
         assert self.setup_params['repo_id'] is not None, "setup_params.repo_id must be set"

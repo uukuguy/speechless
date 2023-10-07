@@ -1,4 +1,26 @@
-include Makefile.env
+# include Makefile.env
+
+MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
+# BASE_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
+BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+
+# pass@1: 75.61
+# TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v2.0
+# pass@1: 70.73
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v1.9
+
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-v0.1
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-nl2sql-mistral-7b-v0.1
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
+
+TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
+
+OUTPUT_DIR=./outputs
+CHECKPOINT_DIR=${OUTPUT_DIR}/${TASK_NAME}/checkpoint-3500/adapter_model
+
 
 help:
 	@echo "Usage: make [prepare_data | finetune | inference | eval]" 
@@ -32,7 +54,7 @@ merge_peft_adapters:
 	python scripts/merge_peft_adapters.py \
 		--base_model_name_or_path ${BASE_MODEL_PATH} \
 		--peft_model_path ${CHECKPOINT_DIR} \
-		--merged_model_name_or_path ${MERGED_MODEL_NAME} \
+		--merged_model_name_or_path ${TEST_MODEL_PATH} \
 
 
 # -------------------- Inference --------------------
@@ -40,7 +62,7 @@ merge_peft_adapters:
 inference:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python inference.py \
-		--base_model ${MERGED_MODEL_NAME} \
+		--base_model ${TEST_MODEL_PATH} \
 		--test_file_path ${TEST_FILE} \
 
 inference_with_lora:
@@ -51,12 +73,7 @@ inference_with_lora:
 		--test_file_path ${TEST_FILE} \
 
 # -------------------- HumanEval --------------------
-# pass@1: 75.61
-# TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v2.0
-# pass@1: 70.73
-TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v1.9
-SERVED_MODEL_NAME=$(shell basename ${TEST_MODEL_PATH})
-HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${SERVED_MODEL_NAME}/humaneval_samples.jsonl
+HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
 
 humaneval_gen:
 	bash ./eval/run_humaneval_gen.sh \
@@ -77,8 +94,7 @@ humaneval:
 
 # https://huggingface.co/spaces/bigcode/bigcode-models-leaderboard
 
-MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${SERVED_MODEL_NAME}
-#MULTIPL_E_NAME=$(shell basename ${MERGED_MODEL_NAME})
+MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}
 
 MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
 	python eval/MultiPL-E/automodel.py \
@@ -89,18 +105,22 @@ MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
 		--completion-limit 20 \
 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
 
+# 34b ~ 56m
 multipl_e_python:
 	${MULTIPLE_E_LANG} \
 		--lang py \
 
+# 34b: ~ 1h 27m
 multipl_e_java:
 	${MULTIPLE_E_LANG} \
 		--lang java \
 
+# 34b: ~ 47m
 multipl_e_js:
 	${MULTIPLE_E_LANG} \
 		--lang js \
 
+# 34b: ~ 1h 40m
 multipl_e_cpp:
 	${MULTIPLE_E_LANG} \
 		--lang cpp \
@@ -131,7 +151,7 @@ multipl_e_results:
 lm_eval_arc:
 	python eval/run_lm_eval.py \
 		--model hf-causal \
-		--model_args pretrained=${MERGED_MODEL_NAME} \
+		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks arc_challenge \
 		--batch_size 1 \
 		--limit 10 \
@@ -144,7 +164,7 @@ lm_eval_arc:
 lm_eval_hellaswag:
 	python eval/run_lm_eval.py \
 		--model hf-causal \
-		--model_args pretrained=${MERGED_MODEL_NAME} \
+		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks hellaswag \
 		--batch_size 1 \
 		--limit 10 \
@@ -157,7 +177,7 @@ lm_eval_hellaswag:
 lm_eval_mmlu:
 	python eval/run_lm_eval.py \
 		--model hf-causal \
-		--model_args pretrained=${MERGED_MODEL_NAME} \
+		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks hendrycksTest-* \
 		--batch_size 1 \
 		--limit 10 \
@@ -170,7 +190,7 @@ lm_eval_mmlu:
 lm_eval_truthfulqa:
 	python eval/run_lm_eval.py \
 		--model hf-causal \
-		--model_args pretrained=${MERGED_MODEL_NAME} \
+		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks truthfulqa_mc \
 		--batch_size 1 \
 		--limit 10 \
@@ -187,14 +207,16 @@ lm_eval_truthfulqa:
 # 	python -m vllm.entrypoints.openai.api_server \
 # 		--host 0.0.0.0 \
 # 		--port 8009 \
-# 		--served-model-name ${SERVED_MODEL_NAME} \
+# 		--served-model-name ${TASK_NAME} \
 # 		--dtype half \
 # 		--trust-remote-code \
 # 		--model ${TEST_MODEL_PATH}
 
 api_server:
 	PYTHONPATH=${PWD}/.. \
-	python api/server.py
+	python api/server.py \
+		--model_name_or_path ${TEST_MODEL_PATH} \
+		--model_family vllm \
 
 
 # -------------------- Sync Remote --------------------
@@ -212,6 +234,7 @@ define push_to_remote
 		--exclude=.git \
 		--exclude=__pycache__ \
 		--exclude=tasks \
+		--exclude=eval_results \
 		--rsh='ssh -p $(2)' \
 		* \
 		$(1):$(3)

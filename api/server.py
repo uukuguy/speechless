@@ -16,9 +16,30 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sse_starlette.sse import EventSourceResponse
 import uvicorn
 
-from settings import Settings
-settings = Settings()
+def get_args():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to listen on")
+    parser.add_argument("--port", type=int, default=5001, help="Port to listen on")
+    parser.add_argument("--log_level", type=str, default="info", help="Log level")  
+    parser.add_argument("--stream", action="store_true", help="Stream output")
+    parser.add_argument("--model_family", type=str, default="vllm", help="Model family")
 
+    parser.add_argument("--model_name_or_path", type=str, default=None, help="Model name or path")
+
+    args = parser.parse_args()
+    return args
+
+args = get_args()
+
+from settings import Settings
+settings = Settings(model_name_or_path=args.model_name_or_path, 
+                    model_family=args.model_family, 
+                    stream=args.stream, 
+                    host=args.host, 
+                    port=args.port, 
+                    log_level=args.log_level,
+                    )
 
 # -------------------- logging --------------------
 log_config = uvicorn.config.LOGGING_CONFIG

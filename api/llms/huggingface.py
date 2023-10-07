@@ -127,7 +127,7 @@ class HuggingFaceLLM(BaseLLM):
             max_new_tokens = sampling_params.pop("max_tokens", 1024)
             sampling_params['max_new_tokens'] = max_new_tokens
 
-        for k in ['model', 'max_tokens', 'stop']:
+        for k in ['model', 'max_tokens', 'stop', 'prompt', 'sampling_method', 'n', 'best_of']:
             sampling_params.pop(k, None)
         input_ids = self.tokenizer(
             prompt,

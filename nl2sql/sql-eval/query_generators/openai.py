@@ -199,7 +199,7 @@ class OpenAIQueryGenerator(QueryGenerator):
             package = prompt
 
         try:
-            print(f"{package=}")
+            # print(f"{package=}")
             self.completion = func_timeout(
                 self.timeout,
                 function_to_run,
@@ -213,7 +213,7 @@ class OpenAIQueryGenerator(QueryGenerator):
                 ),
             )
             results = self.completion
-            print(f"{results=}")
+            # print(f"{results=}")
 
             if prompt_type == "phind":
                 self.query = results.split(";")[0] + ";"
@@ -222,6 +222,9 @@ class OpenAIQueryGenerator(QueryGenerator):
                 self.query = results.split("```sql")[-1]
                 self.query = self.query.split("```")[0]
 
+            if '"' in self.query:
+                print(f"Replace ' with \" in query.")
+                self.query = self.query.replace('"', "'")
             print(f"{self.query=}")
             self.reason = "-"
         except FunctionTimedOut:
