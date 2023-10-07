@@ -32,6 +32,7 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --report_to tensorboard \
     --remove_unused_columns False \
     --do_train \
+    --max_memory_MB ${MAX_MEMORY_MB} \
     --bits 4 \
     --lora_r ${LORA_R} \
     --lora_alpha 16 \
