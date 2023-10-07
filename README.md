@@ -2,11 +2,11 @@
 
 ## speechless-codellama-34b-v2.0
 
-### HumanEval
+HumanEval
 
 humaneval-python pass@1: 75.61
 
-### MultiPL-E
+MultiPL-E
 
 | | |
 | ------ | ------ |
@@ -25,11 +25,25 @@ humaneval-python pass@1: 75.61
 
 ## speechless-codellama-34b-v1.9
 
-### HumanEval
+HumanEval
 
 humaneval-python pass@1: 70.73
 
-### MultiPL-E
+MultiPL-E
+
+| | |
+| ------ | ------ |
+| python | 56.02 |
+| java | 49.56 |
+| javascript | 65.03|
+| cpp | 53.91 |
+| rust | 51.09 |
+
+humaneval-py-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5602484472049689,161,20,20
+humaneval-java-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.49556962025316464,158,20,20
+humaneval-js-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.6503105590062112,161,20,20
+humaneval-cpp-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5391304347826088,161,20,20
+humaneval-rs-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5108974358974359,156,20,20
 
 | | |
 | ------ | ------ |
@@ -39,6 +53,13 @@ humaneval-python pass@1: 70.73
 > humaneval-py-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5602484472049689,161,20,20
 
 ## Data
+
+## API Server
+
+```bash
+# python api/server.py
+make api_server
+```
 
 ## Evaluation
 
@@ -71,4 +92,11 @@ make multipl_e_eval
 
 make multipl_e_results
 python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
+```
+
+### SQLEval
+
+```bash
+# Run docker postgres-sql-eval
+cd nl2sql/sqleval && make codellama
 ```

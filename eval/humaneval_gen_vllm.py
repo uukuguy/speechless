@@ -11,6 +11,8 @@ from human_eval.data import write_jsonl, read_problems, stream_jsonl
 from vllm import LLM
 from vllm import SamplingParams
 
+os.environ['RAY_memory_monitor_refresh_ms'] = '0'
+
 if torch.cuda.is_available():
     device = "cuda"
 else:
