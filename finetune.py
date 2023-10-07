@@ -319,6 +319,7 @@ def get_accelerate_model(args, checkpoint_dir):
         ) if args.bits in (4, 8) else None,
         "torch_dtype": (torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
         "trust_remote_code": args.trust_remote_code,
+        "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
     }
     if args.mpt:
@@ -441,8 +442,15 @@ class DataCollatorForCausalLM(object):
                 torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source))] + copy.deepcopy(tokenized_target))
             )
         # Apply padding
+        if self.tokenizer.padding_side == "left":
+            input_ids = [t.flip(-1) for t in input_ids]
+            labels = [t.flip(-1) for t in labels]
         input_ids = pad_sequence(input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id)
         labels = pad_sequence(labels, batch_first=True, padding_value=IGNORE_INDEX)
+        if self.tokenizer.padding_side == "left":
+            input_ids = input_ids.flip(-1)
+            labels = labels.flip(-1)
+
         data_dict = {
             'input_ids': input_ids,
             'labels': labels,
@@ -911,10 +919,10 @@ def train():
 
     # setup_wandb(args)
 
-    if args.flash_attention:
-        from patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
-        replace_llama_attn_with_flash_attn(packed=args.sample_packing)
-        logger.info(f"Enabled flash attention monkey patching.")
+    # if args.flash_attention:
+    #     from patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+    #     replace_llama_attn_with_flash_attn(packed=args.sample_packing)
+    #     logger.info(f"Enabled flash attention monkey patching.")
 
     if args.rerope:
         from patches.rerope_monkey_patch import replace_llama_attention_forword_with_rerope
@@ -937,12 +945,12 @@ def train():
     # Tokenizer
     tokenizer_kwargs = {
         "cache_dir": args.cache_dir,
-        "padding_side": "right",
+        "padding_side": "left",
         "use_fast": False,
     }
-    if args.mpt:
-        tokenizer_kwargs["padding_side"] = "left"
-        tokenizer_kwargs.pop("use_fast")
+    # if args.mpt:
+    #     tokenizer_kwargs["padding_side"] = "left"
+    #     tokenizer_kwargs.pop("use_fast")
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, **tokenizer_kwargs)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = 0
