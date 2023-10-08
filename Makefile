@@ -261,20 +261,25 @@ push_autodl_nm800_a40x2:
 push_autodl_nm799_a40x2:
 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
 
-push_gpushare_a100x1:
-	$(call push_to_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR))
-	
 push_gpushare_h800x2:
 	$(call push_to_remote,root@i-1.gpushare.com,48068,$(TARGET_DIR))
 
 push_gpushare_a800x2:
 	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
 
+push_gpushare_a100x4:
+	$(call push_to_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR))
+
 
 # ----- pull from remote -----
 pull_autodl_nm799_a40x2_eval_results:
 	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
 
-pull_gpushare_a100x2_eval_results:
-	$(call pull_from_remote,root@i-1.gpushare.com,35538,$(TARGET_DIR),eval_results)
+pull_gpushare_h800x2_eval_results:
+	$(call pull_from_remote,root@i-1.gpushare.com,48068,$(TARGET_DIR),eval_results)
 
+pull_gpushare_a800x2_eval_results:
+	$(call pull_from_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR),eval_results)
+
+pull_gpushare_a100x4_eval_results:
+	$(call pull_from_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR),eval_results)
