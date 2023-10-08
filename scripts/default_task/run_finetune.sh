@@ -5,12 +5,8 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_PATH}/task.env
 
-# torchrun --nnodes=1 --nproc_per_node=2 \
-#     --deepspeed config/deepspeed-13b-stage2.json \
-# python
-
 PYTHONPATH=${PWD}/../.. \
-torchrun --nnodes=1 --nproc_per_node=2 \
+torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     ../../finetune.py \
     ${DEEPSPEED_STAGE2} \
     --task_name ${TASK_NAME} \
@@ -55,7 +51,7 @@ torchrun --nnodes=1 --nproc_per_node=2 \
     --seed 10042 \
     --optim paged_adamw_8bit \
     --gradient_checkpointing True \
-    --group_by_length False \
+    --group_by_length ${GROUP_BY_LENGTH} \
     --ddp_find_unused_parameters False \
     --force_remove_overlength_samples False \
     --flash_attention True \

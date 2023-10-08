@@ -1,5 +1,18 @@
 # Speechless
 
+```ini
+python=3.10.13
+nvcc=cuda_11.8
+torch=2.0.1+cu118
+transformers=4.34.0 # >= 4.34.0 if Mistral else 4.33.3
+bitsandbytes=0.41.1
+flash-attn=2.23.0
+peft=0.5.0
+accelerate=0.23.0
+tokenizers=0.14.1
+deepspeed=0.10.3
+```
+
 ## speechless-codellama-34b-v2.0
 
 HumanEval
