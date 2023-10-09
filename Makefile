@@ -14,7 +14,7 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-orca-7b-v1.0
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -200,6 +200,9 @@ lm_eval_truthfulqa:
 		--device cuda \
 		--num_fewshot 0
 
+lm_eval: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
+	@echo "lm_eval done"
+
 # -------------------- vllm --------------------
 
 # Run this command on the remote server which has the model.
@@ -262,7 +265,7 @@ push_autodl_nm799_a40x2:
 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
 
 push_gpushare_h800x2:
-	$(call push_to_remote,root@i-1.gpushare.com,48068,$(TARGET_DIR))
+	$(call push_to_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR))
 
 push_gpushare_a800x2:
 	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
@@ -276,7 +279,7 @@ pull_autodl_nm799_a40x2_eval_results:
 	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
 
 pull_gpushare_h800x2_eval_results:
-	$(call pull_from_remote,root@i-1.gpushare.com,48068,$(TARGET_DIR),eval_results)
+	$(call pull_from_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR),eval_results)
 
 pull_gpushare_a800x2_eval_results:
 	$(call pull_from_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR),eval_results)
