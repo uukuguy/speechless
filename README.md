@@ -113,3 +113,12 @@ python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 # Run docker postgres-sql-eval
 cd nl2sql/sqleval && make codellama
 ```
+
+### lm-evluation-harness
+
+```bash
+# git clone https://github.com/EleutherAI/lm-evaluation-harness
+# cd lm-evaluation-harness
+# pip install -e .
+make lm_eval
+```
