@@ -1,0 +1,338 @@
+[
+    {
+        "question_id": 37,
+        "db_id": "california_schools",
+        "question": "What is the complete address of the school with the lowest excellence rate? Indicate the Street, City, Zip and State.",
+        "evidence": "Execellence Rate = NumGE1500 / NumTstTakr; complete address has Street, City, Zip, State",
+        "SQL": "SELECT T2.Street, T2.City, T2.Zip, T2.State FROM schools AS T2 INNER JOIN (SELECT cds, CAST(NumGE1500 AS REAL) / NumTstTakr AS rate FROM satscores WHERE NumGE1500 IS NOT NULL AND NumTstTakr IS NOT NULL AND NumTstTakr != 0) AS T1 ON T2.CDSCode = T1.cds WHERE T1.rate = (SELECT MIN(CAST(NumGE1500 AS REAL) / NumTstTakr) AS min_rate FROM satscores WHERE NumGE1500 IS NOT NULL AND NumTstTakr IS NOT NULL AND NumTstTakr != 0) ORDER BY T2.CDSCode",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 68,
+        "db_id": "california_schools",
+        "question": "Which county reported the most number of school closure in the 1980s with school wonership code belonging to Youth Authority Facilities (CEA)?",
+        "evidence": "Youth Authority Facilities (CEA) refers to SOC = 11; 1980s = years between 1980 and 1989",
+        "SQL": "SELECT County FROM (SELECT County, COUNT(School) AS SchoolCount FROM schools WHERE strftime('%Y', ClosedDate) BETWEEN '1980' AND '1989' AND StatusType = 'Closed' AND SOC = 11 GROUP BY County) WHERE SchoolCount = (SELECT MAX(SchoolCount) FROM (SELECT COUNT(School) AS SchoolCount FROM schools WHERE strftime('%Y', ClosedDate) BETWEEN '1980' AND '1989' AND StatusType = 'Closed' AND SOC = 11 GROUP BY County))",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 80,
+        "db_id": "california_schools",
+        "question": "What is the school type of the school with the highest latitude? Indicate the name of the school as well as the latitude coordinates.",
+        "evidence": "",
+        "SQL": "SELECT T1.`School Type`, T1.`School Name`, T2.Latitude FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.Latitude = (SELECT MAX(Latitude) FROM schools)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 81,
+        "db_id": "california_schools",
+        "question": "In which city can you find the school in the state of California with the lowest latitude coordinates and what is its lowest grade? Indicate the school name.",
+        "evidence": "State of California refers to state = 'CA'",
+        "SQL": "SELECT T2.City, T1.`Low Grade`, T1.`School Name` FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.State = 'CA' AND T2.Latitude IS NOT NULL AND T2.Latitude = (SELECT MIN(Latitude) FROM schools WHERE State = 'CA' AND Latitude IS NOT NULL)",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 82,
+        "db_id": "california_schools",
+        "question": "What is the grade span offered in the school with the highest longitude?",
+        "evidence": "",
+        "SQL": "SELECT GSoffered FROM schools WHERE ABS(longitude) = (SELECT MAX(ABS(longitude)) FROM schools)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 101,
+        "db_id": "financial",
+        "question": "List out the accounts who have the earliest trading date in 1995 ?",
+        "evidence": "",
+        "SQL": "SELECT account_id FROM trans WHERE STRFTIME('%Y', date) = '1995' ORDER BY date ASC LIMIT 1",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 189,
+        "db_id": "financial",
+        "question": "Name the account numbers of female clients who are oldest and have lowest average salary?",
+        "evidence": "Female refers to 'F' in the gender; A11 contains information about average salary",
+        "SQL": "SELECT T3.account_id FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id INNER JOIN account AS T3 ON T2.district_id = T3.district_id WHERE T1.gender = 'F' AND T1.birth_date = (SELECT MIN(birth_date) FROM client WHERE gender = 'F') AND T2.A11 = (SELECT MIN(T2.A11) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T1.gender = 'F' AND T1.birth_date = (SELECT MIN(birth_date) FROM client WHERE gender = 'F'))",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 244,
+        "db_id": "toxicology",
+        "question": "Is the molecule with the most double bonds carcinogenic?",
+        "evidence": "double bond refers to bond_type = ' = '; label = '+' mean molecules are carcinogenic",
+        "SQL": "SELECT T1.label FROM molecule AS T1 INNER JOIN (SELECT T.molecule_id, COUNT(T.bond_type) AS bond_count FROM bond AS T WHERE T.bond_type = '=' GROUP BY T.molecule_id HAVING bond_count = (SELECT MAX(bond_count) FROM (SELECT molecule_id, COUNT(bond_type) AS bond_count FROM bond WHERE bond_type = '=' GROUP BY molecule_id) AS subquery) ORDER BY bond_count DESC) AS T2 ON T1.molecule_id = T2.molecule_id",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 250,
+        "db_id": "toxicology",
+        "question": "Of all the carcinogenic molecules, which one has the most double bonds?",
+        "evidence": "label = '+' mean molecules are carcinogenic; double bond refers to bond_type = ' = ';",
+        "SQL": "SELECT T.molecule_id FROM (SELECT T3.molecule_id, COUNT(T1.bond_type) AS bond_count FROM bond AS T1 INNER JOIN molecule AS T3 ON T1.molecule_id = T3.molecule_id WHERE T3.label = '+' AND T1.bond_type = '=' GROUP BY T3.molecule_id HAVING bond_count = (SELECT MAX(bond_count) FROM (SELECT T3.molecule_id, COUNT(T1.bond_type) AS bond_count FROM bond AS T1 INNER JOIN molecule AS T3 ON T1.molecule_id = T3.molecule_id WHERE T3.label = '+' AND T1.bond_type = '=' GROUP BY T3.molecule_id) AS subquery) ORDER BY bond_count DESC) AS T",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 342,
+        "db_id": "card_games",
+        "question": "List the card names with value that cost more converted mana for the face.",
+        "evidence": "more converted mana for the face refers to Max(faceConvertedManaCost);",
+        "SQL": "SELECT name FROM cards WHERE faceConvertedManaCost IS NOT NULL AND faceConvertedManaCost = (SELECT MAX(faceConvertedManaCost)  FROM cards  WHERE faceConvertedManaCost IS NOT NULL)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 432,
+        "db_id": "card_games",
+        "question": "Which Russian set of cards contains the most cards overall?",
+        "evidence": "Russian refers to language = 'Russian'; contains the most cards overall refers to MAX(baseSetSize)",
+        "SQL": "SELECT T1.id FROM sets AS T1 INNER JOIN set_translations AS T2 ON T1.code = T2.setCode WHERE T2.language = 'Russian' GROUP BY T1.baseSetSize HAVING COUNT(T1.id) = (SELECT MAX(card_count) FROM (SELECT COUNT(T1.id) AS card_count FROM sets AS T1 INNER JOIN set_translations AS T2 ON T1.code = T2.setCode WHERE T2.language = 'Russian' GROUP BY T1.baseSetSize) AS subquery)",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 476,
+        "db_id": "card_games",
+        "question": "Please list the name of the cards in the set Coldsnap with the highest converted mana cost.",
+        "evidence": "card set Coldsnap refers to name = 'Coldsnap'",
+        "SQL": "SELECT T1.name FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T2.name = 'Coldsnap' AND T1.convertedManaCost = (SELECT MAX(convertedManaCost)  FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T2.name = 'Coldsnap')",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 484,
+        "db_id": "card_games",
+        "question": "Please list the Italian names of the cards in the set Coldsnap with the highest converted mana cost.",
+        "evidence": "card set Coldsnap refers to name = 'Coldsnap'; Italian refers to language = 'Italian'",
+        "SQL": "SELECT T2.name FROM foreign_data AS T1 INNER JOIN cards AS T2 ON T2.uuid = T1.uuid INNER JOIN sets AS T3 ON T3.code = T2.setCode WHERE T3.name = 'Coldsnap' AND T1.language = 'Italian' AND T2.convertedManaCost = (SELECT MAX(convertedManaCost) FROM foreign_data AS T1 INNER JOIN cards AS T2 ON T2.uuid = T1.uuid INNER JOIN sets AS T3 ON T3.code = T2.setCode WHERE T3.name = 'Coldsnap' AND T1.language = 'Italian')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 515,
+        "db_id": "card_games",
+        "question": "When was the oldest mythic card released and what are its legal play formats?",
+        "evidence": "the oldest card refers to MIN(originalReleaseDate); mythic card refers to rarity = 'mythic'; legal play refers to status = 'legal'; play format refers to format",
+        "SQL": "SELECT T1.originalReleaseDate, T2.format FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T1.rarity = 'mythic' AND T1.originalReleaseDate IS NOT NULL AND T2.status = 'Legal' AND T1.originalReleaseDate = (SELECT MIN(originalReleaseDate) FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T1.rarity = 'mythic' AND T1.originalReleaseDate IS NOT NULL AND T2.status = 'Legal')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 610,
+        "db_id": "codebase_community",
+        "question": "What are the names of badges that users who have the highest reputation obtained?",
+        "evidence": "highest reputation refers to Max(Reputation); user refers to UserId",
+        "SQL": "SELECT T2.name FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T1.Reputation = (SELECT MAX(Reputation) FROM users)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 621,
+        "db_id": "codebase_community",
+        "question": "What are the name of badges that users who have the lowest reputation obtained?",
+        "evidence": "lowest reputation refers to Min(Reputation); user refers to UserId",
+        "SQL": "SELECT T2.Name, T1.Reputation FROM users AS T1 INNER JOIN badges AS T2 ON T1.Id = T2.UserId WHERE T1.Reputation = (SELECT MIN(Reputation) FROM users)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 694,
+        "db_id": "codebase_community",
+        "question": "Provide the text of the latest comment to the post with the title 'Analysing wind data with R' and the display name of the user who left it.",
+        "evidence": "the latest comment refers to MAX(CreationDate);",
+        "SQL": "SELECT T3.Text, T1.DisplayName FROM users AS T1 INNER JOIN posts AS T2 ON T1.Id = T2.OwnerUserId INNER JOIN comments AS T3 ON T2.Id = T3.PostId WHERE T2.Title = 'Analysing wind data with R' AND T3.CreationDate = (SELECT MAX(T4.CreationDate) FROM users AS T5 INNER JOIN posts AS T6 ON T5.Id = T6.OwnerUserId INNER JOIN comments AS T4 ON T6.Id = T4.PostId WHERE T6.Title = 'Analysing wind data with R')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 736,
+        "db_id": "superhero",
+        "question": "Who is the dumbest superhero?",
+        "evidence": "the dumbest superhero refers to MIN(attribute_value) where attribute_name = 'Intelligence'",
+        "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id WHERE T3.attribute_name = 'Intelligence' AND T2.attribute_value = (SELECT MIN(T4.attribute_value) FROM hero_attribute AS T4 INNER JOIN attribute AS T5 ON T4.attribute_id = T5.id WHERE T5.attribute_name = 'Intelligence')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 766,
+        "db_id": "superhero",
+        "question": "What is the hero's full name with the highest attribute in strength?",
+        "evidence": "highest attribute in strength refers to MAX(attribute_value) WHERE attribute_name = 'strength';",
+        "SQL": "SELECT T1.full_name FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id WHERE T3.attribute_name = 'Strength' AND T2.attribute_value = (SELECT MAX(T4.attribute_value) FROM hero_attribute AS T4 INNER JOIN attribute AS T5 ON T4.attribute_id = T5.id WHERE T5.attribute_name = 'Strength')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 769,
+        "db_id": "superhero",
+        "question": "Which superhero has the most durability published by Dark Horse Comics?",
+        "evidence": "which superhero refers to superhero_name; most durability refers to MAX(attribute_value) WHERE attribute_name = 'durability'; published by Dark Horse Comics refers to publisher_name = 'Dark Horse Comics';",
+        "SQL": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T3.id = T2.attribute_id INNER JOIN publisher AS T4 ON T4.id = T1.publisher_id WHERE T4.publisher_name = 'Dark Horse Comics' AND T2.attribute_value = (SELECT MAX(T5.attribute_value) FROM superhero AS T6 INNER JOIN hero_attribute AS T5 ON T6.id = T5.hero_id INNER JOIN publisher AS T7 ON T7.id = T6.publisher_id WHERE T7.publisher_name = 'Dark Horse Comics')",
+        "difficulty": "challenging"
+    },
+    {
+        "question_id": 802,
+        "db_id": "superhero",
+        "question": "Who is the tallest superhero?",
+        "evidence": "who refers to superhero_name; tallest superhero refers to MAX(height_cm);",
+        "SQL": "SELECT superhero_name FROM superhero WHERE height_cm = (SELECT MAX(height_cm) FROM superhero)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 810,
+        "db_id": "superhero",
+        "question": "What is the race of the superhero with maximum attribute value?",
+        "evidence": "maximum attribute value refers to MAX(attribute_value);",
+        "SQL": "SELECT T3.race FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN race AS T3 ON T1.race_id = T3.id WHERE T2.attribute_value = (SELECT MAX(T4.attribute_value) FROM hero_attribute AS T4)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 828,
+        "db_id": "superhero",
+        "question": "Count the fastest superheroes.",
+        "evidence": "fastest refers to attribute_value = 100 WHERE attribute_name = 'Speed';",
+        "SQL": "SELECT COUNT(T3.superhero_name) FROM hero_attribute AS T1 INNER JOIN attribute AS T2 ON T1.attribute_id = T2.id INNER JOIN superhero AS T3 ON T1.hero_id = T3.id WHERE T2.attribute_name = 'Speed' AND T1.attribute_value = (SELECT MAX(T4.attribute_value) FROM hero_attribute AS T4 INNER JOIN attribute AS T5 ON T4.attribute_id = T5.id WHERE T5.attribute_name = 'Speed')",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 832,
+        "db_id": "superhero",
+        "question": "Name the tallest superhero.",
+        "evidence": "tallest superhero refers to MAX(height_cm);",
+        "SQL": "SELECT superhero_name FROM superhero WHERE height_cm = (SELECT MAX(height_cm) FROM superhero)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 847,
+        "db_id": "formula_1",
+        "question": "What is the surname of the driver with the best lap time in race number 19 in the second period?",
+        "evidence": "race number refers to raceId; second qualifying period refers to q2; best lap time refers to MIN(q2);",
+        "SQL": "SELECT T2.surname FROM qualifying AS T1 INNER JOIN drivers AS T2 ON T2.driverId = T1.driverId WHERE T1.raceId = 19 AND T1.q2 IS NOT NULL AND T1.q2 = (SELECT MIN(q2) AS min_q2 FROM qualifying WHERE raceId = 19 AND q2 IS NOT NULL)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 906,
+        "db_id": "formula_1",
+        "question": "Which was Lewis Hamilton first race? What was his points recorded for his first race event?",
+        "evidence": "first race refers to min(Year)",
+        "SQL": "SELECT T1.name, T2.points FROM races AS T1 INNER JOIN driverStandings AS T2 ON T2.raceId = T1.raceId INNER JOIN drivers AS T3 ON T3.driverId = T2.driverId WHERE T3.forename = 'Lewis' AND T3.surname = 'Hamilton' AND T1.year = (SELECT MIN(T4.year) FROM races AS T4 INNER JOIN driverStandings AS T5 ON T5.raceId = T4.raceId INNER JOIN drivers AS T6 ON T6.driverId = T5.driverId WHERE T6.forename = 'Lewis' AND T6.surname = 'Hamilton')",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 908,
+        "db_id": "formula_1",
+        "question": "What is the most laps f1 races had? Name the race, year and circuit location where the races with most laps was hosted.",
+        "evidence": "",
+        "SQL": "SELECT T3.lap, T2.name, T2.year, T1.location FROM circuits AS T1 INNER JOIN races AS T2 ON T1.circuitId = T2.circuitId INNER JOIN lapTimes AS T3 ON T3.raceId = T2.raceId WHERE T3.lap = (SELECT MAX(T4.lap) FROM lapTimes AS T4)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1020,
+        "db_id": "european_football_2",
+        "question": "Which player has the highest overall rating? Indicate the player's api id.",
+        "evidence": "highest overall rating refers to MAX(overall_rating);",
+        "SQL": "SELECT player_api_id FROM Player_Attributes WHERE overall_rating = (SELECT MAX(overall_rating) FROM Player_Attributes)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1022,
+        "db_id": "european_football_2",
+        "question": "What is the preferred foot when attacking of the player with the lowest potential?",
+        "evidence": "preferred foot when attacking refers to preferred_foot; lowest potential refers to MIN(potential);",
+        "SQL": "SELECT preferred_foot FROM Player_Attributes WHERE penalties AND potential = (SELECT MIN(potential) FROM Player_Attributes)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1026,
+        "db_id": "european_football_2",
+        "question": "Which home team had lost the fewest matches in the 2016 season?",
+        "evidence": "home team lost the matches refers to SUBTRACT(home_team_goal, away_team_goal) < 0; 2016 season refers to season = '2015/2016';",
+        "SQL": "SELECT t3.team_long_name FROM Match AS t1 INNER JOIN Team AS t3 ON t1.home_team_api_id = t3.team_api_id WHERE t1.season = '2015/2016' AND t1.home_team_goal - t1.away_team_goal < 0 GROUP BY t1.home_team_api_id HAVING COUNT(*) = (SELECT MIN(lost_matches_count) FROM (SELECT home_team_api_id, COUNT(*) AS lost_matches_count FROM Match WHERE season = '2015/2016' AND home_team_goal - away_team_goal < 0 GROUP BY home_team_api_id))",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 1028,
+        "db_id": "european_football_2",
+        "question": "In Scotland Premier League, which away team won the most during the 2010 season?",
+        "evidence": "Scotland Premier League refers to League.name = 'Scotland Premier League'; away team refers to away_team_api_id; away team that won the most refers to MAX(SUBTRACT(away_team_goal, home_team_goal) > 0); 2010 season refers to season = '2009/2010';",
+        "SQL": "SELECT t3.team_long_name FROM League AS t1 INNER JOIN Match AS t2 ON t1.id = t2.league_id INNER JOIN Team AS t3 ON t2.away_team_api_id = t3.team_api_id WHERE t1.name = 'Scotland Premier League' AND t2.season = '2009/2010' AND t2.away_team_goal - t2.home_team_goal > 0 GROUP BY t2.away_team_api_id HAVING COUNT(*) = (SELECT MAX(won_matches_count) FROM (SELECT away_team_api_id, COUNT(*) AS won_matches_count FROM Match AS m INNER JOIN League AS l ON m.league_id = l.id WHERE l.name = 'Scotland Premier League' AND m.season = '2009/2010' AND m.away_team_goal - m.home_team_goal > 0 GROUP BY m.away_team_api_id))",
+        "difficulty": "challenging"
+    },
+    {
+        "question_id": 1034,
+        "db_id": "european_football_2",
+        "question": "List the players' api id who had the highest above average overall ratings in 2010.",
+        "evidence": "highest above average overall ratings refers to MAX(overall_rating); in 2010 refers to substr(date,1,4) = '2010';",
+        "SQL": "SELECT p.player_api_id FROM Player_Attributes AS p WHERE SUBSTR(p.date, 1, 4) = '2010' AND p.overall_rating = (SELECT MAX(pa.overall_rating) FROM Player_Attributes AS pa WHERE SUBSTR(pa.date, 1, 4) = '2010')",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1090,
+        "db_id": "european_football_2",
+        "question": "What is the long passing score of the oldest player?",
+        "evidence": "long passing score refers to long_passing; oldest player refers to oldest birthday;",
+        "SQL": "SELECT T2.long_passing FROM Player AS T1 INNER JOIN Player_Attributes AS T2 ON T1.player_api_id = T2.player_api_id WHERE T1.birthday = (SELECT MIN(birthday) FROM Player)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1123,
+        "db_id": "european_football_2",
+        "question": "What is the name of players with the highest potential?",
+        "evidence": "highest potential refers to MAX(potential)",
+        "SQL": "SELECT DISTINCT T1.player_name FROM Player AS T1 INNER JOIN Player_Attributes AS T2 ON T1.player_api_id = T2.player_api_id WHERE T2.potential = (SELECT MAX(potential) FROM Player_Attributes)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1253,
+        "db_id": "thrombosis_prediction",
+        "question": "For the patient who has the highest Ig A within the normal range, what is his or her diagnosis?",
+        "evidence": "highest Ig A within the normal range refers to MAX(IGA BETWEEN 80 AND 500);",
+        "SQL": "SELECT T1.Diagnosis FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.IGA = (SELECT MAX(IGA) FROM Laboratory WHERE IGA BETWEEN 80 AND 500)",
+        "difficulty": "simple"
+    },
+     {
+        "question_id": 1284,
+        "db_id": "thrombosis_prediction",
+        "question": "For the patient with the highest lactate dehydrogenase in the normal range, when was his or her data first recorded?",
+        "evidence": "highest lactate dehydrogenase in the normal range refers to MAX(LDH < 500); when the data first recorded refers to MIN(First Date);",
+        "SQL": "SELECT T1.`First Date` FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.LDH = (SELECT MAX(LDH) FROM Laboratory WHERE LDH < 500)",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 1290,
+        "db_id": "thrombosis_prediction",
+        "question": "What is the examination date of the patient whose albumin is the highest in the normal range?",
+        "evidence": "examination date refers to Date; albumin is the highest in the normal range refers to MAX(ALB > 3.5 and ALB < 5.5);",
+        "SQL": "SELECT Date FROM Laboratory WHERE ALB = (SELECT MAX(ALB) FROM Laboratory WHERE ALB BETWEEN 3.5 AND 5.5)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1318,
+        "db_id": "student_club",
+        "question": "What is the event that has the highest attendance of the students from the Student_Club?",
+        "evidence": "event with highest attendance refers to MAX(COUNT(link_to_event))",
+        "SQL": "SELECT T1.event_name FROM event AS T1 INNER JOIN attendance AS T2 ON T1.event_id = T2.link_to_event GROUP BY T1.event_name HAVING COUNT(T2.link_to_event) = (SELECT MAX(attendance_count) FROM (SELECT COUNT(link_to_event) AS attendance_count FROM attendance GROUP BY link_to_event) AS subquery)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1365,
+        "db_id": "student_club",
+        "question": "What are the expenses of the budget with the lowest remaining?",
+        "evidence": "expense of budget refers to expense_description; lowest remaining refers to MIN(remaining)",
+        "SQL": "SELECT T2.expense_description FROM budget AS T1 INNER JOIN expense AS T2 ON T1.budget_id = T2.link_to_budget WHERE T1.remaining = (SELECT MIN(remaining) FROM budget)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1388,
+        "db_id": "student_club",
+        "question": "Which students manage to generate the highest income. State his/her full name along with the income source.",
+        "evidence": "name of students means the full name; full name refers to first_name, last_name; generate the highest income refers to MAX(income.amount);",
+        "SQL": "SELECT T1.first_name, T1.last_name, T2.source FROM member AS T1 INNER JOIN income AS T2 ON T1.member_id = T2.link_to_member WHERE T2.amount = (SELECT MAX(T4.amount) FROM member AS T3 INNER JOIN income AS T4 ON T3.member_id = T4.link_to_member)",
+        "difficulty": "moderate"
+    },
+    {
+        "question_id": 1389,
+        "db_id": "student_club",
+        "question": "Which event has the lowest cost?",
+        "evidence": "event refers to event_name where MIN(cost)",
+        "SQL": "SELECT T1.event_name FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event INNER JOIN expense AS T3 ON T2.budget_id = T3.link_to_budget WHERE T3.cost = (SELECT MIN(T6.cost) FROM event AS T4 INNER JOIN budget AS T5 ON T4.event_id = T5.link_to_event INNER JOIN expense AS T6 ON T5.budget_id = T6.link_to_budget)",
+        "difficulty": "simple"
+    },
+    {
+        "question_id": 1517,
+        "db_id": "debit_card_specializing",
+        "question": "For the earliest customer, what segment did he/she have?",
+        "evidence": "",
+        "SQL": "SELECT T2.Segment FROM transactions_1k AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Date = (SELECT MIN(Date) FROM transactions_1k)",
+        "difficulty": "simple"
+    }
+]
