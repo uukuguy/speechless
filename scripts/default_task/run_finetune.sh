@@ -12,7 +12,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --task_name ${TASK_NAME} \
     --run_name $(date +%Y%m%d-%H%M%S) \
     --model_name_or_path ${BASE_MODEL_PATH} \
-    --output_dir ${OUTPUT_DIR}/${TASK_NAME} \
+    --output_dir ${OUTPUT_DIR} \
     --num_train_epochs ${NUM_TRAIN_EPOCHS} \
     --data_seed 10042 \
     --save_strategy steps \

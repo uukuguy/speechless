@@ -165,7 +165,7 @@ codellama:
 	--best_of 4 \
 	--stop "\`\`\`" \
 	-n 175 \
-	-p 50
+	-p 10
 
 
 
