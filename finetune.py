@@ -488,6 +488,19 @@ ALPACA_PROMPT_DICT = {
     ),
 }
 
+PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Response:\n"
+    ),
+}
+
 def extract_alpaca_dataset(example):
     if example.get("input", "") != "":
         prompt_format = ALPACA_PROMPT_DICT["prompt_input"]
@@ -710,6 +723,20 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     'output': out_,
                 }
             dataset = dataset.map(_format_llama2)
+
+        elif dataset_format == 'instruction-input-response':
+
+            def _format_instruction_input_response(example):
+                if example.get("input", "") != "":
+                    in_ = PROMPT_DICT["prompt_input"].format(instruction=example["instruction"], input=example["input"])
+                else:
+                    in_ = PROMPT_DICT["prompt_no_input"].format(instruction=example["instruction"])
+                out_ = f"<s>{example['response']}</s>"
+                return {'input': in_,
+                        'output': out_}
+
+            dataset = dataset.map(_format_instruction_input_response)
+
         elif dataset_format == 'input-output':
             # leave as is
             pass
