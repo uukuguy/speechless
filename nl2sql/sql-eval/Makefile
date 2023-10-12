@@ -160,9 +160,9 @@ codellama:
 	--timeout_gen 180 \
 	--temperature 0.01 \
 	--max_tokens 600 \
-	--sampling_method beam_search \
-	--num_beams 4 \
-	--best_of 4 \
+	--sampling_method greedy \
+	--num_beams 1 \
+	--best_of 1 \
 	--stop "\`\`\`" \
 	-n 175 \
 	-p 10

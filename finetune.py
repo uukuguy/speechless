@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import math
 #from rich import print
 
 # if os.environ.get('ENABLE_FLASH_ATTENTION', 'False') == 'True': 
@@ -301,6 +302,16 @@ def get_accelerate_model(args, checkpoint_dir):
     if args.full_finetune: assert args.bits in [16, 32]
 
     logger.info(f'loading base model {args.model_name_or_path}...')
+
+    config = transformers.AutoConfig.from_pretrained(
+        args.model_name_or_path,
+        cache_dir=args.cache_dir,
+    )
+    orig_ctx_len = getattr(config, "max_position_embeddings", None)
+    if orig_ctx_len and args.model_max_len > orig_ctx_len:
+        scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
+        config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
         "cache_dir": args.cache_dir,
@@ -324,7 +335,7 @@ def get_accelerate_model(args, checkpoint_dir):
     }
     if args.mpt:
         model_kwargs["attn_config"] = {"attn_impl": "triton"}
-    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, **model_kwargs)
+    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, config=config, **model_kwargs)
     if compute_dtype == torch.float16 and args.bits == 4:
         major, minor = torch.cuda.get_device_capability()
         if major >= 8:
