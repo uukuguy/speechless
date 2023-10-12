@@ -731,7 +731,13 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     in_ = PROMPT_DICT["prompt_input"].format(instruction=example["instruction"], input=example["input"])
                 else:
                     in_ = PROMPT_DICT["prompt_no_input"].format(instruction=example["instruction"])
-                out_ = f"<s>{example['response']}</s>"
+                out_ = f"{example['response']}"
+                # out_lines = out_.strip().split("\n")
+                # if len(out_lines) > 1:
+                #     if out_lines[0].startswith("```"):
+                #         in_ += out_lines[0] + "\n"
+                #         out_ = "\n".join(out_lines[1:])
+                    
                 return {'input': in_,
                         'output': out_}
 

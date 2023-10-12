@@ -167,7 +167,7 @@ def main():
 
         question_schema = "```\n"
         for table_name in question_tables:
-            question_create_sql = f"CREAE TABLE {table_name} (\n"
+            question_create_sql = f"CREATE TABLE {table_name} (\n"
             question_fields = spider_schema[(spider_schema['Database name'] == db_id) & (spider_schema['Table Name'] == table_name)]
             for _, field in question_fields.iterrows():
                 field_name = field['Field Name']

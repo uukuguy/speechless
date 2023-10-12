@@ -104,6 +104,7 @@ Response:Based on your instructions, here is the SQL query I have generated to a
 
 import json
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 
@@ -174,9 +175,29 @@ def main():
                 # question_tables.appen(table_idx)
                 question_tables.append(db_tables[table_idx])
 
+        foreign_schema = ""
+        related_tables = []
+        for foreign_idx, foreign_row in spider_foreign[spider_foreign['Database name'] == db_id].iterrows():
+            if foreign_row['First Table Name'] not in question_tables and foreign_row['Second Table Name'] not in question_tables:
+                continue
+
+            related_tables.append(foreign_row['First Table Name'])
+            related_tables.append(foreign_row['Second Table Name'])
+
+            first_table_nme = foreign_row['First Table Name']
+            first_table_foreign_key = foreign_row['First Table Foreign Key']
+            second_table_name = foreign_row['Second Table Name']
+            second_table_foreign_key = foreign_row['Second Table Foreign Key']
+
+            #airline.airline_code can be joined with flight.airline_code
+            foreign_schema += f"{first_table_nme}.{first_table_foreign_key} can be joined with {second_table_name}.{second_table_foreign_key}\n"
+
+        related_tables = list(set(related_tables))
+        question_all_tables = list(set(question_tables + related_tables))
+
         question_schema = "```\n"
-        for table_name in question_tables:
-            question_create_sql = f"CREAE TABLE {table_name} (\n"
+        for table_name in question_all_tables:
+            question_create_sql = f"CREATE TABLE {table_name} (\n"
             question_fields = spider_schema[(spider_schema['Database name'] == db_id)
                                             & (spider_schema['Table Name'] == table_name)]
             for _, field in question_fields.iterrows():
@@ -192,18 +213,11 @@ def main():
             question_schema += question_create_sql
         question_schema += "```\n"
 
-        question_schema += "\nAdditionally, the following are tables/column pairs that can be joined in this database:\n\n"
-        question_schema += "```\n"
-        for foreign_idx, foreign_row in spider_foreign[spider_foreign['Database name'] == db_id].iterrows():
-            first_table_nme = foreign_row['First Table Name']
-            first_table_foreign_key = foreign_row['First Table Foreign Key']
-            second_table_name = foreign_row['Second Table Name']
-            second_table_foreign_key = foreign_row['Second Table Foreign Key']
-
-            #airline.airline_code can be joined with flight.airline_code
-            question_schema += f"{first_table_nme}.{first_table_foreign_key} can be joined with {second_table_name}.{second_table_foreign_key}\n"
-
-        question_schema += "```\n"
+        if len(foreign_schema) > 0:
+            question_schema += "\nAdditionally, the following are tables/column pairs that can be joined in this database:\n\n"
+            question_schema += "```\n"
+            question_schema += foreign_schema
+            question_schema += "```\n"
 
         # prompt_template = open("../sql-eval/prompts/nl2sql_prompt.md").read()
         # prompt = prompt_template.format(user_question=question ,table_metadata_string=question_schema)

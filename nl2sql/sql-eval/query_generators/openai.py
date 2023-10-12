@@ -152,7 +152,7 @@ class OpenAIQueryGenerator(QueryGenerator):
             chat_prompt = file.read()
 
         prompt_type = os.path.basename(self.prompt_file).split('_')[0]
-        assert prompt_type in ['nl2sql', 'phind', 'codellama']
+        assert prompt_type in ['speechless', 'nl2sql', 'phind', 'codellama']
         # if "codellama" in self.prompt_file:
         #     prompt_type = "codellama"
 
