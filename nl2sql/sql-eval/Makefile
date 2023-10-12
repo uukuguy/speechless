@@ -154,7 +154,7 @@ codellama:
 	-q data/questions_gen.csv \
 	-o results/${CODELLAMA_MODEL}/my_query_generator.csv \
 	-g oa \
-	-f prompts/nl2sql_prompt.md \
+	-f prompts/speechless_nl2sql_prompt.md \
 	-m ${CODELLAMA_MODEL} \
 	--verbose \
 	--timeout_gen 180 \
