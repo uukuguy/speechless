@@ -88,8 +88,8 @@ def format_topk_sql(
         for column_tuple in topk_table_columns[table_name]:
             if len(column_tuple) > 2:
                 column_type = column_tuple[1]
-                if column_type == 'bigint':
-                    column_type = 'integer'
+                # if column_type == 'bigint':
+                #     column_type = 'integer'
                 columns_str += (
                     # FIXME
                     f"\n  {column_tuple[0]} {column_type}, --{column_tuple[2]}"
