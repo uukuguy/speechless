@@ -307,10 +307,10 @@ def get_accelerate_model(args, checkpoint_dir):
         args.model_name_or_path,
         cache_dir=args.cache_dir,
     )
-    orig_ctx_len = getattr(config, "max_position_embeddings", None)
-    if orig_ctx_len and args.model_max_len > orig_ctx_len:
-        scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
-        config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+    # orig_ctx_len = getattr(config, "max_position_embeddings", None)
+    # if orig_ctx_len and args.model_max_len > orig_ctx_len:
+    #     scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
+    #     config.rope_scaling = {"type": "linear", "factor": scaling_factor}
 
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
