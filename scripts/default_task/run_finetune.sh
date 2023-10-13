@@ -40,13 +40,14 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --bf16 \
     --dataset ${DATASET} \
     --dataset_format ${DATASET_FORMAT} \
-    --max_new_tokens 4096 \
-    --model_max_len 4096 \
+    --max_new_tokens ${MODEL_MAX_LENGTH} \
+    --model_max_len ${MODEL_MAX_LENGTH} \
     --per_device_train_batch_size ${PER_DEVICE_TRAIN_BATCH_SIZE} \
     --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
     --per_device_eval_batch_size 1 \
     --learning_rate ${LEARNING_RATE} \
-    --lr_scheduler_type cosine \
+    --lr_scheduler_type ${LR_SCHEDULER_TYPE} \
+    ${OPTIM_ARGS} \
     --weight_decay 0.0 \
     --seed 10042 \
     --optim paged_adamw_8bit \

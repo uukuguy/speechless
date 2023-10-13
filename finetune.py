@@ -4,6 +4,7 @@
 
 import os
 import math
+import gc, ctypes
 #from rich import print
 
 # if os.environ.get('ENABLE_FLASH_ATTENTION', 'False') == 'True': 
@@ -65,6 +66,11 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 torch.backends.cuda.matmul.allow_tf32 = True
 
 IGNORE_INDEX = -100
+
+def clean_memory():
+    gc.collect()
+    ctypes.CDLL("libc.so.6").malloc_trim(0)
+    torch.cuda.empty_cache()
 
 @dataclass
 class ModelArguments:
@@ -257,6 +263,12 @@ def find_all_linear_names(args, model):
         lora_module_names.remove('lm_head')
     return list(lora_module_names)
 
+class TrainHelperCallback(transformers.TrainerCallback):
+    def on_step_end(self, args, state, control, **kwargs):
+        clean_memory()
+
+    def on_evaluate(self, args, state, control, **kwargs):
+        clean_memory()
 
 class SavePeftModelCallback(transformers.TrainerCallback):
     def save_model(self, args, state, kwargs):
@@ -307,10 +319,10 @@ def get_accelerate_model(args, checkpoint_dir):
         args.model_name_or_path,
         cache_dir=args.cache_dir,
     )
-    # orig_ctx_len = getattr(config, "max_position_embeddings", None)
-    # if orig_ctx_len and args.model_max_len > orig_ctx_len:
-    #     scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
-    #     config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+    orig_ctx_len = getattr(config, "max_position_embeddings", None)
+    if orig_ctx_len and args.model_max_len > orig_ctx_len:
+        scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
+        config.rope_scaling = {"type": "linear", "factor": scaling_factor}
 
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
@@ -335,6 +347,7 @@ def get_accelerate_model(args, checkpoint_dir):
     }
     if args.mpt:
         model_kwargs["attn_config"] = {"attn_impl": "triton"}
+    # model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, **model_kwargs)
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, config=config, **model_kwargs)
     if compute_dtype == torch.float16 and args.bits == 4:
         major, minor = torch.cuda.get_device_capability()
@@ -1010,6 +1023,8 @@ def train():
     # Callbacks
     if not args.full_finetune:
         trainer.add_callback(SavePeftModelCallback)
+
+    trainer.add_callback(TrainHelperCallback)
 
     # Verifying the datatypes.
     if not args.full_finetune:
