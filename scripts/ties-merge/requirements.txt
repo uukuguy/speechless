@@ -1,0 +1,8 @@
+torch>=2.0.0
+tqdm
+transformers
+huggingface_hub
+typer
+safetensors
+peft==0.5.0
+accelerate==0.22.0
