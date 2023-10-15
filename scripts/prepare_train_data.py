@@ -214,7 +214,7 @@ def prepare_data(model_name_or_path, model_max_len):
 
     def _filter_by_token_length(item):
         tok_len =  _get_data_length(item)
-        return tok_len >= 64 and tok_len <= model_max_len - 50
+        return tok_len >= 128 and tok_len <= model_max_len - 50
 
     total_samples = len(dataset)
     dataset = dataset.filter(_filter_by_token_length)

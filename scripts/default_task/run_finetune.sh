@@ -5,9 +5,9 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_PATH}/task.env
 
-PYTHONPATH=${PWD}/../.. \
+PYTHONPATH=${SPEECHLESS_ROOT} \
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
-    ../../finetune.py \
+    -m speechless.finetune \
     ${DEEPSPEED_STAGE2} \
     --task_name ${TASK_NAME} \
     --run_name $(date +%Y%m%d-%H%M%S) \
@@ -47,7 +47,6 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --per_device_eval_batch_size 1 \
     --learning_rate ${LEARNING_RATE} \
     --lr_scheduler_type ${LR_SCHEDULER_TYPE} \
-    ${OPTIM_ARGS} \
     --weight_decay 0.0 \
     --seed 10042 \
     --optim paged_adamw_8bit \
