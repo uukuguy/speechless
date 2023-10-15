@@ -1,0 +1,6 @@
+transformers>=3.34.0
+bitsandbytes=0.41.1
+flash-attn=2.23.0
+peft=0.5.0
+git+https://github.com/EleutherAI/lm-evaluation-harness.git
+sse_starlette

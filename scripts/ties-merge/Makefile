@@ -15,13 +15,23 @@ merge_models:
 		--merge ${SUB_MODEL_2} \
 		--cuda
 
+# BASE_MODEL=${LLM_MODELS}/mistralai/Mistral-7B-v0.1
+# SUB_MODEL_1=${LLM_MODELS}/prepare_merge_mistral/dolphin-2.1-mistral-7b
+# SUB_MODEL_2=${LLM_MODELS}/prepare_merge_mistral/Mistral-7B-OpenOrca
+# SUB_MODEL_3=${LLM_MODELS}/prepare_merge_mistral/mistral-7b-platypus-fp16
+# SUB_MODEL_4=${LLM_MODELS}/prepare_merge_mistral/samantha-1.2-mistral-7b
+
+# TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
+
 BASE_MODEL=${LLM_MODELS}/mistralai/Mistral-7B-v0.1
 SUB_MODEL_1=${LLM_MODELS}/prepare_merge_mistral/dolphin-2.1-mistral-7b
 SUB_MODEL_2=${LLM_MODELS}/prepare_merge_mistral/Mistral-7B-OpenOrca
 SUB_MODEL_3=${LLM_MODELS}/prepare_merge_mistral/mistral-7b-platypus-fp16
 SUB_MODEL_4=${LLM_MODELS}/prepare_merge_mistral/samantha-1.2-mistral-7b
+SUB_MODEL_5=${LLM_MODELS}/prepare_merge_mistral/CollectiveCognition-v1.1-Mistral-7B
+SUB_MODEL_6=${LLM_MODELS}/prepare_merge_mistral/zephyr-7b-alpha
 
-TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
+TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-six-in-one-7b
 
 merge_speechless_mistral:
 	PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \
@@ -32,4 +42,6 @@ merge_speechless_mistral:
 		--merge ${SUB_MODEL_2} \
 		--merge ${SUB_MODEL_3} \
 		--merge ${SUB_MODEL_4} \
+		--merge ${SUB_MODEL_5} \
+		--merge ${SUB_MODEL_6} \
 		--cuda
