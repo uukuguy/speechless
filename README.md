@@ -1,84 +1,221 @@
-# Speechless
+# Speechless LLM
 
-```ini
-python=3.10.13
-nvcc=cuda_11.8
-torch=2.0.1+cu118
-transformers=4.34.0 # >= 4.34.0 if Mistral else 4.33.3
-bitsandbytes=0.41.1
-flash-attn=2.23.0
-peft=0.5.0
-accelerate=0.23.0
-tokenizers=0.14.1
-deepspeed=0.10.3
-```
+[Speechless.AI](http://speechless.ai/) is committed to integrating the superior language processing and deep reasoning capabilities of large language models into practical business applications. By enhancing the model's language understanding, knowledge accumulation, and text creation abilities, and introducing long-term memory, external tool integration, and local deployment, our aim is to establish an intelligent collaborative partner that can independently interact, continuously evolve, and closely align with various business scenarios. 
 
-## speechless-codellama-34b-v2.0
+- Firstly, we focus on building a large model with enhanced reasoning capabilities, ensuring its outstanding performance in language processing and logical analysis. 
 
-HumanEval
+- Next, we design and implement an efficient operational framework for the intelligent entity. This framework not only supports rapid deployment and invocation of the model but also boasts features like autonomous interaction, real-time feedback adjustment, context awareness, and long-term memory. 
+  For instance, in customer service scenarios, the intelligent entity can provide more precise and personalized responses based on a user's historical interactions and current context. In content recommendation scenarios, it can dynamically adjust its strategies by capturing real-time shifts in user interests. 
 
-humaneval-python pass@1: 75.61
+- Ultimately, we integrate it with real business scenarios, ensuring that the intelligent entity seamlessly aligns with various business processes, delivering tangible value to enterprises.
 
-MultiPL-E
 
-| | |
-| ------ | ------ |
-| python | 67.55 |
-| java | 51.93 |
-| javascript | 64.81|
-| cpp | 55.81 |
-| rust | 52.98 |
 
-> f"{name},{args.k},{pass_k},{num_problems},{min_completions},{max_completions}")
-> humaneval-py-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v2.0-0.2-reworded,1,0.6754658385093167,161,20,20
-> humaneval-java-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v2.0-0.2-reworded,1,0.5193037974683545,158,20,20
-> humaneval-js-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v2.0-0.2-reworded,1,0.6481366459627329,161,20,20
-> humaneval-cpp-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v2.0-0.2-reworded,1,0.5580745341614907,161,20,20
-> humaneval-rs-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v2.0-0.2-reworded,1,0.5298076923076923,156,20,20
+## Models
 
-## speechless-codellama-34b-v1.9
+https://huggingface.co/uukuguy
 
-HumanEval
+- [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
+  GPTQ GGUF AWQ
 
-humaneval-python pass@1: 70.73
+- [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
+  [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
+- [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
+  [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
 
-MultiPL-E
+- [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
+  [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
+- [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
+  [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML)
+- [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
+- [speechless-codellama-dolphin-orca-platypus-34b](https://huggingface.co/uukuguy/speechless-codellama-dolphin-orca-platypus-34b) 2023.09.14
+- [speechless-llama2-dolphin-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-llama2-dolphin-orca-platypus-13b) 2023.09.16
+- [speechless-codellama-34b-v1.0](https://huggingface.co/speechlessai/speechless-codellama-34b-v1.0) 2023.09.14
+- [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
+- [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
 
-| | |
-| ------ | ------ |
-| python | 56.02 |
-| java | 49.56 |
-| javascript | 65.03|
-| cpp | 53.91 |
-| rust | 51.09 |
+- [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
+  [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
+- [speechless-llama2-hermes-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-13b) 2023.09.02
+- [speechless-llama2-luban-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-luban-orca-platypus-13b) 2023.09.01
+- [speechless-hermes-coig-lite-13b](https://huggingface.co/uukuguy/speechless-hermes-coig-lite-13b) 2023.08.22
 
-humaneval-py-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5602484472049689,161,20,20
-humaneval-java-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.49556962025316464,158,20,20
-humaneval-js-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.6503105590062112,161,20,20
-humaneval-cpp-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5391304347826088,161,20,20
-humaneval-rs-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5108974358974359,156,20,20
 
-| | |
-| ------ | ------ |
-|python | 56.02 |
 
-> f"{name},{args.k},{pass_k},{num_problems},{min_completions},{max_completions}")
-> humaneval-py-_opt_local_llm_models_huggingface.co_speechlessai_speechless_codellama_34b_v1.9-0.2-reworded,1,0.5602484472049689,161,20,20
+### CodeLlama based Models
 
-## Data
+[speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
+[GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
 
-## API Server
+
+
+[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
+
+
+
+### Mistral based Models
+
+[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
+[GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
+
+
+
+### Tora based Models
+
+[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
+[GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
+
+
+
+### Llama2 based Models
+
+[speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
+[GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
+
+
+
+[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
+GPTQ GGUF AWQ
+
+
+
+## Datasets
+
+[jondurbin/airoboros-2.2.1](https://huggingface.co/datasets/jondurbin/airoboros-2.2.1) 
+
+[Open-Orca/OpenOrca](https://huggingface.co/datasets/Open-Orca/OpenOrca) 
+
+[garage-bAInd/Open-Platypus](https://huggingface.co/datasets/garage-bAInd/Open-Platypus) 
+
+[WizardLM/WizardLM_evol_instruct_V2_196k](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
+
+[ehartford/dolphin](https://huggingface.co/datasets/ehartford/dolphin)
+
+[ehartford/samantha-data](https://huggingface.co/datasets/ehartford/samantha-data)
+
+
+
+## speechless.finetune
+
+
+
+#### Install speechless
 
 ```bash
-# python api/server.py
-make api_server
+pip install speechless
 ```
 
-## Evaluation
+
+
+#### Prepare train dataset
+
+Focus on instruction following, currently not supporting multi-turn dialogue scenarios.
+
+The training dataset is a jsonl file, with each line containing a JSON formatted instruction data. The data format is as follows:
+
+```json
+{
+    "instruction": "<instruction>", # Cann't be empty.
+	"input': "<input>", # Can be an empty string.
+    "response': "<response>", # Cann't be empty.
+    "category": "mydata",
+    "skip_prompt_formatting': False, # Keep this setting
+    "system": "",
+}
+```
+
+
+
+#### Run run_finetune.sh
+
+```bash
+
+mkdir -p tasks/speechless-llama2-13b && cd tasks/speechless-llama2-13b
+python -m speechless.finetune \
+	--base_model meta-llama/Llama-2-13B-hf \
+	--dataset <path_to_your_dataset_file> \
+	--dataset_format instruction-input-response \
+	--model_max_len 4096 \
+	--bits 4 \
+	--lora_r 16 \
+	--min_batch_size 4 \
+	--gradient_accumulation_steps 16 \
+	--learning_rate 2e-4 \
+	--num_train_epochs 2 \
+	--num_gpus 2 \
+	
+```
+
+
+
+```bash
+python -m speechless.tools.merge_peft_adapters \
+	--base_model meta-llama/Llama-2-13B-hf \
+	--peft_model_path ${CHECKPOINT_DIR} \
+	--merged_model_path ${TASK_MODEL_PATH}
+```
+
+
+
+## speechless.completion
+
+
+
+```bash
+python -m speechless.completion \
+	create \
+	--model ${TASK_MODEL_PATH} \
+	--prompt ${PROMPT} \
+	--prompts_file ${PROMPTS_FILE_PATH} \
+	--temperature 0.75 \
+	--top_p 0.9 \
+	--top_k 50 \
+
+```
+
+
+
+
+
+
+
+## speechless.api.server
+
+```bash
+python -m speechless.api.server \
+	start \
+	--model ${TASK_MODEL_PATH} \
+	--backbone vllm \
+	--host 0.0.0.0 \
+	--port 5001
+	
+```
+
+
+
+## speechless.eval
+
+Speechless supports HumanEval, MultiPL-E, SQLEval, lm-evaluation-harness.
 
 ### HumanEval
 
 Execute the HumanEval geenrate command on the GPU server where the model is located.
+
+
+
+```bash
+python -m speechless.eval.humaneval \
+	genrate \
+	--model ${TASK_MODEL_PATH} \
+	--output_dir ${EVAL_OUTPUT_DIR} \
+	
+python -m speechless.eval.humaneval \
+	eval \
+	--eval_dir ${EVAL_OUTPUT_DIR}
+	
+```
+
+
 
 ```bash
 # make humaneval_gen
@@ -92,6 +229,22 @@ python eval/run_humaneval.py \
 ```
 
 ### MultiPL-E
+
+
+
+```bash
+python -m speechless.eval.multiple \
+	genrate \
+	--model ${TASK_MODEL_PATH} \
+	--output_dir ${EVAL_OUTPUT_DIR} \
+	
+python -m speechless.eval.multiple \
+	eval \
+	--eval_dir ${EVAL_OUTPUT_DIR}
+	
+```
+
+
 
 ```bash
 MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${SERVED_MODEL_NAME}
@@ -109,12 +262,44 @@ python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 
 ### SQLEval
 
+
+
+```bash
+python -m speechless.eval.sqleval \
+	genrate \
+	--model ${TASK_MODEL_PATH} \
+	--output_dir ${EVAL_OUTPUT_DIR} \
+	
+python -m speechless.eval.sqleval \
+	eval \
+	--eval_dir ${EVAL_OUTPUT_DIR}
+	
+```
+
+
+
 ```bash
 # Run docker postgres-sql-eval
 cd nl2sql/sqleval && make codellama
 ```
 
 ### lm-evluation-harness
+
+
+
+```bash
+python -m speechless.eval.lmeval \
+	genrate \
+	--model ${TASK_MODEL_PATH} \
+	--output_dir ${EVAL_OUTPUT_DIR} \
+	
+python -m speechless.eval.lmeval \
+	eval \
+	--eval_dir ${EVAL_OUTPUT_DIR}
+	
+```
+
+
 
 ```bash
 # git clone https://github.com/EleutherAI/lm-evaluation-harness
