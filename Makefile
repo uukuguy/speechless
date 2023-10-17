@@ -17,7 +17,14 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-orca-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
+#TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
+
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Open-Orca/Mistral-7B-OpenOrca
+#TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Mistral-7B-OpenOrca-lora-merged
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.1
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -156,8 +163,8 @@ lm_eval_arc:
 		--model hf-causal \
 		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks arc_challenge \
-		--batch_size 1 \
-		--limit 10 \
+		--batch_size 16 \
+		--limit 100 \
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME}/arc_challenge_25shot.json \
@@ -169,21 +176,21 @@ lm_eval_hellaswag:
 		--model hf-causal \
 		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks hellaswag \
-		--batch_size 1 \
-		--limit 10 \
+		--batch_size 16 \
+		--limit 100 \
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME}/hellaswag_10shot.json \
 		--device cuda \
-		--num_fewshot 100
+		--num_fewshot 10
 
 lm_eval_mmlu:
 	python eval/run_lm_eval.py \
 		--model hf-causal \
 		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks hendrycksTest-* \
-		--batch_size 1 \
-		--limit 10 \
+		--batch_size 16 \
+		--limit 100 \
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME}/mmlu_5shot.json \
@@ -195,16 +202,44 @@ lm_eval_truthfulqa:
 		--model hf-causal \
 		--model_args pretrained=${TEST_MODEL_PATH} \
 		--tasks truthfulqa_mc \
-		--batch_size 1 \
-		--limit 10 \
+		--batch_size 16 \
+		--limit 100 \
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME}/truthfullqa_0shot.json \
 		--device cuda \
 		--num_fewshot 0
 
-lm_eval: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
+lmeval_open_llm: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
 	@echo "lm_eval done"
+# lmeval:
+# 	python eval/run_lm_eval.py \
+# 		--model hf-causal \
+# 		--model_args pretrained=${TEST_MODEL_PATH} \
+# 		--tasks "gsm8k,arc_challenge,hellaswag,hendrycksTest-*" \
+# 		--limit 100 \
+# 		--device cuda \
+# 		--batch_size auto \
+# 		--no_cache \
+# 		--write_out \
+# 		--output_path eval_results/lm_eval/${TASK_NAME}/lmeval_1shot.json \
+# 		--device cuda \
+# 		--num_fewshot 1
+
+lmeval:
+	python eval/lmeval.py \
+		--model hf-causal \
+		--model_args pretrained=${TEST_MODEL_PATH} \
+		--task \
+			"arc_challenge|25|100" \
+			"hellaswag|10|100" \
+			"hendrycksTest-*|5|100" \
+			"truthfulqa_mc|0|100" \
+			"gsm8k|8|100" \
+		--batch_size 16 \
+		--no_cache \
+		--write_out \
+		--output_path eval_results/lm_eval/${TASK_NAME} 
 
 # -------------------- vllm --------------------
 
@@ -224,68 +259,69 @@ api_server:
 		--model_name_or_path ${TEST_MODEL_PATH} \
 		--model_family vllm \
 
+include ../Makefile.remote
 
-# -------------------- Sync Remote --------------------
+# # -------------------- Sync Remote --------------------
 
-BASENAME=$(shell basename $(shell pwd))
-TARGET_DIR=./sandbox/LLM/speechless.ai/${BASENAME}/
+# BASENAME=$(shell basename $(shell pwd))
+# TARGET_DIR=./sandbox/LLM/speechless.ai/${BASENAME}/
 
-# rsync -rav --exclude=.git --exclude=__pycache__ --rsh='ssh -p 45724' * root@connect.neimeng.seetacloud.com:${TARGET_DIR}
-define push_to_remote
-	@echo "push to remote: $(1), port: $(2), target: $(3)"
-	rsync -rav \
-		--exclude=tmp \
-		--exclude=outputs \
-		--exclude=saved_models \
-		--exclude=.git \
-		--exclude=__pycache__ \
-		--exclude=tasks \
-		--exclude=eval_results \
-		--rsh='ssh -p $(2)' \
-		* \
-		$(1):$(3)
-endef
+# # rsync -rav --exclude=.git --exclude=__pycache__ --rsh='ssh -p 45724' * root@connect.neimeng.seetacloud.com:${TARGET_DIR}
+# define push_to_remote
+# 	@echo "push to remote: $(1), port: $(2), target: $(3)"
+# 	rsync -rav \
+# 		--exclude=tmp \
+# 		--exclude=outputs \
+# 		--exclude=saved_models \
+# 		--exclude=.git \
+# 		--exclude=__pycache__ \
+# 		--exclude=tasks \
+# 		--exclude=eval_results \
+# 		--rsh='ssh -p $(2)' \
+# 		* \
+# 		$(1):$(3)
+# endef
 
-define pull_from_remote
-	@echo "pull from remote: $(1), port: $(2), source: $(3), subdir: $(4)"
-	rsync -rav \
-		--exclude=tmp \
-		--exclude=outputs \
-		--exclude=saved_models \
-		--exclude=.git \
-		--exclude=__pycache__ \
-		--exclude=checkpoint* \
-		--rsh='ssh -p $(2)' \
-		$(1):$(3)/$(4)/ \
-		$(4)/
-endef
+# define pull_from_remote
+# 	@echo "pull from remote: $(1), port: $(2), source: $(3), subdir: $(4)"
+# 	rsync -rav \
+# 		--exclude=tmp \
+# 		--exclude=outputs \
+# 		--exclude=saved_models \
+# 		--exclude=.git \
+# 		--exclude=__pycache__ \
+# 		--exclude=checkpoint* \
+# 		--rsh='ssh -p $(2)' \
+# 		$(1):$(3)/$(4)/ \
+# 		$(4)/
+# endef
 
-# ----- push to remote -----
-push_autodl_nm800_a40x2:
-	$(call push_to_remote,root@connect.neimeng.seetacloud.com,54192,$(TARGET_DIR))
+# # ----- push to remote -----
+# push_autodl_nm800_a40x2:
+# 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,54192,$(TARGET_DIR))
 
-push_autodl_nm799_a40x2:
-	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
+# push_autodl_nm799_a40x2:
+# 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
 
-push_gpushare_h800x2:
-	$(call push_to_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR))
+# push_gpushare_h800x2:
+# 	$(call push_to_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR))
 
-push_gpushare_a800x2:
-	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
+# push_gpushare_a800x2:
+# 	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
 
-push_gpushare_a100x4:
-	$(call push_to_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR))
+# push_gpushare_a100x4:
+# 	$(call push_to_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR))
 
 
-# ----- pull from remote -----
-pull_autodl_nm799_a40x2_eval_results:
-	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
+# # ----- pull from remote -----
+# pull_autodl_nm799_a40x2_eval_results:
+# 	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
 
-pull_gpushare_h800x2_eval_results:
-	$(call pull_from_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR),eval_results)
+# pull_gpushare_h800x2_eval_results:
+# 	$(call pull_from_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR),eval_results)
 
-pull_gpushare_a800x2_eval_results:
-	$(call pull_from_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR),eval_results)
+# pull_gpushare_a800x2_eval_results:
+# 	$(call pull_from_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR),eval_results)
 
-pull_gpushare_a100x4_eval_results:
-	$(call pull_from_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR),eval_results)
+# pull_gpushare_a100x4_eval_results:
+# 	$(call pull_from_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR),eval_results)
