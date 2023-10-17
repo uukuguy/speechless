@@ -420,7 +420,6 @@ def evaluate(
 
     return {"results": dict(results), "versions": dict(versions)}
 
-
 def make_table(result_dict):
     """Generate table of results."""
     from pytablewriter import MarkdownTableWriter, LatexTableWriter
@@ -452,6 +451,62 @@ def make_table(result_dict):
     print(latex_writer.dumps())
 
     return md_writer.dumps()
+
+"""
+acc = 0.0
+n = 0
+for d in json_data:
+if 'results' in d:
+    results = d['results']
+    for k, v in results.items():
+        if k.startswith('hendrycksTest'):
+        acc += results[k]['acc']
+        n += 1
+
+number of docs:
+arc_challenge: 1172
+hellaswag: 10042
+mmlu: hendrycksTest-* 57 tasks, 100 - 1534
+gsm8k: 1319
+"""
+def summarize_results(json_data):
+    arc_acc_norm = 0.0
+    hellaswag_acc_norm = 0.0
+    mmlu_acc = 0.0
+    mmlu_n = 0
+    truthfullqa_mc2 = 0.0
+    gsm8k_acc = 0.0
+    for d in json_data:
+        if 'results' in d:
+            results = d['results']
+            for k, v in results.items():
+                if k.startswith('hendrycksTest'):
+                    mmlu_acc += results[k]['acc']
+                    mmlu_n += 1
+                elif k == 'arc_challenge':
+                    arc_acc_norm = results[k]['acc_norm']
+                elif k == 'hellaswag':
+                    hellaswag_acc_norm = results[k]['acc_norm']
+                elif k == 'truthfulqa_mc':
+                    truthfullqa_mc2 = results[k]['mc2']
+                elif k == 'gsm8k':
+                    gsm8k_acc = results[k]['acc']
+    mmlu_acc /= mmlu_n
+
+    open_llm_score = (arc_acc_norm + hellaswag_acc_norm + mmlu_acc + truthfullqa_mc2) / 4
+
+    summary = {
+        'ARC (acc_norm)': arc_acc_norm,
+        'HellaSwag (acc_norm)': hellaswag_acc_norm,
+        'MMLU (acc)': mmlu_acc,
+        'TruthfulQA (mc2)': truthfullqa_mc2,
+        'Open LLM Score': open_llm_score,
+        'GSM8K (acc)': gsm8k_acc,
+        
+    }
+
+    return summary
+    
 
 
 def do_lmeval(
@@ -629,6 +684,9 @@ def parse_args():
     parser.add_argument("--write_out", action="store_true", default=False)
     parser.add_argument("--output_base_path", type=str, default=None)
 
+    parser.add_argument("--summary", action="store_true")
+    parser.add_argument("--results_file", type=str)
+
     return parser.parse_args()
 
 
@@ -636,6 +694,12 @@ def main():
     start_time = datetime.now().strftime("%Y%m%d%H%M%S")
     args = parse_args()
     print(f"{args=}")
+
+    if args.summary:
+        all_results = json.load(open(args.results_file))
+        summary = summarize_results(all_results)
+        print(summary)
+        exit(0)
 
     # assert not args.provide_description  # not implemented
 
@@ -694,7 +758,7 @@ def main():
     #     write_out=args.write_out,
     #     output_base_path=args.output_base_path,
     # )
-    results = do_lmeval(
+    all_results = do_lmeval(
         model=args.model,
         model_args=args.model_args,
         tasks=eval_tasks,
@@ -709,7 +773,10 @@ def main():
         output_base_path=args.output_base_path,
     )
 
-    dumped = json.dumps(results, indent=2)
+    summary = summarize_results(all_results)
+    all_results['summary'] = summary
+
+    dumped = json.dumps(all_results, ensure_ascii=False, indent=2)
     print(dumped)
 
     end_time = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -724,7 +791,8 @@ def main():
     #     f"{args.model} ({args.model_args}), limit: {args.limit}, provide_description: {args.provide_description}, "
     #     f"num_fewshot: {args.num_fewshot}, batch_size: {args.batch_size}{f' ({batch_sizes})' if batch_sizes else ''}"
     # )
-    print(make_table(results))
+    for results in all_results:
+        print(make_table(results))
 
 
 if __name__ == "__main__":
