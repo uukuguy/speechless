@@ -30,10 +30,10 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-orca-7b-v1.0
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 
-# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 

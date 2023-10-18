@@ -44,7 +44,7 @@ def partial_arg_parser():
     args.add_argument(
         "--lang",
         type=str,
-        required="generate" in sys.argv and "--use-local" not in sys.argv,
+        required="--langs" not in sys.argv and "generate" in sys.argv and "--use-local" not in sys.argv,
         help="Target language for completions",
     )
     args.add_argument(
