@@ -44,16 +44,17 @@ def partial_arg_parser():
     args.add_argument(
         "--lang",
         type=str,
-        required="--use-local" not in sys.argv,
+        required="generate" in sys.argv and "--use-local" not in sys.argv,
         help="Target language for completions",
     )
     args.add_argument(
         "--root-dataset",
         type=str,
-        required="--use-local" not in sys.argv,
+        required="generate" in sys.argv and "--use-local" not in sys.argv,
+        default="humaneval",
         help="either mbpp or humaneval",
     )
-    args.add_argument("--temperature", type=float, required=True)
+    args.add_argument("--temperature", type=float, default=0.2, required="generate" in sys.argv)
     args.add_argument(
         "--input-start-index",
         type=int,
