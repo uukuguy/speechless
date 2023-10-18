@@ -100,7 +100,7 @@ def main():
         model = Model(args.name, args.revision, args.tokenizer_name, args.tokenizer_revision)
         name = do_name_override(args)
         if args.langs is not None:
-            for lang in tqdm(args.langs, ncols=100, desc=f"{lang}"):
+            for lang in tqdm(args.langs, ncols=100):
                 args.lang = lang
                 make_main(args, name, model.completions)
         else:
