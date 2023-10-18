@@ -5,6 +5,8 @@ import transformers
 from datetime import datetime
 from loguru import logger
 
+import gc, ctypes
+import torch
 from lm_eval import tasks 
 import lm_eval.metrics
 import lm_eval.models
@@ -161,6 +163,12 @@ def pattern_match(patterns, source_list):
 
 #     return results
 
+# https://www.kaggle.com/code/simjeg/platypus2-70b-without-wikipedia-rag
+# Function to clean RAM & vRAM
+def clean_memory():
+    gc.collect()
+    ctypes.CDLL("libc.so.6").malloc_trim(0)
+    torch.cuda.empty_cache()
 
 decontaminate_suffix = "_decontaminate"
 
@@ -176,7 +184,7 @@ def evaluate(
     description_dict=None,
     decontamination_ngrams_path=None,
     write_out=False,
-    output_path="evl_results/lm_eval",
+    output_path="eval_results/lm_eval",
     output_base_path=None,
 ):
     """Instantiate and evaluate a model on a list of tasks.
@@ -400,19 +408,21 @@ def evaluate(
         import json
         import pathlib
 
-        output_base_path = (
-            pathlib.Path(output_base_path)
-            if output_base_path is not None
-            else pathlib.Path(".")
-        )
-        try:
-            output_base_path.mkdir(parents=True, exist_ok=False)
-        except FileExistsError:
-            pass
+        # output_base_path = (
+        #     pathlib.Path(output_base_path)
+        #     if output_base_path is not None
+        #     else pathlib.Path(".")
+        # )
+        # try:
+        #     output_base_path.mkdir(parents=True, exist_ok=False)
+        # except FileExistsError:
+        #     pass
 
+        os.makedirs(f"{output_path}/details", exist_ok=True)
         for task_name, _ in task_dict_items:
             with open(
-                output_base_path.joinpath(f"{output_path}/details/{task_name}_write_out_info.json"),
+                # output_base_path.joinpath(f"{output_path}/details/{task_name}_write_out_info.json"),
+                f"{output_path}/details/{task_name}_write_out_info.json",
                 "w",
                 encoding="utf8",
             ) as fp:
@@ -448,7 +458,7 @@ def make_table(result_dict):
     latex_writer.value_matrix = values
 
     # todo: make latex table look good
-    print(latex_writer.dumps())
+    # print(latex_writer.dumps())
 
     return md_writer.dumps()
 
@@ -522,7 +532,7 @@ def do_lmeval(
     check_integrity=False,
     decontamination_ngrams_path=None,
     write_out=False,
-    output_path="evl_results/lm_eval",
+    output_path="eval_results/lm_eval",
     output_base_path=None,
 ):
     """Instantiate and evaluate a model on a list of tasks.
@@ -616,8 +626,11 @@ def do_lmeval(
             description_dict=description_dict,
             decontamination_ngrams_path=decontamination_ngrams_path,
             write_out=write_out,
+            output_path=output_path,
             output_base_path=output_base_path,
         )
+
+        clean_memory()
 
         # add info about the model and few shot config
         model_name = None
@@ -641,6 +654,8 @@ def do_lmeval(
         }
         print(f"{results=}")
         all_results.append(results)
+
+    logger.info(f"LMEval Done. {model_args}")
 
     return all_results
 
@@ -774,7 +789,8 @@ def main():
     )
 
     summary = summarize_results(all_results)
-    all_results['summary'] = summary
+    print(f"{summary=}")
+    all_results.append(summary)
 
     dumped = json.dumps(all_results, ensure_ascii=False, indent=2)
     print(dumped)
@@ -791,8 +807,14 @@ def main():
     #     f"{args.model} ({args.model_args}), limit: {args.limit}, provide_description: {args.provide_description}, "
     #     f"num_fewshot: {args.num_fewshot}, batch_size: {args.batch_size}{f' ({batch_sizes})' if batch_sizes else ''}"
     # )
+    print(f"{args.model_args}")
     for results in all_results:
-        print(make_table(results))
+        if "results" in results:
+            print(make_table(results))
+        else:
+            print(results)
+
+    print(f"Done.\n")
 
 
 if __name__ == "__main__":

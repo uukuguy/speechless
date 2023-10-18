@@ -23,9 +23,17 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Open-Orca/Mistral-7B-OpenOrca
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Mistral-7B-OpenOrca-lora-merged
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Mistral-7B-OpenOrca-r256-lora-merged
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Mistral-7B-OpenOrca-r128-lora-merged
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.1
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-orca-7b-v1.0
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -107,8 +115,16 @@ humaneval:
 
 MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}
 
-MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
-	python eval/MultiPL-E/automodel.py \
+# MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
+# 	python eval/MultiPL-E/automodel.py \
+# 		--name ${TEST_MODEL_PATH} \
+# 		--root-dataset humaneval \
+# 		--temperature 0.2 \
+# 		--batch-size 20 \
+# 		--completion-limit 20 \
+# 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
+MULTIPLE_E_LANG=python eval/multiple.py \
+		generate \
 		--name ${TEST_MODEL_PATH} \
 		--root-dataset humaneval \
 		--temperature 0.2 \
@@ -144,88 +160,89 @@ multipl_e_go:
 	${MULTIPLE_E_LANG} \
 		--lang go \
 
-multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust multipl_e_go
-	@echo "multipl_e_gen done"
+# multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust multipl_e_go
+# 	@echo "multipl_e_gen done"
+
+multipl_e_gen:
+	${MULTIPLE_E_LANG} \
+		--langs py java js cpp rust go \
+
+# multipl_e_eval:
+# 	cd ${MULTIPL_E_RESULTS_DIR} && \
+# 	bash ${PWD}/eval/run_multipl_e_eval.sh
 
 multipl_e_eval:
-	cd ${MULTIPL_E_RESULTS_DIR} && \
-	bash ${PWD}/eval/run_multipl_e_eval.sh
+	python eval/multiple.py \
+		eval \
+		--results_dir ${MULTIPL_E_RESULTS_DIR}
+
+# multipl_e_results:
+# 	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 
 multipl_e_results:
-	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
+	python eval/multiple.py \
+		results \
+		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
 
 # -------------------- lm-evaluation-harness --------------------
 
 #https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard
 
-lm_eval_arc:
-	python eval/run_lm_eval.py \
-		--model hf-causal \
-		--model_args pretrained=${TEST_MODEL_PATH} \
-		--tasks arc_challenge \
-		--batch_size 16 \
-		--limit 100 \
-		--no_cache \
-		--write_out \
-		--output_path eval_results/lm_eval/${TASK_NAME}/arc_challenge_25shot.json \
-		--device cuda \
-		--num_fewshot 25
-
-lm_eval_hellaswag:
-	python eval/run_lm_eval.py \
-		--model hf-causal \
-		--model_args pretrained=${TEST_MODEL_PATH} \
-		--tasks hellaswag \
-		--batch_size 16 \
-		--limit 100 \
-		--no_cache \
-		--write_out \
-		--output_path eval_results/lm_eval/${TASK_NAME}/hellaswag_10shot.json \
-		--device cuda \
-		--num_fewshot 10
-
-lm_eval_mmlu:
-	python eval/run_lm_eval.py \
-		--model hf-causal \
-		--model_args pretrained=${TEST_MODEL_PATH} \
-		--tasks hendrycksTest-* \
-		--batch_size 16 \
-		--limit 100 \
-		--no_cache \
-		--write_out \
-		--output_path eval_results/lm_eval/${TASK_NAME}/mmlu_5shot.json \
-		--device cuda \
-		--num_fewshot 5
-
-lm_eval_truthfulqa:
-	python eval/run_lm_eval.py \
-		--model hf-causal \
-		--model_args pretrained=${TEST_MODEL_PATH} \
-		--tasks truthfulqa_mc \
-		--batch_size 16 \
-		--limit 100 \
-		--no_cache \
-		--write_out \
-		--output_path eval_results/lm_eval/${TASK_NAME}/truthfullqa_0shot.json \
-		--device cuda \
-		--num_fewshot 0
-
-lmeval_open_llm: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
-	@echo "lm_eval done"
-# lmeval:
+# lm_eval_arc:
 # 	python eval/run_lm_eval.py \
 # 		--model hf-causal \
 # 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--tasks "gsm8k,arc_challenge,hellaswag,hendrycksTest-*" \
+# 		--tasks arc_challenge \
+# 		--batch_size 16 \
 # 		--limit 100 \
-# 		--device cuda \
-# 		--batch_size auto \
 # 		--no_cache \
 # 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME}/lmeval_1shot.json \
+# 		--output_path eval_results/lm_eval/${TASK_NAME}/arc_challenge_25shot.json \
 # 		--device cuda \
-# 		--num_fewshot 1
+# 		--num_fewshot 25
+
+# lm_eval_hellaswag:
+# 	python eval/run_lm_eval.py \
+# 		--model hf-causal \
+# 		--model_args pretrained=${TEST_MODEL_PATH} \
+# 		--tasks hellaswag \
+# 		--batch_size 16 \
+# 		--limit 100 \
+# 		--no_cache \
+# 		--write_out \
+# 		--output_path eval_results/lm_eval/${TASK_NAME}/hellaswag_10shot.json \
+# 		--device cuda \
+# 		--num_fewshot 10
+
+# lm_eval_mmlu:
+# 	python eval/run_lm_eval.py \
+# 		--model hf-causal \
+# 		--model_args pretrained=${TEST_MODEL_PATH} \
+# 		--tasks hendrycksTest-* \
+# 		--batch_size 16 \
+# 		--limit 100 \
+# 		--no_cache \
+# 		--write_out \
+# 		--output_path eval_results/lm_eval/${TASK_NAME}/mmlu_5shot.json \
+# 		--device cuda \
+# 		--num_fewshot 5
+
+# lm_eval_truthfulqa:
+# 	python eval/run_lm_eval.py \
+# 		--model hf-causal \
+# 		--model_args pretrained=${TEST_MODEL_PATH} \
+# 		--tasks truthfulqa_mc \
+# 		--batch_size 16 \
+# 		--limit 100 \
+# 		--no_cache \
+# 		--write_out \
+# 		--output_path eval_results/lm_eval/${TASK_NAME}/truthfullqa_0shot.json \
+# 		--device cuda \
+# 		--num_fewshot 0
+
+# lmeval_open_llm: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
+# 	@echo "lm_eval done"
 
 lmeval:
 	python eval/lmeval.py \
@@ -237,7 +254,7 @@ lmeval:
 			"hendrycksTest-*|5|100" \
 			"truthfulqa_mc|0|100" \
 			"gsm8k|8|100" \
-		--batch_size 16 \
+		--batch_size 4 \
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME} 
