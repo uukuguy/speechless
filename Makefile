@@ -47,30 +47,30 @@ help:
 # -------------------- Train --------------------
 
 prepare_data:
-	python ./scripts/prepare_data.py
+	python speechless/scripts/prepare_data.py
 
 finetune_13b:
-	bash ./scripts/finetune_speechless_codellam_13b.sh
+	bash speechless/scripts/finetune_speechless_codellam_13b.sh
 
 finetune_34b:
-	bash ./scripts/finetune_speechless_codellam_34b.sh
+	bash speechless/scripts/finetune_speechless_codellam_34b.sh
 
 full_finetune_34b:
-	bash ./scripts/full_finetune_speechless_codellam_34b.sh
+	bash speechless/scripts/full_finetune_speechless_codellam_34b.sh
 
 finetune_v2.1:
-	# bash ./scripts/finetune_speechless_codellam_34b_v2.1.sh
+	# bash speechless/scripts/finetune_speechless_codellam_34b_v2.1.sh
 	cd tasks/speechless_codellama_34b_v2.1 && \
 		bash ./finetune_speechless_codellama_34b_v2.1.sh
 
 finetune_mistral_7b:
-	# bash ./scripts/finetune_speechless_mistral_7b_v0.1.sh
+	# bash speechless/scripts/finetune_speechless_mistral_7b_v0.1.sh
 	cd tasks/speechless_mistral_7b_v0.1 && \
 		bash ./finetune_speechless_mistral_7b_v0.1.sh
 
 merge_peft_adapters:
 	PYTHONPATH=. \
-	python scripts/merge_peft_adapters.py \
+	python speechless/scripts/merge_peft_adapters.py \
 		--base_model_name_or_path ${BASE_MODEL_PATH} \
 		--peft_model_path ${CHECKPOINT_DIR} \
 		--merged_model_name_or_path ${TEST_MODEL_PATH} \
@@ -80,13 +80,13 @@ merge_peft_adapters:
 
 inference:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
-	python inference.py \
+	python speechless/infer/inference.py \
 		--base_model ${TEST_MODEL_PATH} \
 		--test_file_path ${TEST_FILE} \
 
 inference_with_lora:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
-	python inference.py \
+	python speechless/infer/inference.py \
 		--base_model ${BASE_MODEL_PATH} \
 		--lora_weights ${CHECKPOINT_DIR} \
 		--test_file_path ${TEST_FILE} \
@@ -95,17 +95,17 @@ inference_with_lora:
 HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
 
 humaneval_gen:
-	bash ./eval/run_humaneval_gen.sh \
+	bash speechless/eval/run_humaneval_gen.sh \
 		${TEST_MODEL_PATH} \
 		${HUMANEVAL_GEN_OUTPUT_FILE}
 
 	# PYTHONPATH=${PWD}/eval \
 
 extract_code:
-	python eval/extract_code.py ${HUMANEVAL_GEN_OUTPUT_FILE}
+	python speechless/eval/extract_code.py ${HUMANEVAL_GEN_OUTPUT_FILE}
 
 humaneval:
-	python eval/run_humaneval.py \
+	python speechless/eval/run_humaneval.py \
 		${HUMANEVAL_GEN_OUTPUT_FILE} \
 		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 		
@@ -123,7 +123,7 @@ MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}
 # 		--batch-size 20 \
 # 		--completion-limit 20 \
 # 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
-MULTIPLE_E_LANG=python eval/multiple.py \
+MULTIPLE_E_LANG=python speechless/eval/multiple.py \
 		generate \
 		--name ${TEST_MODEL_PATH} \
 		--root-dataset humaneval \
@@ -172,7 +172,7 @@ multipl_e_gen:
 # 	bash ${PWD}/eval/run_multipl_e_eval.sh
 
 multipl_e_eval:
-	python eval/multiple.py \
+	python speechless/eval/multiple.py \
 		eval \
 		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
@@ -180,7 +180,7 @@ multipl_e_eval:
 # 	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 
 multipl_e_results:
-	python eval/multiple.py \
+	python speechless/eval/multiple.py \
 		results \
 		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
@@ -245,7 +245,7 @@ multipl_e_results:
 # 	@echo "lm_eval done"
 
 lmeval:
-	python eval/lmeval.py \
+	python speechless/eval/lmeval.py \
 		--model hf-causal \
 		--model_args pretrained=${TEST_MODEL_PATH} \
 		--task \
@@ -273,7 +273,7 @@ lmeval:
 
 api_server:
 	PYTHONPATH=${PWD}/.. \
-	python api/server.py \
+	python speechless/api/server.py \
 		--model_name_or_path ${TEST_MODEL_PATH} \
 		--model_family vllm \
 
