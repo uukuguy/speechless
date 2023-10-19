@@ -180,6 +180,14 @@ python -m speechless.eval.lmeval \
 make lm_eval
 ```
 
+### bigcode-evaluation-harness
+
+```bash
+docker pull ghcr.io/bigcode-project/evaluation-harness
+docker tag ghcr.io/bigcode-project/evaluation-harness evaluation-harness
+
+```
+
 ### HumanEval
 
 Execute the HumanEval geenrate command on the GPU server where the model is located.
@@ -208,6 +216,11 @@ python eval/run_humaneval.py \
 ```
 
 ### MultiPL-E
+
+```bash
+docker pull ghcr.io/bigcode-project/evaluation-harness-multiple
+docker tag ghcr.io/bigcode-project/evaluation-harness-multiple evaluation-harness-multiple
+```
 
 ```bash
 python -m speechless.eval.multiple \

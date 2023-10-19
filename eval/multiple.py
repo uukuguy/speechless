@@ -4,6 +4,7 @@ From MultiPL-E/automodel.py
 This script produces completions for roughly any AutoModelForCausalLM.
 """
 import os, sys 
+import copy
 from tqdm import tqdm
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -101,8 +102,9 @@ def main():
         name = do_name_override(args)
         if args.langs is not None:
             for lang in tqdm(args.langs, ncols=100):
-                args.lang = lang
-                make_main(args, name, model.completions)
+                task_args = copy.deepcopy(args)
+                task_args.lang = lang
+                make_main(task_args, name, model.completions)
         else:
             make_main(args, name, model.completions)
 
