@@ -165,7 +165,7 @@ multipl_e_go:
 
 multipl_e_gen:
 	${MULTIPLE_E_LANG} \
-		--langs py java js cpp rust go \
+		--langs py java js cpp rs go \
 
 # multipl_e_eval:
 # 	cd ${MULTIPL_E_RESULTS_DIR} && \
@@ -258,6 +258,50 @@ lmeval:
 		--no_cache \
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME} 
+
+BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
+BIGCODE_METRIC_RESULTS_FILE=eval_results/bigcode_eval/${TASK_NAME}/bigcode_evaluation_results.json
+BIGCODE_SAVE_GENERATIONS_PATH=eval_results/bigcode_eval/${TASK_NAME}/generations.json
+
+BIGCODE_CHECK_REFERENCES="--check_references"
+
+bigcode_eval_gen:
+	BITS="--load_in_8bit" \
+	NUMBER_PROBLEMS= \
+	LIMIT="--limit 100" \
+	MAX_LENGTH_GENERATION=2048 \
+	BATCH_SIZE=16 \
+	TEMPERATURE=0.2 \
+	BITS="--load_in_8bit" \
+	PRECISION=bf16 \
+	accelerate launch  eval/bigcode_eval.py \
+		--model ${TEST_MODEL_PATH} \
+		${BITS} \
+		--tasks ${BIGCODE_TASKS} \
+		${LIMIT} \
+		--batch_size ${BATCH_SIZE} \
+		--limit ${NUMBER_PROBLEMS} \
+		--max_length_generation ${MAX_LENGTH_GENERATION} \
+		--temperature ${TEMPERATURE} \
+		--do_sample True \
+		--n_samples 1 \
+		--batch_size 1 \
+		--precision ${PRECISION}\
+		--trust_remote_code True \
+		--save_generations \
+		--save_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
+		--save_references \
+		--generation_only \
+		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
+		${BIGCODE_CHECK_REFERENCES}
+
+bigcode_eval_exec:
+	accelerate launch  eval/bigcode_eval.py \
+		--model ${TEST_MODEL_PATH}
+		--tasks ${BIGCODE_TASKS} \
+		--allow_code_execution  \
+		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
+		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
 
 # -------------------- vllm --------------------
 
