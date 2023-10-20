@@ -1,4 +1,4 @@
-import os, json, argparse
+import os, sys, json, argparse
 import collections, itertools, random
 import numpy as np
 import transformers
@@ -7,6 +7,8 @@ from loguru import logger
 
 import gc, ctypes
 import torch
+script_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, f"{script_path}/lm-evaluation-harness")
 from lm_eval import tasks 
 import lm_eval.metrics
 import lm_eval.models

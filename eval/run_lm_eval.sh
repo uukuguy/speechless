@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: run_lmeval.sh model_path
+# Usage: run_lm_eval.sh model_path
 
 SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
@@ -10,7 +10,7 @@ TASK_NAME=$(basename ${TEST_MODEL_PATH})
 echo "Model Path: ${TEST_MODEL_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
-python ${SCRIPT_PATH}/../eval/lmeval.py \
+python ${SCRIPT_PATH}/lm_eval.py \
     --model hf-causal \
     --model_args pretrained=${TEST_MODEL_PATH} \
     --task \

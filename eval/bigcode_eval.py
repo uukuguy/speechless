@@ -1,7 +1,8 @@
-import os, sys
+import os, sys, copy
 import fnmatch
 import json
 import warnings
+from tqdm import tqdm
 
 import datasets
 import torch
@@ -41,6 +42,7 @@ class MultiChoice:
 def parse_args():
     parser = HfArgumentParser(EvalArguments)
 
+    parser.add_argument("--eval_results_dir", type=str, default="eval_results/bigcode_eval")
     parser.add_argument(
         "--model",
         default="codeparrot/codeparrot-small",
@@ -161,12 +163,12 @@ def parse_args():
         action="store_true",
         help="Whether to save code generations",
     )
-    parser.add_argument(
-        "--save_generations_path",
-        type=str,
-        default="generations.json",
-        help="Path for saving the code generations",
-    )
+    # parser.add_argument(
+    #     "--save_generations_path",
+    #     type=str,
+    #     default="generations.json",
+    #     help="Path for saving the code generations",
+    # )
     parser.add_argument(
         "--save_references",
         action="store_true",
@@ -212,6 +214,10 @@ def main():
     args = parse_args()
     transformers.logging.set_verbosity_error()
     datasets.logging.set_verbosity_error()
+
+    os.makedirs(args.eval_results_dir, exist_ok=True)
+    # os.makedirs(os.path.dirname(args.save_generations_path), exist_ok=True)
+    # os.makedirs(os.path.dirname(args.metric_output_path), exist_ok=True)
 
     if args.tasks is None:
         task_names = ALL_TASKS
@@ -328,14 +334,17 @@ def main():
 
         evaluator = Evaluator(accelerator, model, tokenizer, args)
 
-        for task in task_names:
+        pbar = tqdm(task_names, ncols=100)
+        for task in pbar:
+            args.save_generations_path = f"{args.eval_results_dir}/bigcode_{task}_generations.json"
+            pbar.set_description(f"{task}")
             if args.generation_only:
                 if accelerator.is_main_process:
                     print("generation mode only")
                 generations, references = evaluator.generate_text(task)
                 if accelerator.is_main_process:
                     with open(args.save_generations_path, "w") as fp:
-                        json.dump(generations, fp)
+                        json.dump(generations, fp, ensure_ascii=False, indent=2)
                         print(f"generations were saved at {args.save_generations_path}")
                     if args.save_references:
                         with open("references.json", "w") as fp:
@@ -347,11 +356,11 @@ def main():
     # Save all args to config
     results["config"] = vars(args)
     if not args.generation_only:
-        dumped = json.dumps(results, indent=2)
+        dumped = json.dumps(results, ensure_ascii=False, indent=2)
         if accelerator.is_main_process:
             print(dumped)
-
-        with open(args.metric_output_path, "w") as f:
+        metric_output_path = f"{args.eval_results_dir}/bigcode_eval_results.json"
+        with open(metric_output_path, "w") as f:
             f.write(dumped)
 
 
