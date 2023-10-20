@@ -33,7 +33,8 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -99,15 +100,12 @@ humaneval_gen:
 		${TEST_MODEL_PATH} \
 		${HUMANEVAL_GEN_OUTPUT_FILE}
 
-	# PYTHONPATH=${PWD}/eval \
-
-extract_code:
-	python eval/extract_code.py ${HUMANEVAL_GEN_OUTPUT_FILE}
-
 humaneval:
-	python eval/run_humaneval.py \
-		${HUMANEVAL_GEN_OUTPUT_FILE} \
-		--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+	# python eval/run_humaneval.py \
+	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
+	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+
+	bash ./eval/run_humaneval.sh ${TEST_MODEL_PATH}
 		
 # -------------------- MultiPL-E --------------------
 
@@ -129,7 +127,7 @@ MULTIPLE_E_LANG=python eval/multiple.py \
 		--root-dataset humaneval \
 		--temperature 0.2 \
 		--batch-size 20 \
-		--completion-limit 20 \
+		--completion-limit 10 \
 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
 
 # 34b ~ 56m
@@ -163,26 +161,49 @@ multipl_e_go:
 # multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust multipl_e_go
 # 	@echo "multipl_e_gen done"
 
-multipl_e_gen:
-	${MULTIPLE_E_LANG} \
-		--langs py java js cpp rs go \
+# multipl_e_gen:
+# 	${MULTIPLE_E_LANG} \
+# 		--langs py java js cpp rs go sh jl \
+
+multiple_gen:
+	# python eval/multiple_gen.py \
+	# 	--do_generate \
+	# 	-m ${TASK_NAME}  \
+	# 	--langs py java js cpp rs go sh jl \
+	# 	--completion_limit 5 && \
+	# python eval/multiple_gen.py \
+	# 	--do_convert \
+	# 	--output_dir output_multiple_gen/${TASK_NAME}
+
+	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
+
+multiple:
+	# python eval/multiple.py \
+	# 	eval \
+	# 	--results_dir output_multiple_gen/${TASK_NAME}/multiple && \
+	# python eval/multiple.py \
+	# 	results \
+	# 	--results_dir output_multiple_gen/${TASK_NAME}/multiple
+
+	bash eval/run_multiple.sh ${TEST_MODEL_PATH}
+
 
 # multipl_e_eval:
 # 	cd ${MULTIPL_E_RESULTS_DIR} && \
 # 	bash ${PWD}/eval/run_multipl_e_eval.sh
 
-multipl_e_eval:
-	python eval/multiple.py \
-		eval \
-		--results_dir ${MULTIPL_E_RESULTS_DIR}
+# multipl_e_eval:
+# 	python eval/multiple.py \
+# 		eval \
+# 		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
 # multipl_e_results:
 # 	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
 
-multipl_e_results:
-	python eval/multiple.py \
-		results \
-		--results_dir ${MULTIPL_E_RESULTS_DIR}
+# multipl_e_results:
+# 	python eval/multiple.py \
+# 		results \
+# 		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
 
 # -------------------- lm-evaluation-harness --------------------
@@ -244,64 +265,74 @@ multipl_e_results:
 # lmeval_open_llm: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
 # 	@echo "lm_eval done"
 
-lmeval:
-	python eval/lmeval.py \
-		--model hf-causal \
-		--model_args pretrained=${TEST_MODEL_PATH} \
-		--task \
-			"arc_challenge|25|100" \
-			"hellaswag|10|100" \
-			"hendrycksTest-*|5|100" \
-			"truthfulqa_mc|0|100" \
-			"gsm8k|8|100" \
-		--batch_size 4 \
-		--no_cache \
-		--write_out \
-		--output_path eval_results/lm_eval/${TASK_NAME} 
+# lmeval:
+# 	python eval/lm_eval.py \
+# 		--model hf-causal \
+# 		--model_args pretrained=${TEST_MODEL_PATH} \
+# 		--task \
+# 			"arc_challenge|25|100" \
+# 			"hellaswag|10|100" \
+# 			"hendrycksTest-*|5|100" \
+# 			"truthfulqa_mc|0|100" \
+# 			"gsm8k|8|100" \
+# 		--batch_size 4 \
+# 		--no_cache \
+# 		--write_out \
+# 		--output_path eval_results/lm_eval/${TASK_NAME} 
 
-BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
-BIGCODE_METRIC_RESULTS_FILE=eval_results/bigcode_eval/${TASK_NAME}/bigcode_evaluation_results.json
-BIGCODE_SAVE_GENERATIONS_PATH=eval_results/bigcode_eval/${TASK_NAME}/generations.json
+lm_eval:
+	bash eval/run_lm_eval.sh ${TEST_MODEL_PATH}
 
-BIGCODE_CHECK_REFERENCES="--check_references"
 
+# BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
+
+# Don't run generation but benchmark groundtruth (useful for debugging)
+# BIGCODE_CHECK_REFERENCES="--check_references"
+
+# BITS="--load_in_8bit" 
+# LIMIT="--limit 10"
+# MAX_LENGTH_GENERATION=2048
+# TEMPERATURE=0.2
+# BITS="--load_in_8bit"
+# PRECISION=bf16
+# N_SAMPLES=1
+# BATCH_SIZE=16
+
+# bigcode_eval_gen:
+# 	accelerate launch \
+# 		--num_processes=2 \
+# 		--num_machines=1 \
+# 		--mixed_precision=${PRECISION} \
+# 		--dynamo_backend=no \
+# 		eval/bigcode_eval.py \
+# 		--model ${TEST_MODEL_PATH} \
+# 		${BITS} \
+# 		--tasks ${BIGCODE_TASKS} \
+# 		--limit 20 \
+# 		--max_length_generation ${MAX_LENGTH_GENERATION} \
+# 		--temperature ${TEMPERATURE} \
+# 		--do_sample \
+# 		--n_samples ${N_SAMPLES} \
+# 		--batch_size ${BATCH_SIZE} \
+# 		--precision ${PRECISION}\
+# 		--trust_remote_code \
+# 		--eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
+# 		--generation_only \
+# 		--save_generations \
+# 		${BIGCODE_CHECK_REFERENCES}
 bigcode_eval_gen:
-	BITS="--load_in_8bit" \
-	NUMBER_PROBLEMS= \
-	LIMIT="--limit 100" \
-	MAX_LENGTH_GENERATION=2048 \
-	BATCH_SIZE=16 \
-	TEMPERATURE=0.2 \
-	BITS="--load_in_8bit" \
-	PRECISION=bf16 \
-	accelerate launch  eval/bigcode_eval.py \
-		--model ${TEST_MODEL_PATH} \
-		${BITS} \
-		--tasks ${BIGCODE_TASKS} \
-		${LIMIT} \
-		--batch_size ${BATCH_SIZE} \
-		--limit ${NUMBER_PROBLEMS} \
-		--max_length_generation ${MAX_LENGTH_GENERATION} \
-		--temperature ${TEMPERATURE} \
-		--do_sample True \
-		--n_samples 1 \
-		--batch_size 1 \
-		--precision ${PRECISION}\
-		--trust_remote_code True \
-		--save_generations \
-		--save_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
-		--save_references \
-		--generation_only \
-		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
-		${BIGCODE_CHECK_REFERENCES}
+	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
 
-bigcode_eval_exec:
-	accelerate launch  eval/bigcode_eval.py \
-		--model ${TEST_MODEL_PATH}
-		--tasks ${BIGCODE_TASKS} \
-		--allow_code_execution  \
-		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
-		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
+# bigcode_eval_exec:
+# 	accelerate launch  eval/bigcode_eval.py \
+# 		--model ${TEST_MODEL_PATH}
+# 		--tasks ${BIGCODE_TASKS} \
+# 		--allow_code_execution  \
+# 		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
+# 		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
+
+bigcode_eval:
+	./eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
 
 # -------------------- vllm --------------------
 
