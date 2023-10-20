@@ -7,11 +7,16 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 TEST_MODEL_PATH=$1
 TASK_NAME=$(basename ${TEST_MODEL_PATH})
 
+COMPLETION_LIMIT=$2
+if [ -z ${COMPLETION_LIMIT} ]; then
+	COMPLETION_LIMIT=1
+fi
+
 echo "Model Path: ${TEST_MODEL_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
 OUTPUT_DIR=eval_results/multipl_e
-MULTIPL_E_RESULTS_DIR=${OUTPUT_DIR}/${TASK_NAME}
+MULTIPL_E_RESULTS_DIR=${OUTPUT_DIR}/${TASK_NAME}/${COMPLETION_LIMIT}-completions
 
 # python ${SCRIPT_PATH}/multiple.py \
 # 		generate \
@@ -28,7 +33,7 @@ python eval/multiple_gen.py \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
 	--langs py java js cpp rs go sh jl \
-	--completion_limit 5 && \
+	--completion_limit ${COMPLETION_LIMIT} && \
 python eval/multiple_gen.py \
 	--do_convert \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} 
