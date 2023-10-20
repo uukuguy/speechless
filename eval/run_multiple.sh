@@ -16,7 +16,7 @@ echo "Model Path: ${TEST_MODEL_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
 # MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}
-MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}/$(COMPLETION_LIMIT)-completions/multiple
+MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}/${COMPLETION_LIMIT}-completions/multiple
 
 python ${SCRIPT_PATH}/multiple.py \
 		eval \
