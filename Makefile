@@ -34,7 +34,10 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.1
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-reasoning-7b-v0
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -347,8 +350,11 @@ bigcode_eval:
 # 		--model ${TEST_MODEL_PATH}
 
 api_server:
-	PYTHONPATH=${PWD}/.. \
-	python api/server.py \
+	# PYTHONPATH=${PWD}/.. \
+	# python .api/server.py \
+
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python -m speechless.api.server \
 		--model_name_or_path ${TEST_MODEL_PATH} \
 		--model_family vllm \
 

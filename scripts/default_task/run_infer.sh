@@ -4,8 +4,11 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_PATH}/task.env
 
-PYTHONPATH=${PWD}/../.. \
-python ../../infer.py \
+# PYTHONPATH=${PWD}/../.. \
+# python ../../infer.py \
+
+PYTHONPATH=${SPEECHLESS_ROOT} \
+python -m speechless.infer \
     --model_name ${TASK_NAME} \
     --questions_file /opt/local/datasets/Speechless/chip2023_test_b.json \
     --output_file chip2023_answers.json \
