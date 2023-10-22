@@ -71,23 +71,23 @@ def main():
             eprint(
                 f"Found multiple temperatures {temperatures} in {d} {results}")
             continue
-        temperature = list(temperatures)[0]
         num_problems = len(results)
         min_completions = np.min([r["n"] for r in results])
         max_completions = np.max([r["n"] for r in results])
-        if temperature == 0.2:
-            pass_1 = np.mean([r["pass@1"] for r in results])
-            print(
-                f"{name},1,{pass_1},{num_problems},{min_completions},{max_completions}")
-        elif temperature == 0.8:
-            pass_10 = np.mean([r["pass@10"] for r in results])
-            pass_100 = np.mean([r["pass@100"] for r in results])
-            print(
-                f"{name},10,{pass_10},{num_problems},{min_completions},{max_completions}")
-            print(
-                f"{name},100,{pass_100},{num_problems},{min_completions},{max_completions}")
-        else:
-            raise ValueError(f"Unexpected temperature: {temperature}")
+        # temperature = list(temperatures)[0]
+        # if temperature == 0.2:
+        #     pass_1 = np.mean([r["pass@1"] for r in results])
+        #     print(
+        #         f"{name},1,{pass_1},{num_problems},{min_completions},{max_completions}")
+        # elif temperature == 0.8:
+        #     pass_10 = np.mean([r["pass@10"] for r in results])
+        #     pass_100 = np.mean([r["pass@100"] for r in results])
+        #     print(
+        #         f"{name},10,{pass_10},{num_problems},{min_completions},{max_completions}")
+        #     print(
+        #         f"{name},100,{pass_100},{num_problems},{min_completions},{max_completions}")
+        # else:
+        #     raise ValueError(f"Unexpected temperature: {temperature}")
 
             
         if args.k is not None:

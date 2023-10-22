@@ -5,7 +5,9 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_PATH}/task.env
 
-PYTHONPATH=${SCRIPT_PATH}/../../.. \
-python ../../api/server.py \
+# python ${SPEECHLESS_ROOT}/speechless/api/server.py \
+
+PYTHONPATH=${SPEECHLESS_ROOT} \
+python -m speechless.api.server \
         --model_name_or_path=${TEST_MODEL_PATH} \
         --model_family vllm

@@ -32,7 +32,7 @@ def get_args():
 
 args = get_args()
 
-from settings import Settings
+from .settings import Settings
 settings = Settings(model_name_or_path=args.model_name_or_path, 
                     model_family=args.model_family, 
                     stream=args.stream, 
