@@ -32,7 +32,7 @@ python eval/multiple_gen.py \
 	--do_generate \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
-	--langs py java js cpp rs go sh jl \
+	--langs py java js cpp rs go sh jl cs ts \
 	--completion_limit ${COMPLETION_LIMIT} && \
 python eval/multiple_gen.py \
 	--do_convert \

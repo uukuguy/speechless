@@ -10,11 +10,13 @@ from async_openai import batch_completion, CompletionPrompt, default_argument_pa
 def get_args():
     parser = default_argument_parser()
 
+    available_langs = ['py', 'java', 'js', 'cpp', 'rs', 'go', 'sh', 'jl', 'cs', 'ts']
+
     parser.add_argument("--do_generate", action="store_true")
     parser.add_argument("--do_convert", action="store_true")
     parser.add_argument("--output_dir", type=str, default="./output_multiple_gen")
     parser.add_argument("--root_dataset", type=str, default='humaneval', choices=['humaneval', 'mbpp']) 
-    parser.add_argument("--langs", type=str, nargs='+', choices=['py', 'java', 'js', 'cpp', 'rs', 'go', 'sh', 'jl'])
+    parser.add_argument("--langs", type=str, nargs='+', default=available_langs, choices=available_langs)
     parser.add_argument("-f", "--prompt_file", type=str, help="The path to the file containing the prompt template.")
 
     args = parser.parse_args()
