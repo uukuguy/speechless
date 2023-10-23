@@ -142,6 +142,15 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         metadata={"help": "Rerope window size."}
     )
 
+    neftune: bool = field(
+        default=False,
+        metadata={"help": "Use neftune."}
+    )
+    noise_alpha: float = field(
+        default=5.0,
+        metadata={"help": "Neftune noise alpha."}
+    )
+
     wandb: str = field(
         default=None,
         metadata={"help": "Wandb project name."}
@@ -389,6 +398,11 @@ def get_accelerate_model(args, checkpoint_dir):
         if "lm_head" in name or "embed_tokens" in name:
             if hasattr(module, "weight"):
                 module.to(compute_dtype)
+
+    if args.neftune:
+        from patches.neftune_monkey_patch import NEFTune
+        model = NEFTune(model, noise_alpha=args.noise_alpha)
+
     return model
 
 def print_trainable_parameters(args, model):
