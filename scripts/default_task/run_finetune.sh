@@ -56,4 +56,5 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --force_remove_overlength_samples False \
     --flash_attention True \
     --rerope False \
-    --repeat_steps 0
+    --repeat_steps 0 \
+    ${DEEPSEED}

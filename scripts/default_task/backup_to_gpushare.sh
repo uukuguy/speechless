@@ -9,4 +9,4 @@ echo "Parent Path: ${PARENT_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
 TASK_ZIP_FILE=${PARENT_PATH}/${TASK_NAME}.$(date +%Y%m%d-%H%M%S).zip
-zip -0 -ry ${TASK_ZIP_FILE} ${PARENT_PATH}
+zip -0 -ry ${TASK_ZIP_FILE} ${SCRIPT_PATH}
