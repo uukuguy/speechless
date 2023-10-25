@@ -151,6 +151,17 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         metadata={"help": "Neftune noise alpha."}
     )
 
+
+    sliding_window: int = field(
+        default=4096,
+        metadata={"help": "Sliding window size."}
+    )
+
+    rope_theta: float = field(
+        default=10000,
+        metadata={"help": "Rope theta."}
+    )
+
     wandb: str = field(
         default=None,
         metadata={"help": "Wandb project name."}
@@ -332,6 +343,9 @@ def get_accelerate_model(args, checkpoint_dir):
     if orig_ctx_len and args.model_max_len > orig_ctx_len:
         scaling_factor = float(math.ceil(args.model_max_len / orig_ctx_len))
         config.rope_scaling = {"type": "linear", "factor": scaling_factor}
+
+    config.sliding_window = args.sliding_window
+    config.rope_theta = args.rope_theta
 
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {

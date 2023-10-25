@@ -15,8 +15,8 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --output_dir ${OUTPUT_DIR} \
     --num_train_epochs ${NUM_TRAIN_EPOCHS} \
     --data_seed 10042 \
-    --save_strategy steps \
-    --save_total_limit 1 \
+    --save_strategy ${SAVE_STRATEGY} \
+    ${SAVE_TOTAL_LIMIT} \
     --evaluation_strategy steps \
     --eval_dataset_size ${EVAL_DATASET_SIZE} \
     --save_steps ${SAVE_STEPS} \
@@ -38,6 +38,8 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --double_quant \
     --quant_type nf4 \
     --bf16 \
+    --sliding_window ${SLIDING_WINDOW} \
+    --rope_theta ${ROPE_THETA} \
     --dataset ${DATASET} \
     --dataset_format ${DATASET_FORMAT} \
     --max_new_tokens ${MODEL_MAX_LENGTH} \
@@ -57,4 +59,5 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --flash_attention True \
     --rerope False \
     --repeat_steps 0 \
+    ${NEFTUNE} \
     ${DEEPSEED}
