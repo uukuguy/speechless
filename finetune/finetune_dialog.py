@@ -496,6 +496,32 @@ class DataCollatorForCausalLM(object):
         }
         return data_dict
 
+ALPACA_PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response: "
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Response: "
+    ),
+}
+
+PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Response:\n"
+    ),
+}
+
 @dataclass
 class DialogDataCollatorForCausalLM(object):
     tokenizer: transformers.PreTrainedTokenizer
@@ -506,12 +532,18 @@ class DialogDataCollatorForCausalLM(object):
         input_ids = []
         labels = []
         for example in instances:
-
+            system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
             example_input_ids = None
             example_output_ids = None
             for idx, (human_input, bot_response) in enumerate(example['dialog']):
-                source = f"{self.tokenizer.bos_token}{human_input}"
-                target = f"{bot_response}{self.tokenizer.eos_token}"
+                # human_input = PROMPT_DICT["prompt_no_input"].format(instruction=human_input)
+                human_input = "USER: " + human_input + "\n" + "ASSISTANT: "
+                if idx == 0:
+                    source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
+                else:
+                    source = f"{self.tokenizer.bos_token}{human_input}"
+                target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
+
                 tokenized_source = self.tokenizer(source, 
                                                   max_length=self.model_max_len, 
                                                   truncation=True, 
@@ -569,32 +601,6 @@ def extract_unnatural_instructions_data(examples, extract_reformulations=False):
                     out['input'].append(instance['instruction_with_input'])
                     out['output'].append(instance['output'])
     return out
-
-ALPACA_PROMPT_DICT = {
-    "prompt_input": (
-        "Below is an instruction that describes a task, paired with an input that provides further context. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response: "
-    ),
-    "prompt_no_input": (
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Response: "
-    ),
-}
-
-PROMPT_DICT = {
-    "prompt_input": (
-        "Below is an instruction that describes a task, paired with an input that provides further context. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
-    ),
-    "prompt_no_input": (
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request.\n\n"
-        "### Instruction:\n{instruction}\n\n### Response:\n"
-    ),
-}
 
 def extract_alpaca_dataset(example):
     if example.get("input", "") != "":
@@ -874,11 +880,22 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
 
             dataset = dataset.map(_format_input_output)
         elif dataset_format == 'sharegpt':
-            pass
+            def _format_sharegpt(example):
+                human_bot_dialog = []
+                dialog = example['dialog']
+                for _i in range(len(dialog) // 2):
+                    human_input = dialog[2 * _i]['value']
+                    bot_output = dialog[2 * _i + 1]['value']
+                    human_bot_dialog.append((human_input, bot_output))
+                return {'dialog': human_bot_dialog}
+                    
+            dataset = dataset.map(_format_sharegpt)
 
         # Remove unused columns.
         dataset = dataset.remove_columns(
-            [col for col in dataset.column_names['train'] if col not in ['input', 'output']]
+            # FIXME
+            # [col for col in dataset.column_names['train'] if col not in ['input', 'output']]
+            [col for col in dataset.column_names['train'] if col not in ['dialog', 'system_prompt']]
         )
         return dataset
 
@@ -935,7 +952,9 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         )
         logger.info(f"Filtered out {prev_len - len(train_dataset)} samples. ({len(train_dataset)}/{prev_len})")
 
-    data_collator = DataCollatorForCausalLM(
+    # FIXME
+    # data_collator = DataCollatorForCausalLM(
+    data_collator = DialogDataCollatorForCausalLM(
         tokenizer=tokenizer,
         model_max_len=args.model_max_len,
     )
