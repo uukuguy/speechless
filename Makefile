@@ -45,8 +45,16 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-reasoning-7b-v0.2-tora-cosine
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-reasoning-7b-v0.3-tora
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-reasoning-7b-v0.4-tora
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-32k-mistral
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-reasoning-7b-v0.3-mistral
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/EleutherAI/llemma_7b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-32k-mistral
+#TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.1-32k-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-tora-794-steps
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 

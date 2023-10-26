@@ -32,7 +32,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --max_memory_MB ${MAX_MEMORY_MB} \
     --bits 4 \
     --lora_r ${LORA_R} \
-    --lora_alpha 16 \
+    --lora_alpha ${LORA_ALPHA} \
     --lora_dropout 0.05 \
     --lora_modules all \
     --double_quant \
