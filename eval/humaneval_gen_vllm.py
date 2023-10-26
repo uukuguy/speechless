@@ -34,6 +34,15 @@ Create a Python script for this problem:
 ### Response:"""
     return INSTRUCTION
 
+def generate_speechless_prompt(input):
+    INSTRUCTION = f"""<s>A Bot
+
+USER: Create a Python script for this problem:
+{input}
+
+ASSISTANT: """
+    return INSTRUCTION
+
 def generate_llama2_prompt(input):
     INSTRUCTION=f"""<INST>{input}</INST>"""
     return INSTRUCTION
@@ -91,6 +100,7 @@ def main():
         prompt = prompts[i].replace('    ', '\t')
         # prompt = "<INST>" + prompt + "</INST>"
         prompt_batch = [generate_alpaca_prompt(prompt)]
+        # prompt_batch = [generate_speechless_prompt(prompt)]
         # print(f"{prompt_batch=}")
 
         ids_batch = [task_ids[i]]

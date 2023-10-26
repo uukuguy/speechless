@@ -414,7 +414,7 @@ def get_accelerate_model(args, checkpoint_dir):
                 module.to(compute_dtype)
 
     if args.neftune:
-        from patches.neftune_monkey_patch import NEFTune
+        from speechless.patches.neftune_monkey_patch import NEFTune
         model = NEFTune(model, noise_alpha=args.noise_alpha)
 
     return model
@@ -546,15 +546,23 @@ class DialogDataCollatorForCausalLM(object):
         input_ids = []
         labels = []
         for example in instances:
-            system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
+            # system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
+            system_prompt = example.get('system_prompt', "").strip()
+            if system_prompt:
+                system_prompt += "\n\n"
             example_input_ids = None
             example_output_ids = None
             for idx, (human_input, bot_response) in enumerate(example['dialog']):
-                # human_input = PROMPT_DICT["prompt_no_input"].format(instruction=human_input)
-                human_input = "USER: " + human_input + "\n" + "ASSISTANT: "
+                # human_input = "USER: " + human_input + "\n" + "ASSISTANT: "
                 if idx == 0:
-                    source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
+                    if system_prompt:
+                        source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
+                    else:
+                        system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
+                        human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
+                        source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
                 else:
+                    human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
                     source = f"{self.tokenizer.bos_token}{human_input}"
                 target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
 

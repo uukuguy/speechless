@@ -26,16 +26,25 @@ def get_args():
 
     return args
 
+def generate_speechless_prompt(input):
+#     INSTRUCTION = f"""<s>A Bot
+
+# USER: {input}
+
+# ASSISTANT: """
+    INSTRUCTION = f"""<s>{input}"""
+    return INSTRUCTION
 
 def build_completion_prompts(dataset, prompt_template, sampling_params):
     completion_prompts = []
     for data in dataset:
         s_params = copy.deepcopy(sampling_params)
         s_params['stop'] = data['stop_tokens']
-
+        prompt = data['prompt']
+        # prompt = generate_speechless_prompt(prompt)
         completion_prompt = CompletionPrompt(
             completion_type="commpletion",
-            prompt_template=data['prompt'],
+            prompt_template=prompt,
             prompt_args={},
             input_data=data,
             sampling_params=s_params,
