@@ -562,7 +562,7 @@ class DialogDataCollatorForCausalLM(object):
                         else:
                             system_prompt = "A chat between a curious user and an artificial intelligence assistant who can use external tools and APIs to solve the user's question."
                             "The assistant gives tools and APIs calling processes or final answer to the human's question."
-                            human_input = "Human: {instruction} Assistant:".format(instruction=human_input)
+                            human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
                             source = f"{system_prompt} {human_input}"
                     else:
                         human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
@@ -579,7 +579,10 @@ class DialogDataCollatorForCausalLM(object):
                             source = f"{system_prompt}{human_input}"
                     else:
                         human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
-                        source = f"{self.tokenizer.bos_token}{human_input}"
+                        # source = f"{self.tokenizer.bos_token}{human_input}"
+                        source = f"{human_input}"
+
+                # source = f"{self.tokenizer.bos_token}{source}"
                 target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
 
                 tokenized_source = self.tokenizer(source, 
