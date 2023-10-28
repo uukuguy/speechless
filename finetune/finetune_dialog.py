@@ -536,6 +536,7 @@ PROMPT_DICT = {
     ),
 }
 
+
 @dataclass
 class DialogDataCollatorForCausalLM(object):
     tokenizer: transformers.PreTrainedTokenizer
@@ -547,23 +548,38 @@ class DialogDataCollatorForCausalLM(object):
         labels = []
         for example in instances:
             # system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
+            prompt_type = example['prompt_type']
             system_prompt = example.get('system_prompt', "").strip()
             if system_prompt:
                 system_prompt += "\n\n"
             example_input_ids = None
             example_output_ids = None
             for idx, (human_input, bot_response) in enumerate(example['dialog']):
-                # human_input = "USER: " + human_input + "\n" + "ASSISTANT: "
-                if idx == 0:
-                    if system_prompt:
-                        source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
+                if prompt_type == 'toolllama':
+                    if idx == 0:
+                        if system_prompt:
+                            source = f"{system_prompt} Human: {human_input} Assistant: "
+                        else:
+                            system_prompt = "A chat between a curious user and an artificial intelligence assistant who can use external tools and APIs to solve the user's question."
+                            "The assistant gives tools and APIs calling processes or final answer to the human's question."
+                            human_input = "Human: {instruction} Assistant:".format(instruction=human_input)
+                            source = f"{system_prompt} {human_input}"
                     else:
-                        system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
+                        human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
+                        source = f"{human_input}"
+                else: # default alpaca
+                    if idx == 0:
+                        if system_prompt:
+                            # source = f"{self.tokenizer.bos_token}{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
+                            source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
+                        else:
+                            system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
+                            human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
+                            # source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
+                            source = f"{system_prompt}{human_input}"
+                    else:
                         human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
-                        source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
-                else:
-                    human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
-                    source = f"{self.tokenizer.bos_token}{human_input}"
+                        source = f"{self.tokenizer.bos_token}{human_input}"
                 target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
 
                 tokenized_source = self.tokenizer(source, 
@@ -917,7 +933,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         dataset = dataset.remove_columns(
             # FIXME
             # [col for col in dataset.column_names['train'] if col not in ['input', 'output']]
-            [col for col in dataset.column_names['train'] if col not in ['dialog', 'system_prompt']]
+            [col for col in dataset.column_names['train'] if col not in ['dialog', 'system_prompt', 'prompt_type']]
         )
         return dataset
 
