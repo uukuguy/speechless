@@ -198,6 +198,8 @@ def flashattn_forward(
 
     attention_mask: [bsz, q_len]
     """
+    print(f"flashattn_forward() in flash_attn_monkey_patch.py")
+
     # pylint: disable=duplicate-code
     bsz, q_len, _ = hidden_states.size()
 

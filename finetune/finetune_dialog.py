@@ -36,6 +36,8 @@ import pandas as pd
 # logger = logging.getLogger(__name__)
 from loguru import logger
 
+# from speechless.patches.llama_attn_replace_sft import replace_llama_attn
+# replace_llama_attn(use_flash_attn=True, use_full=False, inference=False)
 
 import torch
 import transformers
@@ -78,7 +80,7 @@ class ModelArguments:
         default="EleutherAI/pythia-12b"
     )
     trust_remote_code: Optional[bool] = field(
-        default=False,
+        default=True,
         metadata={"help": "Enable unpickling of arbitrary code in AutoModelForCausalLM#from_pretrained."}
     )
     # use_auth_token: Optional[bool] = field(
@@ -132,6 +134,11 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         default=True,
         metadata={"help": "Use flash attention."}
     ) 
+
+    long_lora: bool = field(
+        default=False,
+        metadata={"help": "Use long lora."}
+    )
 
     rerope: bool = field(
         default=False, 
@@ -368,8 +375,11 @@ def get_accelerate_model(args, checkpoint_dir):
         "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
     }
-    if args.mpt:
-        model_kwargs["attn_config"] = {"attn_impl": "triton"}
+
+    # if args.mpt:
+    #     model_kwargs["attn_config"] = {"attn_impl": "triton"}
+
+    logger.info(f"{model_kwargs=}")
     # model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, **model_kwargs)
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, config=config, **model_kwargs)
     if compute_dtype == torch.float16 and args.bits == 4:
@@ -571,18 +581,18 @@ class DialogDataCollatorForCausalLM(object):
                     if idx == 0:
                         if system_prompt:
                             # source = f"{self.tokenizer.bos_token}{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
-                            source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
+                            source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:"
                         else:
                             system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
-                            human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
+                            human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
                             # source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
                             source = f"{system_prompt}{human_input}"
                     else:
-                        human_input = "### Instruction:\n{instruction}\n\n### Response:\n".format(instruction=human_input)
+                        human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
                         # source = f"{self.tokenizer.bos_token}{human_input}"
                         source = f"{human_input}"
 
-                # source = f"{self.tokenizer.bos_token}{source}"
+                source = f"{self.tokenizer.bos_token}{source}"
                 target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
 
                 tokenized_source = self.tokenizer(source, 
@@ -1144,15 +1154,28 @@ def train():
     # setup_wandb(args)
 
     # if args.flash_attention:
-    #     from patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+    #     from speechless.patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
     #     replace_llama_attn_with_flash_attn(packed=args.sample_packing)
     #     logger.info(f"Enabled flash attention monkey patching.")
 
+    if args.long_lora:
+        if 'mistral' in args.model_name_or_path:
+            logger.warning(f"Mistral doesn't support long alpaca now.")
+            # from speechless.patches.llama_attn_replace_sft import replace_mistral_attn
+            # replace_mistral_attn(use_flash_attn=training_args.flash_attention, use_full=False, inference=False)
+        else:
+            from speechless.patches.long_lora_monkey_patch import replace_llama_attn
+            replace_llama_attn(use_flash_attn=training_args.flash_attention, use_full=False, inference=False)
+
     if args.rerope:
-        from patches.rerope_monkey_patch import replace_llama_attention_forword_with_rerope
+        from speechless.patches.rerope_monkey_patch import replace_llama_attention_forword_with_rerope
         rerope_window = args.rerope_window or int(args.model_max_Len * 3 / 8) // 16 * 16
         replace_llama_attention_forword_with_rerope(training_length=args.model_max_len, window=rerope_window)
         logger.info(f"Enabled rerope monkey patching.")
+
+    if args.sliding_window is not None:
+        from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
+        replace_llama_attn() 
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
     if completed_training:
@@ -1206,6 +1229,8 @@ def train():
             print(k, v, v/total)
 
     all_metrics = {"run_name": args.run_name}
+
+
     # Training
     if args.do_train:
         logger.info("*** Train ***")
