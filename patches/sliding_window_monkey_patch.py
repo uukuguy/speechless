@@ -30,6 +30,7 @@ def sliding_window_forward(
     use_cache: bool = False,
     padding_mask: Optional[torch.LongTensor] = None,
 ):
+    # print(f"sliding_window_forward()")
     bsz, q_len, _ = hidden_states.size()
 
     query_states = self.q_proj(hidden_states)
@@ -269,4 +270,5 @@ def _upad_input(self, query_layer, key_layer, value_layer, padding_mask, query_l
     )
 
 def replace_llama_attn():
+    print(f"Replacing llama attention with sliding window attention from Mistral")
     transformers.models.llama.modeling_llama.LlamaFlashAttention2.forward = sliding_window_forward
