@@ -60,4 +60,5 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --rerope False \
     --repeat_steps 0 \
     ${NEFTUNE} \
-    ${DEEPSEED}
+    ${DEEPSEED} \
+    ${MISC_PARAMS}
