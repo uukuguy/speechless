@@ -1174,8 +1174,9 @@ def train():
         logger.info(f"Enabled rerope monkey patching.")
 
     if args.sliding_window is not None:
-        from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
-        replace_llama_attn() 
+        if 'mistral' not in args.model_name_or_path:
+            from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
+            replace_llama_attn() 
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
     if completed_training:
