@@ -47,14 +47,15 @@ class Settings:
 
         repo_id = self.setup_params['repo_id']
         num_gpus = torch.cuda.device_count()
-
+        is_awq = '-awq' in self.setup_params['repo_id'].lower()
+        is_gptq = '-gptq' in self.setup_params['repo_id'].lower()
         # --------------------- vllm_engine_params ---------------------
         self.vllm_engine_params = dict(
             model = repo_id,
             trust_remote_code = True,
             # download_dir: Optional[str] = None
             # load_format: str = 'auto'
-            dtype = 'float16' if 'GPTQ' in self.setup_params['repo_id'] else 'bfloat16',
+            dtype = 'float16' if is_gptq or is_awq else 'bfloat16',
             # seed: int = 0
             # max_model_len: Optional[int] = None
             worker_use_ray = True,
@@ -70,7 +71,7 @@ class Settings:
             # disable_log_stats: bool = False
             # revision: Optional[str] = None
 
-            quantization = None # ['awq', Non] Method used to quantize the weights
+            quantization = 'awq' if is_awq else None # ['awq', Non] Method used to quantize the weights
         )
 
         # --------------------- model_params ---------------------
