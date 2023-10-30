@@ -65,7 +65,8 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-orca-7b-16k
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechless-agents-7b-v0.3-32k-mistral
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-orca-7b-32k-644-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/stabilityai/stablelm-3b-4e1t
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 

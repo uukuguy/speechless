@@ -38,11 +38,12 @@ num_seqs_per_iter=1
 #     --max_len ${max_len} \
 #     --output_path ${output_path} 
 
+# python eval/humaneval_gen_vllm.py \
 
 mkdir -p ${output_path}
 echo 'Output file: '$output_file
 echo 'Model to eval: '$model
-python eval/humaneval_gen_vllm.py \
+python eval/humaneval_gen.py \
     --model ${model} \
     --start_index 0 \
     --end_index 164 \
