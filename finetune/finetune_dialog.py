@@ -345,6 +345,7 @@ def get_accelerate_model(args, checkpoint_dir):
     config = transformers.AutoConfig.from_pretrained(
         args.model_name_or_path,
         cache_dir=args.cache_dir,
+        trust_remote_code=args.trust_remote_code,
     )
     orig_ctx_len = getattr(config, "max_position_embeddings", None)
     if orig_ctx_len and args.model_max_len > orig_ctx_len:
@@ -1173,7 +1174,7 @@ def train():
         replace_llama_attention_forword_with_rerope(training_length=args.model_max_len, window=rerope_window)
         logger.info(f"Enabled rerope monkey patching.")
 
-    if args.sliding_window is not None:
+    if args.sliding_window > 0:
         if 'mistral' not in args.model_name_or_path:
             from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
             replace_llama_attn() 
@@ -1195,6 +1196,7 @@ def train():
         "cache_dir": args.cache_dir,
         "padding_side": "left",
         "use_fast": False,
+        "trust_remote_code": True,
     }
     # if args.mpt:
     #     tokenizer_kwargs["padding_side"] = "left"
