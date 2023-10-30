@@ -90,6 +90,7 @@ def main():
     parser.add_argument('--num_seqs_per_iter', type=int, default=50, help='')
     parser.add_argument('--greedy_decode', action='store_true', help='')
     parser.add_argument('--overwrite', action='store_true', help='')
+    parser.add_argument('--output_file', type=str, help="")
 
     args = parser.parse_args()
 
@@ -115,7 +116,8 @@ def main():
     )
 
     print(f"Loaded {args.model}.")
-    output_file = args.output_path + '/human_eval_samples.jsonl'
+    # output_file = args.output_path + '/human_eval_samples.jsonl'
+    output_file = args.output_file
     for i in tqdm(range(num_samples), ncols=50, total=num_samples):
         # output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
