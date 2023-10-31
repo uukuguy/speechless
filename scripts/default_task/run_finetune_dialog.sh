@@ -22,6 +22,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --save_steps ${SAVE_STEPS} \
     --eval_steps ${EVAL_STEPS} \
     --warmup_steps ${WARMUP_STEPS} \
+    --max_train_samples ${MAX_TRAIN_SAMPLES} \
     --max_eval_samples ${MAX_EVAL_SAMPLES} \
     --dataloader_num_workers 3 \
     --logging_strategy steps \
