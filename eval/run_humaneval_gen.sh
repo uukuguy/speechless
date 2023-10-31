@@ -51,5 +51,5 @@ python eval/humaneval_gen_vllm.py \
     --num_seqs_per_iter ${num_seqs_per_iter} \
     --N ${pred_num} \
     --max_len ${max_len} \
-    --sliding_window 8192 \
+    --sliding_window 0 \
     --output_file ${output_file} 
