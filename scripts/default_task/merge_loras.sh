@@ -6,11 +6,18 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 #source ${SCRIPT_PATH}/task.env
 
 MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
-BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
-CHECKPOINT_DIR=${MODELS_ROOT_DIR}/multi-loras/Mistral-7B-v0.1/speechless-agents-7b-v0.2-32k-mistral/speechless-agents-7b-v0.2-32k-mistral-397-steps-lora
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
+
+MODEL_BASENAME=$(basename ${PWD})
+#CKPT_STEPS=70
+CKPT_STEPS=28
+
+# BASE_MODEL_PATH=${MODELS_ROOT_DIR}/llm_agents/tora-code-7b-v1.0
+# BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
+CHECKPOINT_DIR=${PWD}/outputs/checkpoint-${CKPT_STEPS}/adapter_model
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/${MODEL_BASENAME}-${CKPT_STEPS}-steps
 
 python ${SPEECHLESS_ROOT}/speechless/scripts/merge_peft_adapters.py \
     --base_model_name_or_path ${BASE_MODEL_PATH} \
     --peft_model_path ${CHECKPOINT_DIR} \
-    --merged_model_name_or_path ${TEST_MODEL_PATH} 
+    --merged_model_name_or_path ${TEST_MODEL_PATH}
