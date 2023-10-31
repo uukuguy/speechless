@@ -70,6 +70,7 @@ def main():
     parser.add_argument('--decoding_style', type=str, default='sampling', help="")
     parser.add_argument('--num_seqs_per_iter', type=int, default=50, help='')
     parser.add_argument('--overwrite', action='store_true', help='')
+    parser.add_argument('--sliding_window', type=int, default=0, help='')
 
     args = parser.parse_args()
 
@@ -78,6 +79,11 @@ def main():
 
     argsdict = vars(args)
     print(pprint.pformat(argsdict))
+
+    if args.sliding_window > 0:
+        if 'mistral' not in args.model.lower():
+            from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
+            replace_llama_attn() 
 
     problems = read_problems()
 

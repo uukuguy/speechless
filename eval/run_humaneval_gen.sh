@@ -38,12 +38,12 @@ num_seqs_per_iter=1
 #     --max_len ${max_len} \
 #     --output_path ${output_path} 
 
-# python eval/humaneval_gen_vllm.py \
 
 mkdir -p ${output_path}
 echo 'Output file: '$output_file
 echo 'Model to eval: '$model
-python eval/humaneval_gen.py \
+PYTHONPATH=${SPEECHLESS_ROOT} \
+python eval/humaneval_gen_vllm.py \
     --model ${model} \
     --start_index 0 \
     --end_index 164 \
@@ -51,4 +51,5 @@ python eval/humaneval_gen.py \
     --num_seqs_per_iter ${num_seqs_per_iter} \
     --N ${pred_num} \
     --max_len ${max_len} \
+    --sliding_window 8192 \
     --output_file ${output_file} 

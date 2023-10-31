@@ -94,6 +94,11 @@ def main():
 
     args = parser.parse_args()
 
+    if args.sliding_window > 0:
+        if 'mistral' not in args.model_name_or_path:
+            from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
+            replace_llama_attn() 
+
     argsdict = vars(args)
     print(pprint.pformat(argsdict))
 
