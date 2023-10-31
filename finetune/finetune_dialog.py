@@ -97,11 +97,11 @@ class DataArguments:
     eval_dataset_size: float = field(
         default=0.02, metadata={"help": "Ratio of dataset to use for validation."}
     )
-    max_train_samples: Optional[int] = field(
+    max_train_samples: Optional[float] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+            "value if set. If set to a float, will truncate the number of examples to that percentage of the dataset."
         },
     )
     max_eval_samples: Optional[int] = field(
@@ -548,6 +548,100 @@ PROMPT_DICT = {
 }
 
 
+def preprocess_toolbench_dataset(
+    example,
+    model_max_len: int,
+    tokenizer: transformers.PreTrainedTokenizer,
+    template: str="tool-llama-single-round"
+) -> Dict:
+    # conv = get_conversation_template(template)
+    # if template == "tool-llama":
+    #     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
+    # elif template == "tool-llama-single-round" or template == "tool-llama-multi-rounds":
+    #     roles = {"system": conv.roles[0], "user": conv.roles[1], "function": conv.roles[2], "assistant": conv.roles[3]}
+
+    roles = {"system": "System", "user": "User", "function": "Function", "assistant": "Assistant"}
+    seps = ["\n", "</s>"]
+
+
+    # Apply prompt templates
+    conversation = ""
+    for i, round in enumerate(example['dialog']):
+        role = roles[round['from']]
+        message = round['value']
+        if i + 1 == len(example['dialog']) and message:
+            conversation += role + ": " + str(message) + seps[1]
+        elif message:
+            conversation += role + ": " + str(message) + seps[0]
+        else:
+            conversation += role + ":"
+    
+
+
+    # Tokenize conversations
+    input_ids = tokenizer(
+        conversation,
+        # return_tensors="pt",
+        # padding="max_length",
+        max_length=model_max_len,
+        truncation=True,
+        # add_special_tokens=False,
+    ).input_ids
+    # input_ids begin with '<s>' and end with '</s>'
+    assert input_ids[0] == tokenizer.bos_token_id and input_ids[-1] == tokenizer.eos_token_id
+    labels = copy.deepcopy(input_ids)
+
+    input_ids = torch.tensor(input_ids)
+    labels = torch.tensor(labels)
+    
+    # Mask targets. Only compute loss on the assistant outputs.
+    sep = seps[0] + roles['assistant'] + ": "
+
+    total_len = int(labels.ne(tokenizer.pad_token_id).sum())
+    turns = conversation.split(seps[1])
+    cur_len = 1
+    labels[:cur_len] = IGNORE_INDEX
+    for i, turn in enumerate(turns):
+        if turn == "":
+            continue
+        turn_len = len(tokenizer(turn).input_ids)
+
+        parts = turn.split(sep)
+        
+        # only train on the last assistant reply, treat the history chat as instruction
+        prefix = parts[:-1]
+        instruction = ""
+        for part in prefix:
+            instruction += part
+            instruction += sep
+
+        # "-2" is hardcoded for the LLaMA tokenizer to make the offset correct.
+        instruction_len = len(tokenizer(instruction).input_ids) - 2
+
+        # Ignore the user instructions
+        labels[cur_len : cur_len + instruction_len] = IGNORE_INDEX
+        cur_len += turn_len
+
+    labels[cur_len:] = IGNORE_INDEX
+
+    # if False:  # Inspect and check the correctness of masking
+    #     z = labels.clone()
+    #     z = torch.where(z == IGNORE_TOKEN_ID, tokenizer.unk_token_id, z)
+    #     rank0_print(tokenizer.decode(z))
+
+    if cur_len < model_max_len:
+        if cur_len != total_len:
+            labels[:] = IGNORE_INDEX
+            logger.warning(
+                f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
+                f" (ignored)"
+                f"{conversation=}"
+            )
+    return dict(
+        input_ids=input_ids,
+        labels=labels,
+        # attention_mask=input_ids.ne(tokenizer.pad_token_id),
+    )
 @dataclass
 class DialogDataCollatorForCausalLM(object):
     tokenizer: transformers.PreTrainedTokenizer
@@ -560,13 +654,30 @@ class DialogDataCollatorForCausalLM(object):
         for example in instances:
             # system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
             prompt_type = example['prompt_type']
+            if prompt_type == "tool-llama-single-round":
+                data_dict = preprocess_toolbench_dataset(example, 
+                                                   model_max_len=self.model_max_len, 
+                                                   tokenizer=self.tokenizer, 
+                                                   template="tool-llama-single-round")
+                input_ids.append(data_dict['input_ids'])
+                labels.append(data_dict['labels'])
+                continue
+
             system_prompt = example.get('system_prompt', "").strip()
             if system_prompt:
                 system_prompt += "\n\n"
             example_input_ids = None
             example_output_ids = None
-            for idx, (human_input, bot_response) in enumerate(example['dialog']):
+
+            human_bot_dialog = []
+            dialog = example['dialog']
+            for _i in range(len(dialog) // 2):
+                human_input = dialog[2 * _i]['value']
+                bot_output = dialog[2 * _i + 1]['value']
+                human_bot_dialog.append((human_input, bot_output))
+            for idx, round in enumerate(human_bot_dialog):
                 if prompt_type == 'toolllama':
+                    human_input, bot_response = round
                     if idx == 0:
                         if system_prompt:
                             source = f"{system_prompt} Human: {human_input} Assistant: "
@@ -578,7 +689,10 @@ class DialogDataCollatorForCausalLM(object):
                     else:
                         human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
                         source = f"{human_input}"
+                    source = f"{self.tokenizer.bos_token}{source}"
+                    target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
                 else: # default alpaca
+                    human_input, bot_response = round
                     if idx == 0:
                         if system_prompt:
                             # source = f"{self.tokenizer.bos_token}{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
@@ -593,8 +707,8 @@ class DialogDataCollatorForCausalLM(object):
                         # source = f"{self.tokenizer.bos_token}{human_input}"
                         source = f"{human_input}"
 
-                source = f"{self.tokenizer.bos_token}{source}"
-                target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
+                    source = f"{self.tokenizer.bos_token}{source}"
+                    target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
 
                 tokenized_source = self.tokenizer(source, 
                                                   max_length=self.model_max_len, 
@@ -931,7 +1045,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 return {'dialog': [(instruction['instruction'], instruction['response'])]}  
 
             dataset = dataset.map(_format_input_output)
-        elif dataset_format == 'sharegpt':
+        elif dataset_format == 'sharegpt': # instruction-response
             def _format_sharegpt(example):
                 human_bot_dialog = []
                 dialog = example['dialog']
@@ -942,6 +1056,20 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 return {'dialog': human_bot_dialog}
                     
             dataset = dataset.map(_format_sharegpt)
+        elif dataset_format == 'dialog':
+            def _format_multi_turns(example):
+                human_bot_dialog = []
+                dialog = example['dialog']
+                for round in dialog:
+                    who = round['from']
+                    response = round['value']
+                    human_bot_dialog.append({
+                        "from": who,
+                        "value": response,
+                    })
+                return {'dialog': human_bot_dialog}
+                    
+            dataset = dataset.map(_format_multi_turns)
 
         # Remove unused columns.
         dataset = dataset.remove_columns(
@@ -980,8 +1108,14 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             eval_dataset = eval_dataset.map(lambda x: {'length': len(x['input']) + len(x['output'])})
     if args.do_train:
         train_dataset = dataset['train']
-        if args.max_train_samples is not None and len(train_dataset) > args.max_train_samples:
-            train_dataset = train_dataset.select(range(args.max_train_samples))
+        max_train_samples = args.max_train_samples
+        if max_train_samples is not None and max_train_samples > 0 and max_train_samples < 1.0:
+            max_train_samples = int(len(train_dataset) * max_train_samples)
+        else:
+            max_train_samples = 0.0
+        if max_train_samples >= 1.0 and len(train_dataset) > max_train_samples:
+            train_dataset = train_dataset.select(range(max_train_samples))
+
         if args.group_by_length:
             train_dataset = train_dataset.map(lambda x: {'length': len(x['input']) + len(x['output'])})
             
@@ -1258,7 +1392,7 @@ def train():
         prediction_output = trainer.predict(test_dataset=data_module['predict_dataset'],metric_key_prefix="predict")
         prediction_metrics = prediction_output.metrics
         predictions = prediction_output.predictions
-        predictions = np.where(predictions != -100, predictions, tokenizer.pad_token_id)
+        predictions = np.where(predictions != IGNORE_INDEX, predictions, tokenizer.pad_token_id)
         predictions = tokenizer.batch_decode(
             predictions, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
