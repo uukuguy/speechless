@@ -68,8 +68,8 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/stabilityai/stablelm-3b-4e1t
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-1357-steps
-# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-mistral-2714-steps
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-mistral-2714-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 
@@ -213,6 +213,12 @@ multiple_gen:
 	# 	--output_dir output_multiple_gen/${TASK_NAME}
 
 	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
+
+multiple_gen_50:
+	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 50 20
+
+multiple_50:
+	bash eval/run_multiple.sh ${TEST_MODEL_PATH} 50
 
 multiple:
 	# python eval/multiple.py \
@@ -359,6 +365,9 @@ lm_eval:
 # 		${BIGCODE_CHECK_REFERENCES}
 bigcode_eval_gen:
 	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
+
+bigcode_offical_gen:
+	./eval/bigcode_offical_gen.sh ${TEST_MODEL_PATH}
 
 # bigcode_eval_exec:
 # 	accelerate launch  eval/bigcode_eval.py \

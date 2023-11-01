@@ -10,19 +10,28 @@ TASK_NAME=$(basename ${TEST_MODEL_PATH})
 echo "Model Path: ${TEST_MODEL_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
-BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
+# BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
+
+# langs=(py js java cpp swift php d jl lua r rkt rs)
+BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+# BIGCODE_TASKS="humaneval,multiple-*"
 
 # # Don't run generation but benchmark groundtruth (useful for debugging)
 # BIGCODE_CHECK_REFERENCES="--check_references"
 
 BITS="--load_in_8bit" 
-MAX_LENGTH_GENERATION=2048
+
 TEMPERATURE=0.2
+MAX_LENGTH_GENERATION=512
+N_SAMPLES=50
+TOP_P=0.95
+
 BITS="--load_in_8bit"
 PRECISION=bf16
 LIMIT=100
-N_SAMPLES=1
-BATCH_SIZE=1
+    # --limit ${LIMIT} \
+
+BATCH_SIZE=50
 
 accelerate launch \
     --num_processes=2 \
@@ -35,7 +44,7 @@ accelerate launch \
     --tasks ${BIGCODE_TASKS} \
     --max_length_generation ${MAX_LENGTH_GENERATION} \
     --temperature ${TEMPERATURE} \
-    --limit ${LIMIT} \
+    --top_p ${TOP_P} \
     --do_sample \
     --n_samples ${N_SAMPLES} \
     --batch_size ${BATCH_SIZE} \

@@ -12,6 +12,11 @@ if [ -z ${COMPLETION_LIMIT} ]; then
 	COMPLETION_LIMIT=1
 fi
 
+PARALLEL_THREADS=$3
+if [ -z ${PARALLEL_THREADS} ]; then
+	PARALLEL_THREADS=5
+fi
+
 echo "Model Path: ${TEST_MODEL_PATH}"
 echo "Task Name: ${TASK_NAME}"
 
@@ -28,13 +33,18 @@ MULTIPL_E_RESULTS_DIR=${OUTPUT_DIR}/${TASK_NAME}/${COMPLETION_LIMIT}-completions
 # 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} \
 # 		--langs py java js cpp rs go sh jl \
 
+	# --langs py java js cpp rs go sh jl ts \
+
 python eval/multiple_gen.py \
 	--do_generate \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
-	--langs py java js cpp rs go sh jl ts \
-  --parallel_threads 5 \
-  --timeout 30 \
+	--langs py js java cpp swift php d jl lua r rkt rs go sh \
+	--sampling_method normal \
+	--temperature 0.2 \
+	--top_p 0.95 \
+	--parallel_threads ${PARALLEL_THREADS} \
+	--timeout 30 \
 	--completion_limit ${COMPLETION_LIMIT} && \
 python eval/multiple_gen.py \
 	--do_convert \
