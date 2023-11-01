@@ -22,6 +22,11 @@ max_len=2048
 pred_num=1
 num_seqs_per_iter=1
 
+# temp=0.2
+# max_len=512
+# pred_num=50
+# num_seqs_per_iter=50
+
 # output_path=eval_results/human_eval/$(basename ${model})
 # mkdir -p ${output_path}
 # echo 'Output path: '$output_path
