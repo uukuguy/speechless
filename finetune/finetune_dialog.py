@@ -290,20 +290,28 @@ def find_all_linear_names(args, model):
         lora_module_names.remove('lm_head')
     return list(lora_module_names)
 
-class TrainHelperCallback(transformers.TrainerCallback):
+class CleanMemoryCallback(transformers.TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):
         clean_memory()
 
     def on_evaluate(self, args, state, control, **kwargs):
         clean_memory()
 
-class SavePeftModelCallback(transformers.TrainerCallback):
+from transformers import TrainerCallback
+class LoggingCallback(TrainerCallback):
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            logger.info(logs)
+
+class SavePeftModelCallback(TrainerCallback):
     def save_model(self, args, state, kwargs):
         logger.info('Saving PEFT checkpoint...')
-        if state.best_model_checkpoint is not None:
-            checkpoint_folder = os.path.join(state.best_model_checkpoint, "adapter_model")
-        else:
-            checkpoint_folder = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
+        # if state.best_model_checkpoint is not None:
+        #     checkpoint_folder = os.path.join(state.best_model_checkpoint, "adapter_model")
+        # else:
+        #     checkpoint_folder = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
+        checkpoint_folder = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
 
         peft_model_path = os.path.join(checkpoint_folder, "adapter_model")
         kwargs["model"].save_pretrained(peft_model_path)
@@ -312,8 +320,20 @@ class SavePeftModelCallback(transformers.TrainerCallback):
         if os.path.exists(pytorch_model_path):
             os.remove(pytorch_model_path)
 
+        self._symlink_latest_checkpoint(checkpoint_folder)
+
+    def _symlink_latest_checkpoint(self, checkpoint_folder):
+        # if the latest checkpoint is a symlink, remove it
+        output_dir = os.path.dirname(checkpoint_folder)
+        latest_checkpoint = os.path.join(output_dir, "checkpoint-latest")
+        if os.path.islink(latest_checkpoint):
+            os.remove(latest_checkpoint)
+        # symlink the latest checkpoint to the checkpoint folder
+        os.symlink(os.path.basename(checkpoint_folder), latest_checkpoint)
+
     def on_save(self, args, state, control, **kwargs):
-        self.save_model(args, state, kwargs)
+        if state.is_local_process_zero:
+            self.save_model(args, state, kwargs)
         return control
 
     def on_train_end(self, args, state, control, **kwargs):
@@ -321,8 +341,9 @@ class SavePeftModelCallback(transformers.TrainerCallback):
             with open(fname, 'a'):
                 os.utime(fname, times)
 
-        touch(join(args.output_dir, 'completed'))
-        self.save_model(args, state, kwargs)
+        if state.is_local_process_zero:
+            touch(join(args.output_dir, 'completed'))
+            self.save_model(args, state, kwargs)
 
 def get_accelerate_model(args, checkpoint_dir):
 
@@ -1371,7 +1392,7 @@ def train():
         args.task_name = os.path.basename(os.curdir)
         
     from datetime import datetime
-    logger.add(f"{args.output_dir}/logs/finetune_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", level="INFO")
+    logger.add(f"{args.output_dir}/logs/{args.task_name}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", level="INFO")
     logger.info(f"{args=}")
 
     # setup_wandb(args)
@@ -1439,7 +1460,9 @@ def train():
     if not args.full_finetune:
         trainer.add_callback(SavePeftModelCallback)
 
-    trainer.add_callback(TrainHelperCallback)
+    trainer.add_callback(CleanMemoryCallback)
+    trainer.add_callback(LoggingCallback)
+
 
     # Verifying the datatypes.
     if not args.full_finetune:
