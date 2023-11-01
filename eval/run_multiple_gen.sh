@@ -39,7 +39,7 @@ python eval/multiple_gen.py \
 	--do_generate \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
-	--langs py js java cpp swift php d jl lua r rkt rs go sh \
+	--langs py js java cpp swift php d jl lua r rkt rs go sh ts \
 	--sampling_method normal \
 	--temperature 0.2 \
 	--top_p 0.95 \

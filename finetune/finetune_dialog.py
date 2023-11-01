@@ -642,6 +642,75 @@ def preprocess_toolbench_dataset(
         labels=labels,
         # attention_mask=input_ids.ne(tokenizer.pad_token_id),
     )
+
+def preprocess_multi_rounds_dialog(
+    example,
+    model_max_len: int,
+    tokenizer: transformers.PreTrainedTokenizer,
+) -> Dict:
+    # conv = get_conversation_template(template)
+    # if template == "tool-llama":
+    #     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
+    # elif template == "tool-llama-single-round" or template == "tool-llama-multi-rounds":
+    #     roles = {"system": conv.roles[0], "user": conv.roles[1], "function": conv.roles[2], "assistant": conv.roles[3]}
+
+    roles = {"system": "System", "user": "User", "function": "Function", "assistant": "Assistant"}
+    seps = ["\n", "</s>"]
+
+    # The dialogue process is divided into multiple rounds, with each round ending when the Assistant speaks.
+    dialog = example['dialog']
+    dialog_rounds = []
+    round_messages = []
+    for i, round in enumerate(dialog):
+        who = round['from']
+        message = round['value']
+        if who != 'assistant':
+            round_messages.append((who, message))
+        else:
+            dialog_rounds.append({
+                'round_messages': round_messages,
+                'assistant': message,
+            })
+            round_messages = []
+    if len(round_messages) > 0:
+        logger.warning(f"WARNING: the last round is not ended by the assistant. IGNORE!!!. {dialog=}")
+        dialog_rounds = []
+    # print(f"{dialog_rounds=}")
+
+    example_input_ids = None
+    example_output_ids = None
+    for idx, round in enumerate(dialog_rounds):
+        round_messages = round['round_messages']
+        assistant_message = round['assistant']
+        source = ""
+        for (who, message) in round_messages:
+            source += roles[who] + ": " + str(message) + seps[0]
+        source += roles['assistant'] + ": "
+        target = assistant_message + tokenizer.eos_token
+
+        # source = f"{tokenizer.bos_token}{source}"
+        # target = f"{bot_response.strip()}\n{tokenizer.eos_token}"
+
+        tokenized_source = tokenizer(source, max_length=model_max_len, truncation=True, add_special_tokens=False)
+        tokenized_target = tokenizer(target, max_length=model_max_len, truncation=True, add_special_tokens=False)
+        tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
+        tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] + 
+                                        copy.deepcopy(tokenized_target['input_ids']))
+        if idx == 0:
+            example_input_ids = tokenized_input
+            example_output_ids = tokenized_output
+        else:
+            example_input_ids = torch.concatenate((example_input_ids, tokenized_input), dim=0)
+            example_output_ids = torch.concatenate((example_output_ids, tokenized_output), dim=0)
+
+    input_ids = example_input_ids
+    labels = example_output_ids
+    return dict(
+        input_ids=input_ids,
+        labels=labels,
+        # attention_mask=input_ids.ne(tokenizer.pad_token_id),
+    )
+
 @dataclass
 class DialogDataCollatorForCausalLM(object):
     tokenizer: transformers.PreTrainedTokenizer
@@ -659,8 +728,27 @@ class DialogDataCollatorForCausalLM(object):
                                                    model_max_len=self.model_max_len, 
                                                    tokenizer=self.tokenizer, 
                                                    template="tool-llama-single-round")
-                input_ids.append(data_dict['input_ids'])
-                labels.append(data_dict['labels'])
+                example_input_ids = data_dict['input_ids']
+                example_labels = data_dict['labels']
+                if example_input_ids is not None:
+                    # print(f"{example_input_ids.shape=},{example_input_ids=}")
+                    # print(f"{example_labels.shape=},{example_labels=}")
+                    input_ids.append(example_input_ids)
+                    labels.append(example_labels)
+                continue
+
+            elif prompt_type == "tool-llama-multi-rounds":
+                data_dict = preprocess_multi_rounds_dialog(example, 
+                                                   model_max_len=self.model_max_len, 
+                                                   tokenizer=self.tokenizer, 
+                )
+                example_input_ids = data_dict['input_ids']
+                example_labels = data_dict['labels']
+                if example_input_ids is not None:
+                    # print(f"{example_input_ids.shape=},{example_input_ids=}")
+                    # print(f"{example_labels.shape=},{example_labels=}")
+                    input_ids.append(example_input_ids)
+                    labels.append(example_labels)
                 continue
 
             system_prompt = example.get('system_prompt', "").strip()
