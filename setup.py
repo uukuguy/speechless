@@ -12,27 +12,25 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 REQUIRED = [
-    "numpy",
-    # dataclasses for Python versions that don't have it
-    "dataclasses;python_version<'3.7'",
     "tqdm >= 4.27",
     "loguru",
-    "torch >= 1.7.0",
-    "transformers >=4.6.0",
-    "tokenizers >= 0.10.2",
-    "pytorch-lightning >= 1.2.3",
-    "datasets >= 1.2.1",
     "rich",
-    "dill",
+    "torch >= 2.0.1",
+    "transformers >=4.34.0",
+    "tokenizers >= 0.14.0",
+    "datasets >= 2.14.0",
+    "flash-attn >= 2.3.1",
+    "bitsandbytes >= 0.41.1",
+    "fastapi",
 ]
 
 # Package meta-data.
-NAME = 'theta'
-DESCRIPTION = 'Deep learning toolbox for end-to-end text information extraction tasks.'
-URL = 'https://github.com/idleuncle/theta'
-EMAIL = '531045572@qq.com'
+NAME = 'speechless'
+DESCRIPTION = 'LLM based agents with proactive interactions, long-term memory, external tool integration, and local deployment capabilities.'
+URL = 'https://github.com/uukuguy/speechless'
+EMAIL = 'uukuguy@gmail.com'
 AUTHOR = 'Jiangwen Su'
-REQUIRES_PYTHON = '>=3.7.0'
+REQUIRES_PYTHON = '>=3.8.0'
 VERSION = None
 
 # What packages are required for this module to be executed?
@@ -125,16 +123,18 @@ setup(
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
-    license='MIT',
+    license='Apache',
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Intended Audience :: Developers",
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
     # $ setup.py publish support.
