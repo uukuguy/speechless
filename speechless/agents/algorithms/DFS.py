@@ -1,12 +1,10 @@
-import re
-from .Tree import my_tree, tree_node
+import json, random
+from copy import deepcopy
 from ..prompts.ReAct_prompts import FORMAT_INSTRUCTIONS_SYSTEM_FUNCTION, FORMAT_INSTRUCTIONS_USER_FUNCTION
 from ..prompts.Tree_search_prompts import DIVERSITY_PROMPT
-from ..algorithms.base_search import base_search_method
-from copy import deepcopy
+from .Tree import my_tree, tree_node
+from .base_search import base_search_method
 from .rank_candidate import sum_based_rankn, rank2_subfix
-import json
-import random
 
 
 class DFS_tree_search(base_search_method):

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 import json
 import os
 from typing import Union
-from toolbench.utils import standardize, change_name
+from ..utils import standardize, change_name
 import random
 
 

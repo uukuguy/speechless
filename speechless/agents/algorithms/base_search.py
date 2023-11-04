@@ -1,4 +1,4 @@
-from Downstream_tasks.base_env import base_env
+from .base_env import base_env
 
 class base_search_method:
     """For the base tree search method, you need to support the following functions"""
