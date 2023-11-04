@@ -4,6 +4,7 @@ import json
 import time
 import requests
 from tqdm import tqdm
+from loguru import logger
 from termcolor import colored
 import random
 from speechless.agents.llms.chatgpt_function_model import ChatGPTFunction
@@ -453,7 +454,7 @@ class pipeline_runner:
         else:
             model = backbone_model
             llm_forward = model
-        print(f"{llm_forward=}")
+        # print(f"{llm_forward=}")
         
         if method.startswith("CoT"):
             passat = int(method.split("@")[-1])
@@ -501,7 +502,8 @@ class pipeline_runner:
         ) for callback in callbacks]
         query = data_dict["query"]
         if process_id == 0:
-            print(colored(f"[process({process_id})]now playing {query}, with {len(env.functions)} APIs", "green"))
+            # print(colored(f"[process({process_id})]now playing {query}, with {len(env.functions)} APIs", "green"))
+            logger.info(f"[process({process_id})]{query} (with {len(env.functions)} APIs)")
         [callback.on_request_start(
             user_input=query,
             method=method,
@@ -526,14 +528,15 @@ class pipeline_runner:
                 data["answer_generation"]["query"] = query
                 json.dump(data, writer, indent=2)
                 success = data["answer_generation"]["valid_data"] and "give_answer" in data["answer_generation"]["final_answer"]
-                print(colored(f"[process({process_id})]valid={success}", "green"))
+                # print(colored(f"[process({process_id})]valid={success}", "green"))
+                logger.info(f"[process({process_id})]valid={success}")
         return result
         
     def run(self):
         task_list = self.task_list
         random.seed(42)
         random.shuffle(task_list)
-        print(f"total tasks: {len(task_list)}")
+        logger.info(f"total tasks: {len(task_list)}")
         new_task_list = []
         for task in task_list:
             out_dir_path = task[-2]
@@ -542,13 +545,13 @@ class pipeline_runner:
             if not os.path.exists(output_file_path):
                 new_task_list.append(task)
         task_list = new_task_list
-        print(f"undo tasks: {len(task_list)}")
+        logger.info(f"undo tasks: {len(task_list)}")
         if self.add_retrieval:
             retriever = self.get_retriever()
         else:
             retriever = None
         for k, task in enumerate(tqdm(task_list, ncols=120, desc="Task")):
-            print(f"process[{self.process_id}] doing task {k}/{len(task_list)}: real_task_id_{task[2]}")
+            logger.info(f"---------- process[{self.process_id}] doing task {k}/{len(task_list)}: real_task_id_{task[2]}")
             result = self.run_single_task(*task, retriever=retriever, process_id=self.process_id)
 
 

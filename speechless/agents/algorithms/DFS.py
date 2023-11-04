@@ -1,5 +1,8 @@
 import json, random
 from copy import deepcopy
+from tqdm import trange
+import time
+from loguru import logger
 from ..prompts.ReAct_prompts import FORMAT_INSTRUCTIONS_SYSTEM_FUNCTION, FORMAT_INSTRUCTIONS_USER_FUNCTION
 from ..prompts.Tree_search_prompts import DIVERSITY_PROMPT
 from .Tree import my_tree, tree_node
@@ -140,7 +143,7 @@ class DFS_tree_search(base_search_method):
                     return 1
 
         next_tree_split_nodes = []
-        for i in range(tree_beam_size):
+        for i in trange(tree_beam_size, ncols=100, desc=f"DFS-{self.process_id}"):
             temp_now_node = now_node
 
             """If a node have children now, We will prompt the model to generate different nodes than all the existing nodes"""
@@ -186,6 +189,8 @@ class DFS_tree_search(base_search_method):
             agent_block_ids = []
             self.llm.change_messages(temp_now_node.messages)
             # on_llm_start
+            llm_start_time = time.time()    
+            logger.debug(f"on_llm_start")
             [callback.on_llm_start(
                 depth=now_depth,
                 messages=temp_now_node.messages
@@ -193,6 +198,8 @@ class DFS_tree_search(base_search_method):
             new_message, error_code, total_tokens = self.llm.parse(
                 self.io_func.functions, process_id=self.process_id)
             # on_llm_end
+            llm_end_time = time.time()
+            logger.debug(f"on_llm_end ({llm_end_time - llm_start_time:.2f} s)")
             [callback.on_llm_end(
                 depth=now_depth,
                 response=new_message
@@ -258,6 +265,8 @@ class DFS_tree_search(base_search_method):
                 child_io_state.retriever=None
                 
                 # on_tool_start
+                tool_start_time = time.time()
+                logger.debug(f"on_tool_start")
                 [callback.on_tool_start(
                     depth=now_depth,
                     tool_name=temp_now_node.description,
@@ -281,6 +290,8 @@ class DFS_tree_search(base_search_method):
                     output=observation,
                     status=status
                 ) for callback in self.callbacks]
+                tool_end_time = time.time()
+                logger.debug(f"on_tool_end ({tool_end_time - tool_start_time:.2f} s)")
                 if status != 0:
                     # return code defination can be seen in Downstream_tasks/rapid_api
                     if status == 4:
