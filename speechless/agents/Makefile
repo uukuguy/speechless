@@ -17,7 +17,18 @@ EXEC_ARGS=--max_observation_length 1024 --observ_compress_method truncate --meth
 RETRIEVAL_ARGS="--corpus_tsv_path ${CORPUS_TSV_PATH} --retrieval_model_path ${RETRIEVAL_MODEL_PATH} --retrieved_api_nums ${RETRIEVED_API_NUMS} "
 
 MODEL_NAME=$(shell basename ${TOOLLLAMA_MODEL_PATH})
-OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD} 
+OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
+
+toolbench_vllm:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${INPUT_QUERY_FILE} \
+		--output_answer_file ${OUTPUT_DIR}.vllm \
+		--toolbench_key ${TOOLBENCH_KEY}
 
 toolbench_speechless:
 	PYTHONPATH=${SPEECHLESS_ROOT} \

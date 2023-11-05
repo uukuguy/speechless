@@ -83,6 +83,8 @@ class tree_node:
             child.prune()
 
     def print(self,process_id = 0):
+        return
+    
         if process_id != 0:
             return
         color_converter = {"Thought":"red", "Action": "blue", "Action Input": "cyan","Final Answer": "green","Reflection":"blue"}
