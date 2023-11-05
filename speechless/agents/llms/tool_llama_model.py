@@ -56,6 +56,45 @@ class ToolLLaMA:
             outputs = self.chatio.return_output(output_stream)
             prediction = outputs.strip()
         return prediction
+
+    # def prediction(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+    #     with torch.no_grad():
+    #         # gen_params = {
+    #         #     "model": "",
+    #         #     "prompt": prompt,
+    #         #     "temperature": 0.5,
+    #         #     "max_new_tokens": 512,
+    #         #     "stop": "</s>",
+    #         #     "stop_token_ids": None,
+    #         #     "echo": False
+    #         # }
+    #         # generate_stream_func = generate_stream
+    #         # output_stream = generate_stream_func(self.model, self.tokenizer, gen_params, "cuda", self.max_sequence_length, force_generate=True)
+    #         # outputs = self.chatio.return_output(output_stream)
+    #         # prediction = outputs.strip()
+
+    #         input_ids = self.tokenizer(
+    #             prompt,
+    #             return_token_type_ids=False,
+    #             return_attention_mask=True,
+    #             return_tensors="pt",
+    #         ).to("cuda")
+    #         sampling_params = {
+    #             'do_sample': True,
+    #             'temperature': 0.5,
+    #             'max_new_tokens': 2048,
+    #             "top_p": 1.0,
+    #             "top_k": 50,
+    #             "repetition_penalty": 1.2,
+    #         }
+    #         gen_tokens = self.model.generate(**input_ids, pad_token_id=self.tokenizer.pad_token_id, **sampling_params)
+    #         result = self.tokenizer.batch_decode(
+    #             gen_tokens[:, input_ids["input_ids"].shape[1] :], skip_special_tokens=True
+    #         )
+    #         generated_text = result[0]
+    #         print(f">>>>> {generated_text=}")
+
+    #     return generated_text
         
     def add_message(self, message):
         self.conversation_history.append(message)
