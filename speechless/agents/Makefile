@@ -1,8 +1,8 @@
 MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
 #TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/ToolBench/ToolLLaMA-2-7b-v2
 
-TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-v0.1-32k-mistral-5743-steps
-# TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-multi-rounds-32k-tora-train0.15-861-steps
+# TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-v0.1-32k-mistral-5743-steps
+TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-multi-rounds-32k-tora-train0.15-861-steps
 RETRIEVAL_MODEL_PATH=${MODELS_ROOT_DIR}/ToolBench/ToolBench_IR_bert_based_uncased
 
 TOOLBENCH_DATA_DIR=/opt/local/datasets/toolbench_data
@@ -19,16 +19,29 @@ RETRIEVAL_ARGS="--corpus_tsv_path ${CORPUS_TSV_PATH} --retrieval_model_path ${RE
 MODEL_NAME=$(shell basename ${TOOLLLAMA_MODEL_PATH})
 OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
 
-toolbench_vllm:
+toolbench_G1_instruction:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python rapidapi/run_rapidapi.py \
 		--tool_root_dir ${TOOL_ROOT_DIR} \
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
-		--input_query_file ${INPUT_QUERY_FILE} \
-		--output_answer_file ${OUTPUT_DIR}.vllm \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_instruction.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G1_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
+
+
+toolbench_G1_tool:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_tool.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G1_tool \
+		--toolbench_key ${TOOLBENCH_KEY}
+
 
 toolbench_speechless:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
