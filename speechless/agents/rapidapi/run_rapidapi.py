@@ -22,6 +22,9 @@ from speechless.agents.utils import (
     replace_llama_with_condense
 )
 
+from toolbench_cache import ToolBenchCache
+tb_cache = None
+
 # For pipeline environment preparation
 def get_white_list(tool_root_dir):
     # print(tool_root_dir)
@@ -118,8 +121,10 @@ You have access of the following tools:\n'''
         
         unduplicated_reflection = {}
         for standardize_tool_name, tool_des in tool_descriptions:
-            unduplicated_reflection[standardize_tool_name] = tool_des
+            if tool_des:
+                unduplicated_reflection[standardize_tool_name] = tool_des
 
+        # print(f"{unduplicated_reflection=}")
         for k,(standardize_tool_name, tool_des) in enumerate(unduplicated_reflection.items()):
             striped = tool_des[:512].replace('\n','').strip()
             if striped == "":
@@ -343,6 +348,11 @@ You have access of the following tools:\n'''
                     if self.process_id == 0:
                         #print(colored(f"query to {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}",color="yellow"))
                         logger.debug(f"Calling {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}")
+                    if tb_cache is not None:
+                        response, status_code = tb_cache.get_response_from_cache(payload)
+                        if response is not None:
+                            return response, status_code
+
                     if self.use_rapidapi_key or self.api_customization:
                         payload["rapidapi_key"] = self.rapidapi_key
                         response = get_rapidapi_response(payload, api_customization=self.api_customization)
@@ -352,15 +362,24 @@ You have access of the following tools:\n'''
                         try:
                             response = requests.post(self.service_url, json=payload, headers=headers, timeout=15)
                         except Exception as e:
-                            return json.dumps({"error": f"Timeout error...{e}", "response": ""}), 5
+                            response = json.dumps({"error": f"Timeout error...{e}", "response": ""})
+                            if tb_cache is not None:
+                                tb_cache.cache_query_response(payload, response, 5)
+                            return response, 5
 
                         if response.status_code != 200:
-                            return json.dumps({"error": f"request invalid, data error. status_code={response.status_code}", "response": ""}), 12
+                            response = json.dumps({"error": f"request invalid, data error. status_code={response.status_code}", "response": ""})
+                            if tb_cache is not None:
+                                tb_cache.cache_query_response(payload, response, 12)
+                            return response, 12
                         try:
                             response = response.json()
                         except:
                             print(response)
-                            return json.dumps({"error": f"request invalid, data error", "response": ""}), 12
+                            response = json.dumps({"error": f"request invalid, data error", "response": ""})
+                            if tb_cache is not None:
+                                tb_cache.cache_query_response(payload, response, 12)
+                            return response, 12
                     # 1 Hallucinating function names
                     # 4 means that the model decides to pruning by itself
                     # 5 represents api call timeout
@@ -387,7 +406,11 @@ You have access of the following tools:\n'''
                         status_code = 11
                     else:
                         status_code = 0
-                    return json.dumps(response), status_code
+
+                    response = json.dumps(response)
+                    if tb_cache is not None:
+                        tb_cache.cache_query_response(payload, response, status_code)
+                    return response, status_code
                     # except Exception as e:
                     #     return json.dumps({"error": f"Timeout error...{e}", "response": ""}), 5
             return json.dumps({"error": f"No such function name: {action_name}", "response": ""}), 1
@@ -395,12 +418,14 @@ You have access of the following tools:\n'''
 
 class pipeline_runner:
     def __init__(self, args, add_retrieval=False, process_id=0, server=False):
+
         self.args = args
         self.add_retrieval = add_retrieval
         self.process_id = process_id
         self.server = server
         if not self.server: self.task_list = self.generate_task_list()
         else: self.task_list = []
+
 
     def get_backbone_model(self):
         args = self.args
@@ -507,6 +532,7 @@ class pipeline_runner:
         if (not server) and os.path.exists(output_file_path):
             return
         [callback.on_tool_retrieval_start() for callback in callbacks]
+        # print(f"{tool_des=}")
         env = rapidapi_wrapper(data_dict, tool_des, retriever, args, process_id=process_id)
         [callback.on_tool_retrieval_end(
             tools=env.functions
@@ -623,5 +649,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     add_retrieval = True if args.corpus_tsv_path is not None else False
+
+    tb_cache = ToolBenchCache(cache_file=f"{args.output_answer_file}/toolbench_cache.jsonl")
     pipeline_runner = pipeline_runner(args, add_retrieval=add_retrieval)
     pipeline_runner.run()
