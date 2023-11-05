@@ -5,11 +5,13 @@ import time
 import requests
 from tqdm import tqdm
 from loguru import logger
+from rich import print
 from termcolor import colored
 import random
 from speechless.agents.llms.chatgpt_function_model import ChatGPTFunction
 from speechless.agents.llms.tool_llama_lora_model import ToolLLaMALoRA
 from speechless.agents.llms.tool_llama_model import ToolLLaMA
+from speechless.agents.llms.vllm_model import VllmModel
 from speechless.agents.llms.retriever import ToolRetriever
 from speechless.agents.algorithms.single_chain import single_chain
 from speechless.agents.algorithms.DFS import DFS_tree_search
@@ -339,7 +341,8 @@ You have access of the following tools:\n'''
                         "toolbench_key": self.toolbench_key
                     }
                     if self.process_id == 0:
-                        print(colored(f"query to {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}",color="yellow"))
+                        #print(colored(f"query to {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}",color="yellow"))
+                        logger.debug(f"Calling {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}")
                     if self.use_rapidapi_key or self.api_customization:
                         payload["rapidapi_key"] = self.rapidapi_key
                         response = get_rapidapi_response(payload, api_customization=self.api_customization)
@@ -401,7 +404,13 @@ class pipeline_runner:
 
     def get_backbone_model(self):
         args = self.args
-        if args.backbone_model == "toolllama":
+        if args.backbone_model == "vllm":
+            logger.info(f"Use VLLM model with {args.model_path}")
+            ratio = int(args.max_sequence_length/args.max_source_sequence_length)
+            replace_llama_with_condense(ratio=ratio)
+            backbone_model = VllmModel(model_name_or_path=args.model_path)
+        elif args.backbone_model == "toolllama":
+            logger.info(f"Use ToolLLaMA model with {args.model_path}")
             # ratio = 4 means the sequence length is expanded by 4, remember to change the model_max_length to 8192 (2048 * ratio) for ratio = 4
             ratio = int(args.max_sequence_length/args.max_source_sequence_length)
             replace_llama_with_condense(ratio=ratio)
@@ -410,6 +419,7 @@ class pipeline_runner:
             else:
                 backbone_model = ToolLLaMA(model_name_or_path=args.model_path, max_sequence_length=args.max_sequence_length)
         else:
+            logger.info(f"Use ChatGPTFunction model with {args.model_path}")
             backbone_model = args.backbone_model
         return backbone_model
 
@@ -492,6 +502,7 @@ class pipeline_runner:
         splits = output_dir_path.split("/")
         os.makedirs("/".join(splits[:-1]),exist_ok=True)
         os.makedirs("/".join(splits),exist_ok=True)
+
         output_file_path = os.path.join(output_dir_path,f"{query_id}_{method}.json")
         if (not server) and os.path.exists(output_file_path):
             return
@@ -503,7 +514,7 @@ class pipeline_runner:
         query = data_dict["query"]
         if process_id == 0:
             # print(colored(f"[process({process_id})]now playing {query}, with {len(env.functions)} APIs", "green"))
-            logger.info(f"[process({process_id})]{query} (with {len(env.functions)} APIs)")
+            logger.info(f"Q: {query} (with {len(env.functions)} APIs)")
         [callback.on_request_start(
             user_input=query,
             method=method,
@@ -522,6 +533,7 @@ class pipeline_runner:
             chain=chain.terminal_node[0].messages,
             outputs=chain.terminal_node[0].description,
         ) for callback in callbacks]
+        success = False
         if output_dir_path is not None:
             with open(output_file_path,"w") as writer:
                 data = chain.to_json(answer=True,process=True)
@@ -529,8 +541,20 @@ class pipeline_runner:
                 json.dump(data, writer, indent=2)
                 success = data["answer_generation"]["valid_data"] and "give_answer" in data["answer_generation"]["final_answer"]
                 # print(colored(f"[process({process_id})]valid={success}", "green"))
-                logger.info(f"[process({process_id})]valid={success}")
-        return result
+                # print(f"data['answer_generation']['final_answer']=")
+                answer_generation = data['answer_generation']
+                print(f"{answer_generation['valid_data']=}")
+                print(f"{answer_generation['query_count']=}")
+                print(f"{answer_generation['total_tokens']=}")
+                print(f"{answer_generation['finish_type']=}")
+                print(f"---------- final_answer ----------")
+                final_answer = answer_generation['final_answer']
+                try:
+                    json_data = json.loads(final_answer)
+                    print(json_data)
+                except:
+                    print(final_answer)
+        return result, success
         
     def run(self):
         task_list = self.task_list
@@ -550,9 +574,26 @@ class pipeline_runner:
             retriever = self.get_retriever()
         else:
             retriever = None
-        for k, task in enumerate(tqdm(task_list, ncols=120, desc="Task")):
-            logger.info(f"---------- process[{self.process_id}] doing task {k}/{len(task_list)}: real_task_id_{task[2]}")
-            result = self.run_single_task(*task, retriever=retriever, process_id=self.process_id)
+        num_successes = 0
+        import time
+        run_start_time = time.time()
+        last_task_end_time = run_start_time
+        for k, task in enumerate(tqdm(task_list, ncols=100, desc="Task")):
+            method, backbone_model, query_id, data_dict, args, answer_dir, tool_des = task
+            logger.info(f"process[{self.process_id}] doing task {k+1}/{len(task_list)}: real_task_id_{task[2]}")
+            result, success = self.run_single_task(*task, retriever=retriever, process_id=self.process_id)
+            task_end_time = time.time()
+            avg_task_time = (task_end_time - run_start_time)/(k+1)
+            if success:
+                num_successes += 1
+                logger.info(f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) {query_id=} ({task_end_time - last_task_end_time:.2f} s), average task time: {avg_task_time:.2f} s")
+            else:
+                logger.warning(f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) {query_id=} ({task_end_time - last_task_end_time:.2f} s), average task time: {avg_task_time:.2f} s")
+            last_task_end_time = task_end_time
+
+        run_end_time = time.time()
+        print(f"{num_successes * 100 / len(task_list):.2f}%({num_successes}/{len(task_list)})")
+        print(f"total time: {run_end_time - run_start_time:.2f} s, average task time: {(run_end_time - run_start_time)/len(task_list):.2f} s")
 
 
 if __name__ == "__main__":
