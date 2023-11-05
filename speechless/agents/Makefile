@@ -19,6 +19,7 @@ RETRIEVAL_ARGS="--corpus_tsv_path ${CORPUS_TSV_PATH} --retrieval_model_path ${RE
 MODEL_NAME=$(shell basename ${TOOLLLAMA_MODEL_PATH})
 OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
 
+
 toolbench_G1_instruction:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python rapidapi/run_rapidapi.py \
@@ -43,6 +44,54 @@ toolbench_G1_tool:
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
+toolbench_G1_category:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_category.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G1_category \
+		--toolbench_key ${TOOLBENCH_KEY}
+
+
+toolbench_G2_instruction:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_instruction.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G2_instruction \
+		--toolbench_key ${TOOLBENCH_KEY}
+
+
+toolbench_G2_category:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_category.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G2_category \
+		--toolbench_key ${TOOLBENCH_KEY}
+
+
+toolbench_G3_instruction:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
+	python rapidapi/run_rapidapi.py \
+		--tool_root_dir ${TOOL_ROOT_DIR} \
+		--backbone_model vllm \
+		--model_path ${TOOLLLAMA_MODEL_PATH} \
+		${EXEC_ARGS} \
+		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G3_instruction.json \
+		--output_answer_file ${OUTPUT_DIR}.vllm.G3_instruction \
+		--toolbench_key ${TOOLBENCH_KEY}
+
+
 toolbench_speechless:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python rapidapi/run_rapidapi.py \
@@ -53,6 +102,7 @@ toolbench_speechless:
 		--input_query_file ${INPUT_QUERY_FILE} \
 		--output_answer_file ${OUTPUT_DIR} \
 		--toolbench_key ${TOOLBENCH_KEY}
+
 
 toolbench_openai:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
@@ -65,6 +115,7 @@ toolbench_openai:
 		--output_answer_file chatgpt_dfs_inference_result \
 		--toolbench_key ${TOOLBENCH_KEY}
 
+
 toolbench_opendomain:
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python rapidapi/run_rapidapi.py \
@@ -76,6 +127,7 @@ toolbench_opendomain:
 		--input_query_file ${INPUT_QUERY_FILE} \
 		--output_answer_file ${PWD}/toolllama_dfs_open_domain_inference_result \
 		--toolbench_key ${TOOLBENCH_KEY}
+
 
 toolbench_eval_prepare:
 	cd tooleval

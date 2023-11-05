@@ -42,9 +42,34 @@ class ToolBenchCache:
             lines = open(self.cache_file, 'r').readlines()
             cache_datas = [json.loads(line.strip()) for line in lines]
 
+            num_queries = 0
             for cache_data in tqdm(cache_datas, ncols=100, desc="Loading toolbench cache"):
-                toolbench_cache[cache_data['key']].append(cache_data['value'])
-            print(f"Loaded {len(toolbench_cache)} cache data from {self.cache_file}")
+                k = cache_data['key']
+                v = cache_data['value']
+                query_response_list = toolbench_cache[k]
+                has_same_input = False
+                for query_response in query_response_list:
+                    try:
+                        dict1 = json.loads(v['tool_input'])
+                        dict2 = json.loads(query_response['tool_input'])
+                        if compare_dict(dict1, dict2):
+                            has_same_input = True
+                            break
+                    except:
+                        if query_response['tool_input'] == v['tool_input']:
+                            has_same_input = True
+                            break
+                if not has_same_input:
+                    num_queries += 1
+                    toolbench_cache[k].append(v)
+
+            if num_queries != len(cache_datas):
+                with open(self.cache_file, 'w') as f:
+                    for k, v in tqdm(toolbench_cache.items(), ncols=100, desc="Resaving"):
+                        for item in v:
+                            f.write(json.dumps({"key": k, "value": item}, ensure_ascii=False) + "\n")
+
+            print(f"Loaded {len(toolbench_cache)} cached api calls ({num_queries} queries) from {self.cache_file}")
 
         return toolbench_cache
 
