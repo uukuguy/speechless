@@ -302,7 +302,7 @@ class LoggingCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
-            logger.info(logs)
+            logger.debug(logs)
 
 class SavePeftModelCallback(TrainerCallback):
     def save_model(self, args, state, kwargs):

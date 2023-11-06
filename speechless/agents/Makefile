@@ -131,10 +131,10 @@ toolbench_opendomain:
 
 toolbench_eval_prepare:
 	cd tooleval
-	export RAW_ANSWER_PATH=../../data/my_reproduction_data/model_predictions/
-	export CONVERTED_ANSWER_PATH=../../data/my_reproduction_data/model_predictions_converted/
-	export MODEL_NAME=chatgpt_cot
-	export METHOD=CoT
+	export RAW_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions/
+	export CONVERTED_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions_converted/
+	export MODEL_NAME=speechless-tools-7b-32k-v0.15_dfs
+	export METHOD=DFS_woFilter_w2
 	mkdir ${CONVERTED_ANSWER_PATH}/${MODEL_NAME}
 	for test_set in G1_instruction G1_category G1_tool G2_category G2_instruction G3_instruction
 	do
@@ -148,21 +148,21 @@ toolbench_eval_prepare:
 
 
 toolbench_pass_rate:
-	cd tooleval 
-	export CONVERTED_ANSWER_PATH=../../data/reproduction_data/model_predictions_converted/ 
-	export SAVE_PATH=pass_rate_results 
-	export CANDIDATE_MODEL=chatgpt_cot 
+	cd tooleval && \
+	export CONVERTED_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions_converted/ \
+	export SAVE_PATH=pass_rate_results \
+	export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.15_dfs \
 	python eval_pass_rate.py \
 		--converted_answer_path ${CONVERTED_ANSWER_PATH} \
 		--save_path ${SAVE_PATH} \
 		--reference_model ${CANDIDATE_MODEL} \
-		--test_ids ../../data/test_query_ids/ \
+		--test_ids ${TOOLBENCH_DATA_DIR}/data/test_query_ids/ \
 		--max_eval_threads 20 \
 		--evaluate_times 4
 
 toolbench_win_rate:
 	cd tooleval
-	export CONVERTED_ANSWER_PATH=../../data/reproduction_data/model_predictions_converted/
+	export CONVERTED_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions_converted/
 	export SAVE_PATH=preference_results
 	export PASS_TARE_PATH=pass_rate_results
 	export REFERENCE_MODEL=chatgpt_cot
