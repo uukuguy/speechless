@@ -12,9 +12,9 @@ python eval_preference.py \
     --converted_answer_path ${CONVERTED_ANSWER_PATH} \
     --reference_model ${REFERENCE_MODEL} \
     --output_model ${CANDIDATE_MODEL} \
-    --test_ids ../../data/test_ids/ \
+    --test_ids ${TOOLBENCH_DATA_DIR}/test_query_ids/ \
     --save_path ${SAVE_PATH} \
     --pass_rate_result_path ${PASS_TARE_PATH} \
     --max_eval_threads 10 \
     --use_pass_rate true \
-    --evaluate_times 4
+    --evaluate_times 1

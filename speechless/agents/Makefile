@@ -1,8 +1,9 @@
 MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
 #TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/ToolBench/ToolLLaMA-2-7b-v2
 
+TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-32k-v0.5-2871-steps
 # TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-v0.1-32k-mistral-5743-steps
-TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-multi-rounds-32k-tora-train0.15-861-steps
+# TOOLLLAMA_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tools-7b-multi-rounds-32k-tora-train0.15-861-steps
 RETRIEVAL_MODEL_PATH=${MODELS_ROOT_DIR}/ToolBench/ToolBench_IR_bert_based_uncased
 
 TOOLBENCH_DATA_DIR=/opt/local/datasets/toolbench_data
@@ -17,7 +18,8 @@ EXEC_ARGS=--max_observation_length 1024 --observ_compress_method truncate --meth
 RETRIEVAL_ARGS="--corpus_tsv_path ${CORPUS_TSV_PATH} --retrieval_model_path ${RETRIEVAL_MODEL_PATH} --retrieved_api_nums ${RETRIEVED_API_NUMS} "
 
 MODEL_NAME=$(shell basename ${TOOLLLAMA_MODEL_PATH})
-OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
+# OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
+OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}
 
 
 toolbench_G1_instruction:
@@ -28,7 +30,7 @@ toolbench_G1_instruction:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_instruction.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G1_instruction \
+		--output_answer_file ${OUTPUT_DIR}/G1_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
@@ -40,7 +42,7 @@ toolbench_G1_tool:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_tool.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G1_tool \
+		--output_answer_file ${OUTPUT_DIR}/G1_tool \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
@@ -52,7 +54,7 @@ toolbench_G1_category:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_category.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G1_category \
+		--output_answer_file ${OUTPUT_DIR}/G1_category \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
@@ -64,7 +66,7 @@ toolbench_G2_instruction:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_instruction.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G2_instruction \
+		--output_answer_file ${OUTPUT_DIR}/G2_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
@@ -76,7 +78,7 @@ toolbench_G2_category:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_category.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G2_category \
+		--output_answer_file ${OUTPUT_DIR}/G2_category \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 
@@ -88,7 +90,7 @@ toolbench_G3_instruction:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G3_instruction.json \
-		--output_answer_file ${OUTPUT_DIR}.vllm.G3_instruction \
+		--output_answer_file ${OUTPUT_DIR}/G3_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
 
 

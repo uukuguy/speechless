@@ -8,8 +8,9 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
 
 MODEL_BASENAME=$(basename ${PWD})
-#CKPT_STEPS=70
-CKPT_STEPS=28
+#CKPT_STEPS=2871
+CKPT_STEPS=5742
+# CKPT_STEPS=latest
 
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/llm_agents/tora-code-7b-v1.0
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
