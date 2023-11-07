@@ -348,10 +348,11 @@ You have access of the following tools:\n'''
                     if self.process_id == 0:
                         #print(colored(f"query to {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}",color="yellow"))
                         logger.debug(f"Calling {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}")
-                    if tb_cache is not None:
-                        response, status_code = tb_cache.get_response_from_cache(payload)
-                        if response is not None:
-                            return response, status_code
+                    # Don't retrival from cache, only save cache to review.
+                    # if tb_cache is not None:
+                    #     response, status_code = tb_cache.get_response_from_cache(payload)
+                    #     if response is not None:
+                    #         return response, status_code
 
                     if self.use_rapidapi_key or self.api_customization:
                         payload["rapidapi_key"] = self.rapidapi_key
