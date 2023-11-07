@@ -130,6 +130,7 @@ def write_results(filename:str, prefer_dict: dict, reference_model: str, output_
 
 if __name__=='__main__':
     args = parse_args()
+    os.makedirs(args.save_path, exist_ok=True)
     evaluators = [load_registered_automatic_evaluator(evaluator_name=args.evaluator, evaluators_cfg_path=os.path.join(abs_dir,'evaluators')) for _ in range(args.max_eval_threads)]
     
     def get_preference(query_id, task_status, answer_statuss, ref_example, output_example):
@@ -175,7 +176,7 @@ if __name__=='__main__':
                 for qid in test_ids:
                     if qid not in prefer_dict:
                         prefer_dict[qid] = {reference_model: 0, output_model: 0, f"round_{i}": "incomplete"}
-                    elif prefer_dict[qid][f"round_{i}"] == "complete":
+                    elif prefer_dict[qid].get(f"round_{i}", "") == "complete":
                         continue
                     if qid in ref_pass_result_dict and qid in output_pass_result_dict:
                         if ref_pass_result_dict[qid]["machine_label"] == "passed" and output_pass_result_dict[qid]["machine_label"] == "failed":
