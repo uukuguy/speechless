@@ -40,9 +40,9 @@ def process_error(response):
     if "Your Client (working) ---> Gateway (working) ---> API (not working)" in str(response):
         return_dict = {"error": "API not working error...", "response": response}
 
-    # FIXME
-    elif "Endpoint" in str(response) and "does not exist" in str(response):
-        return_dict = {"error": "API not working error...", "response": response}
+    # # FIXME
+    # elif "Endpoint" in str(response) and "does not exist" in str(response):
+    #     return_dict = {"error": "API not working error...", "response": response}
         
     elif "Unauthorized" in str(response) or "unauthorized" in str(response):
         save_cache_flag = True
