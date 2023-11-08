@@ -215,10 +215,10 @@ multiple_gen:
 	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
 
 multiple_gen_50:
-	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 50 20
+	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 50 20
 
 multiple_50:
-	bash eval/run_multiple.sh ${TEST_MODEL_PATH} 50
+	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 50
 
 multiple:
 	# python eval/multiple.py \

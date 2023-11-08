@@ -778,12 +778,13 @@ class DialogDataCollatorForCausalLM(object):
             example_input_ids = None
             example_output_ids = None
 
-            human_bot_dialog = []
-            dialog = example['dialog']
-            for _i in range(len(dialog) // 2):
-                human_input = dialog[2 * _i]['value']
-                bot_output = dialog[2 * _i + 1]['value']
-                human_bot_dialog.append((human_input, bot_output))
+            human_bot_dialog = example['dialog']
+            # human_bot_dialog = []
+            # dialog = example['dialog']
+            # for _i in range(len(dialog) // 2):
+            #     human_input = dialog[2 * _i]['value']
+            #     bot_output = dialog[2 * _i + 1]['value']
+            #     human_bot_dialog.append((human_input, bot_output))
             for idx, round in enumerate(human_bot_dialog):
                 if prompt_type == 'toolllama':
                     human_input, bot_response = round
@@ -832,6 +833,11 @@ class DialogDataCollatorForCausalLM(object):
                 tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
                 tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] + 
                                                 copy.deepcopy(tokenized_target['input_ids']))
+
+                # print(f"{source=}")
+                # print(f"{tokenized_input=}")
+                # print(f"{target=}")
+                # print(f"{tokenized_target=}")
                 if idx == 0:
                     example_input_ids = tokenized_input
                     example_output_ids = tokenized_output
@@ -842,6 +848,9 @@ class DialogDataCollatorForCausalLM(object):
             input_ids.append(example_input_ids)
             labels.append(example_output_ids)
                                             
+        # print(f"{example=}")
+        # print(f"{input_ids=}")
+        # print(f"{labels=}")
         # Apply padding
         if self.tokenizer.padding_side == "left":
             input_ids = [t.flip(-1) for t in input_ids]
