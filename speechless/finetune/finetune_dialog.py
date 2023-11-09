@@ -302,7 +302,10 @@ class LoggingCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
-            logger.debug(logs)
+            if "eval_loss" in logs:
+                logger.info(logs)
+            else:
+                logger.debug(logs)
 
 class SavePeftModelCallback(TrainerCallback):
     def save_model(self, args, state, kwargs):
@@ -325,7 +328,7 @@ class SavePeftModelCallback(TrainerCallback):
     def _symlink_latest_checkpoint(self, checkpoint_folder):
         # if the latest checkpoint is a symlink, remove it
         output_dir = os.path.dirname(checkpoint_folder)
-        latest_checkpoint = os.path.join(output_dir, "checkpoint-latest")
+        latest_checkpoint = os.path.join(output_dir, "latest")
         if os.path.islink(latest_checkpoint):
             os.remove(latest_checkpoint)
         # symlink the latest checkpoint to the checkpoint folder
@@ -1426,10 +1429,10 @@ def train():
         replace_llama_attention_forword_with_rerope(training_length=args.model_max_len, window=rerope_window)
         logger.info(f"Enabled rerope monkey patching.")
 
-    if args.sliding_window > 0:
-        if 'mistral' not in args.model_name_or_path:
-            from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
-            replace_llama_attn() 
+    # if args.sliding_window > 0:
+    #     if 'mistral' not in args.model_name_or_path:
+    #         from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
+    #         replace_llama_attn() 
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
     if completed_training:
@@ -1456,6 +1459,12 @@ def train():
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, **tokenizer_kwargs)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = 0
+    tokenizer.pad_token = '<unk>'
+    tokenizer.bos_token = '<s>'
+    tokenizer.eos_token = '</s>'
+    tokenizer.pad_token_id = 0
+    tokenizer.bos_token_id = 1
+    tokenizer.eos_token_id = 2
     data_module = make_data_module(tokenizer=tokenizer, args=args)
     trainer = Seq2SeqTrainer(
     # trainer = PeftTrainer(
