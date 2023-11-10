@@ -31,7 +31,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --remove_unused_columns False \
     --do_train \
     --max_memory_MB ${MAX_MEMORY_MB} \
-    --bits 4 \
+    --bits ${BITS} \
     --lora_r ${LORA_R} \
     --lora_alpha ${LORA_ALPHA} \
     --lora_dropout 0.05 \

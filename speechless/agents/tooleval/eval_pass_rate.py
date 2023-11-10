@@ -54,6 +54,7 @@ if __name__ == "__main__":
     evaluators = [load_registered_automatic_evaluator(evaluator_name=args.evaluator, evaluators_cfg_path=os.path.join(abs_dir,'evaluators')) for _ in range(args.max_eval_threads)]
     
     def compute_pass_rate(query_id, example):
+        #print(f"{query_id=}")
         global evaluators
         evaluator = random.choice(evaluators)
         try:
