@@ -781,13 +781,15 @@ class DialogDataCollatorForCausalLM(object):
             example_input_ids = None
             example_output_ids = None
 
-            human_bot_dialog = example['dialog']
-            # human_bot_dialog = []
-            # dialog = example['dialog']
-            # for _i in range(len(dialog) // 2):
-            #     human_input = dialog[2 * _i]['value']
-            #     bot_output = dialog[2 * _i + 1]['value']
-            #     human_bot_dialog.append((human_input, bot_output))
+            # human_bot_dialog = example['dialog']
+            human_bot_dialog = []
+            dialog = example['dialog']
+            for _i in range(len(dialog) // 2):
+                human_input = dialog[2 * _i]['value']
+                bot_output = dialog[2 * _i + 1]['value']
+                human_bot_dialog.append((human_input, bot_output))
+            if len(human_bot_dialog) < 1:
+                continue
             for idx, round in enumerate(human_bot_dialog):
                 if prompt_type == 'toolllama':
                     human_input, bot_response = round
@@ -1166,17 +1168,17 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 return {'dialog': [(instruction['instruction'], instruction['response'])]}  
 
             dataset = dataset.map(_format_input_output)
-        elif dataset_format == 'sharegpt': # instruction-response
-            def _format_sharegpt(example):
-                human_bot_dialog = []
-                dialog = example['dialog']
-                for _i in range(len(dialog) // 2):
-                    human_input = dialog[2 * _i]['value']
-                    bot_output = dialog[2 * _i + 1]['value']
-                    human_bot_dialog.append((human_input, bot_output))
-                return {'dialog': human_bot_dialog}
+        # elif dataset_format == 'sharegpt': # instruction-response
+        #     def _format_sharegpt(example):
+        #         human_bot_dialog = []
+        #         dialog = example['dialog']
+        #         for _i in range(len(dialog) // 2):
+        #             human_input = dialog[2 * _i]['value']
+        #             bot_output = dialog[2 * _i + 1]['value']
+        #             human_bot_dialog.append((human_input, bot_output))
+        #         return {'dialog': human_bot_dialog}
                     
-            dataset = dataset.map(_format_sharegpt)
+        #     dataset = dataset.map(_format_sharegpt)
         elif dataset_format == 'dialog':
             def _format_multi_turns(example):
                 human_bot_dialog = []

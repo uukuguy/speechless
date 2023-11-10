@@ -17,6 +17,7 @@ answer_status_mapping = {
     "AnswerStatus.Unsure": AnswerStatus.Unsure
 }
 test_sets = ["G1_instruction", "G1_category", "G1_tool", "G2_instruction", "G2_category", "G3_instruction"]
+# test_sets = ["G1_instruction", "G1_category", "G2_instruction", "G2_category", "G3_instruction"]
 
 def get_steps(example):
     answer_details = example["answer"]["answer_details"][0]
