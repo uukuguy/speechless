@@ -6,7 +6,8 @@ export RAW_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions
 export CONVERTED_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predictions_converted/
 # export MODEL_NAME=speechless-tools-7b-32k-v0.15_dfs
 # export MODEL_NAME=speechless-tools-7b-32k-v0.5-2871-steps
-export MODEL_NAME=speechless-tools-7b-32k-v0.5-5742-steps
+# export MODEL_NAME=speechless-tools-7b-32k-v0.5-5742-steps
+export MODEL_NAME=speechless-tools-7b-32k-mistral-2871-steps
 export METHOD=DFS_woFilter_w2
 mkdir ${CONVERTED_ANSWER_PATH}/${MODEL_NAME}
 for test_set in G1_instruction G1_category G1_tool G2_category G2_instruction G3_instruction
