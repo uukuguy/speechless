@@ -23,9 +23,8 @@
 ## Models
 
 [Models Repositry](https://huggingface.co/uukuguy)
-⭐️ My Focus
 
-🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month
+⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month
 
 ### Nov. 2023
 
@@ -33,29 +32,69 @@
 
     Fine-tune on the [llm_agents/tora-code-7b-v1.0](https://huggingface.co/llm_agents/tora-code-7b-v1.0). The primary goal is to enhance the code generation capability of the model, thereby achieving a large-scale intelligent agent base model with good planning and reasoning abilities.
 
+    **HumanEval & MultiPL-E**
+
+    | HumanEval-Python | Python | Java   | JavaScript | CPP    | Rust   | Go     | Shell  | Julia  | D      | Lua    | PHP    | R      |
+    | ------           | ------ | ------ | ------     | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+    | 52.44            | 55.96  | 37.84  | 46.93      | 37.48  | 29.01  | 28.99  | 12.11  | 31.47  |12.05   |26.52   |39.25   | 22.09  |
+
 ### Oct. 2023
 
 - ⭐️ **[speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15**
 
     This model is a merge of 6 SOTA Mistral-7B based models. [Model benchmark](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b/discussions/1) by [sethuiyer](https://huggingface.co/sethuiyer).
+
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
 
     The subsequent version of [Speechless SuperLngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 53.34   | **64.33**   | **84.4**    | **63.72**  | **52.52**      | **78.37**      | **21.38**  | 8.66   |
 
 - 🔥🔥 **[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10**
 
   [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
 
+
+- 🔥🔥 **[speechless-code-mistral-orca-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-orca-7b-v1.0) 2023.10.10**
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 55.33   | 59.64   | 82.25      | 61.33  | 48.45      | 77.51      | 8.26  | **49.89**   |
+
 - 🔥🔥 **[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10**
 
   [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 53.47   | 60.58   | 83.75      | 62.98  | 47.9      | **78.69**  | 19.18  | 21.19   |
 
 - ⭐️🔥🔥 **[speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04**
 
   [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
   My current strongest code generation model supports 12 commonly used programming languages, including Python, Java, C++, Rust, Go etc. pass@1 on humaneval: 75.61, NL2SQL SQLEval: 71.43% (EM: 67.43%)
+
+    **HumanEval & MultiPL-E**
+
+    | HumanEval-Python | Python | Java   | JavaScript | CPP    | Rust   |
+    | ------           | ------ | ------ | ------     | ------ | ------ |
+    | 75.61            | 67.55  | 51.93  | 64.81      | 55.81  | 52.98  |
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 50.96   | 54.35  | 75.65     | 54.67  | 45.21      | 73.56      | 11.6   | 41.71  |
 
 ### Sep. 2023
 
@@ -98,18 +137,33 @@
 
     My current strongest code generation model supports 12 commonly used programming languages, including Python, Java, C++, Rust, Go etc. pass@1 on humaneval: 75.61, NL2SQL SQLEval: 71.43% (EM: 67.43%)
 
+    **HumanEval & MultiPL-E**
+
+    | HumanEval-Python | Python | Java   | JavaScript | CPP    | Rust   |
+    | ------           | ------ | ------ | ------     | ------ | ------ |
+    | 75.61            | 67.55  | 51.93  | 64.81      | 55.81  | 52.98  |
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 50.96   | 54.35  | 75.65     | 54.67  | 45.21      | 73.56      | 11.6   | 41.71  |
+
 - 🔥🔥 **[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19**
 
 - ⭐️🔥🔥🔥 **[speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13**
 
 - ⭐️🔥🔥🔥 **[speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13**
 
-
 ### Mistral based Models
 
 - ⭐️ **[speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15**
 
+    This model is a merge of 6 SOTA Mistral-7B based models. [Model benchmark](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b/discussions/1) by [sethuiyer](https://huggingface.co/sethuiyer).
+
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
+
+    The subsequent version of [Speechless SuperLngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
 
 - ⭐️🔥🔥 **[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10**
 
@@ -120,6 +174,12 @@
 - ⭐️ **[speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01**
 
     Fine-tune on the [llm_agents/tora-code-7b-v1.0](https://huggingface.co/llm_agents/tora-code-7b-v1.0). The primary goal is to enhance the code generation capability of the model, thereby achieving a large-scale intelligent agent base model with good planning and reasoning abilities.
+
+    **HumanEval & MultiPL-E**
+
+    | HumanEval-Python | Python | Java   | JavaScript | CPP    | Rust   | Go     | Shell  | Julia  | D      | Lua    | PHP    | R      |
+    | ------           | ------ | ------ | ------     | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+    | 52.44            | 55.96  | 37.84  | 46.93      | 37.48  | 29.01  | 28.99  | 12.11  | 31.47  |12.05   |26.52   |39.25   | 22.09  |
 
 - 🔥🔥 **[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10**
 
