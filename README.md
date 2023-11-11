@@ -2,6 +2,8 @@
 
 > LLM based agents with proactive interactions, long-term memory, external tool integration, and local deployment capabilities.
 
+![Speechless.AI](imgs/speechlessai_main_3.png)
+
 [Speechless.AI](http://speechless.ai/) is committed to integrating the superior language processing and deep reasoning capabilities of large language models into practical business applications. By enhancing the model's language understanding, knowledge accumulation, and text creation abilities, and introducing long-term memory, external tool integration, and local deployment, our aim is to establish an intelligent collaborative partner that can independently interact, continuously evolve, and closely align with various business scenarios.
 
 - Firstly, we focus on building a large model with enhanced reasoning capabilities, ensuring its outstanding performance in language processing and logical analysis.
