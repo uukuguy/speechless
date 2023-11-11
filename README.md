@@ -96,6 +96,8 @@
 
     [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
+    My current strongest code generation model supports 12 commonly used programming languages, including Python, Java, C++, Rust, Go etc. pass@1 on humaneval: 75.61, NL2SQL SQLEval: 71.43% (EM: 67.43%)
+
 - 🔥🔥 **[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19**
 
 - ⭐️🔥🔥🔥 **[speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13**
