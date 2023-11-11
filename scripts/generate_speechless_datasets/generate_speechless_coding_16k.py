@@ -7,12 +7,12 @@ from transformers import (
 )
 
 def load_agent_instruct_dataset():
-    dataset_name_or_path = "/opt/local/datasets/huggingface.co/THUDM/AgentInstruct"
+    dataset_name_or_path = "/opt/local/datasets/huggingface.co/toolllama/THUDM/AgentInstruct"
     dataset = datasets.load_dataset(dataset_name_or_path)
     dataset = datasets.concatenate_datasets(dataset.values())
     def _format(sample):
         convs = sample['conversations']  
-        dialog = []
+        conversations = []
         for i in range(len(convs) // 2):
             human = convs[i*2]
             gpt = convs[i*2+1]
@@ -20,14 +20,14 @@ def load_agent_instruct_dataset():
             # gpt = {'from': gpt['from'], 'value': gpt['value']}
             human = {'from': 'human', 'value': human['value']}
             gpt = {'from': 'assistant', 'value': gpt['value']}
-            dialog.append(human)
-            dialog.append(gpt)
+            conversations.append(human)
+            conversations.append(gpt)
         return {
             'category': "toolllama",
             'prompt_type': "toolllama",
             "system_prompt": "A chat between a curious user and an artificial intelligence assistant who can use external tools and APIs to solve the user's question."
             "The assistant gives tools and APIs calling processes or final answer to the human's question.",
-            'dialog': dialog,
+            'conversations': conversations,
         }
 
     dataset = dataset.map(_format)
@@ -83,7 +83,7 @@ def load_airoboros_dataset():
         selected_categories.extend(cats)
 
     print(f"Loading jondurbin/airoboros-2.2.1 ...")
-    airoboros_dataset = datasets.load_dataset("json", data_files="/opt/local/datasets/jondurbin/airoboros-2.2.1/instructions.jsonl")['train']
+    airoboros_dataset = datasets.load_dataset("json", data_files="/opt/local/datasets/base/jondurbin/airoboros-2.2.1/instructions.jsonl")['train']
     print(f"Loaded {len(airoboros_dataset)} samples from jondurbin/airoboros-2.2.1")
     total_samples = len(airoboros_dataset)
     airoboros_dataset = airoboros_dataset.filter(lambda x: x['category'] in selected_categories)
@@ -137,7 +137,7 @@ def load_airoboros_22_dataset():
         selected_categories.extend(cats)
 
     print(f"Loading jondurbin/airoboros-2.2 ...")
-    airoboros_dataset = datasets.load_dataset("json", data_files="/opt/local/datasets/jondurbin/airoboros-2.2/instructions.jsonl")['train']
+    airoboros_dataset = datasets.load_dataset("json", data_files="/opt/local/datasets/base/jondurbin/airoboros-2.2/instructions.jsonl")['train']
     print(f"Loaded {len(airoboros_dataset)} samples from jondurbin/airoboros-2.2")
     total_samples = len(airoboros_dataset)
     airoboros_dataset = airoboros_dataset.filter(lambda x: x['category'] in selected_categories)
@@ -286,23 +286,23 @@ def prepare_data(model_name_or_path, model_max_len, model_min_len):
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, **tokenizer_kwargs)
 
     # speechless-coding-16k.jsonl
-    dataset_file = "/opt/local/datasets/Speechless/speechless-coding-16k.jsonl"
+    dataset_file = "/opt/local/datasets/speechless_data/speechless-coding-16k.jsonl"
 
     # airoboros 2.2
     airoboros_dataset = load_airoboros_22_dataset()
     # airoboros_dataset = airoboros_dataset.train_test_split(test_size=10000)['test']
 
-    orca_dataset = load_orca_dataset("/opt/local/datasets/OpenOrca")
+    orca_dataset = load_orca_dataset("/opt/local/datasets/base/OpenOrca")
     # orca_dataset = orca_dataset.train_test_split(test_size=10000)['test']
 
-    platypus_dataset = load_platypus_dataset("/opt/local/datasets/garage-bAInd/Open-Platypus")
+    platypus_dataset = load_platypus_dataset("/opt/local/datasets/base/garage-bAInd/Open-Platypus")
     # platypus_dataset = platypus_dataset.train_test_split(test_size=10000)['test']
 
-    wizardlm_dataset = load_wizardlm_dataset("/opt/local/datasets/WizardLM/WizardLM_evol_instruct_V2_196k")
+    wizardlm_dataset = load_wizardlm_dataset("/opt/local/datasets/base/WizardLM/WizardLM_evol_instruct_V2_196k")
     # wizardlm_dataset = wizardlm_dataset.train_test_split(test_size=10000)['test']
 
     # use tokenbender
-    tokenbender_dataset = load_tokenbender_dataset("/opt/local/datasets/TokenBender/python_evol_instruct_51k")
+    tokenbender_dataset = load_tokenbender_dataset("/opt/local/datasets/base/TokenBender/python_evol_instruct_51k")
     # tokenbender_dataset = tokenbender_dataset.train_test_split(test_size=10000)['test']
 
     # not use tinycodes
@@ -339,7 +339,7 @@ def prepare_data(model_name_or_path, model_max_len, model_min_len):
         'category': x['category'],
         'prompt_type': "alpaca",
         'system_prompt': "", #x['system'],
-        'dialog': [
+        'conversations': [
                 {
                     'from': 'human',
                     'value': x['instruction'].replace("PLAINFORMAT", ""),  
@@ -353,7 +353,7 @@ def prepare_data(model_name_or_path, model_max_len, model_min_len):
     # Remove unused columns.
     dataset = dataset.remove_columns(
         # FIXME
-        [col for col in dataset.column_names if col not in ['dialog', 'system_prompt', 'category', 'prompt_type']]
+        [col for col in dataset.column_names if col not in ['conversations', 'system_prompt', 'category', 'prompt_type']]
     )
 
     # ---------- AgentInstruct Dataset ----------
