@@ -58,8 +58,6 @@
 
   [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
-
-
 - 🔥🔥 **[speechless-code-mistral-orca-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-orca-7b-v1.0) 2023.10.10**
 
     **Open LLM Language Model Evaluation Harness**
@@ -116,14 +114,13 @@
 
 - ⭐️🔥 **[speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10**
 
-  🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke) 
+  🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
   Guys called it "**Speechless SuperLongName**". My first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). It is said to be widely used by die-hard fans and hotly discussed on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
 
 - **[speechless-llama2-hermes-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-13b) 2023.09.02**
 
 - **[speechless-llama2-luban-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-luban-orca-platypus-13b) 2023.09.01**
-
 
 ### Aug. 2023
 
@@ -164,6 +161,12 @@
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
 
     The subsequent version of [Speechless SuperLngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  | DROP   |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ | ------ |
+    | 53.34   | **64.33**   | **84.4**    | **63.72**  | **52.52**      | **78.37**      | **21.38**  | 8.66   |
 
 - ⭐️🔥🔥 **[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10**
 
