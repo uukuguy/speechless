@@ -11,6 +11,12 @@
 
 - Ultimately, we integrate it with real business scenarios, ensuring that the intelligent entity seamlessly aligns with various business processes, delivering tangible value to enterprises.
 
+## TODO
+
+- Multi-LoRAs: Load multiple LoRA modules simultaneously and automatically switch the appropriate combination of LoRA modules to generate the best answer based on user queries. [uukuguy/multi-loras](https://github.com/uukuguy/multi_loras)
+- speechless.tools: The general tool-use capability started from ToolBench. Will be under uukuguy/speechless-tools.
+
+
 ## Models
 
 [Models Repositry](https://huggingface.co/uukuguy)
@@ -49,6 +55,8 @@
     [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
 
 - [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
+- [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
+- [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
 
 ### Mistral based Models
 
@@ -66,10 +74,10 @@
 
 ### Llama2 based Models
 
+- [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
+  [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML)
 - [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
     [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
-- [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
-    GPTQ GGUF AWQ
 
 ## Datasets
 
