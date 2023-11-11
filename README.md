@@ -40,7 +40,7 @@
     This model is a merge of 6 SOTA Mistral-7B based models. [Model benchmark](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b/discussions/1) by [sethuiyer](https://huggingface.co/sethuiyer).
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
 
-    The subsequent version of [Speechless SuperLOngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
+    The subsequent version of [Speechless SuperLngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
 
 - 🔥🔥 **[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10**
 
@@ -79,7 +79,7 @@
 
   🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke) 
 
-  The first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). A large amount of usage and sparked heated discussions among people on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
+  Guys called it "**Speechless SuperLongName**". My first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). It is said to be widely used by die-hard fans and hotly discussed on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
 
 - **[speechless-llama2-hermes-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-13b) 2023.09.02**
 
@@ -135,7 +135,7 @@
 
     🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
-    The first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). A large amount of usage and sparked heated discussions among people on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
+    Guys called it "**Speechless SuperLongName**". My first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). It is said to be widely used by die-hard fans and hotly discussed on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
 
 ## Datasets
 
@@ -160,7 +160,7 @@ The training dataset is a jsonl file, with each line containing a JSON formatted
 
 ```json
 {
-    "dialog":[
+    "conversations":[
         {"from": "human", "value": "Human's Instruction"},
         {"from": "assistant", "value": "Assistant's response"}
     ],

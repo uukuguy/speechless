@@ -120,8 +120,8 @@ class DataArguments:
         metadata={"help": "Which dataset to finetune on. See datamodule for options."}
     )
     dataset_format: Optional[str] = field(
-        default="dialog",
-        metadata={"help": "Which dataset format is used. [alpaca|dialog|chip2|self-instruct|hh-rlhf|mistral]"}
+        default="conversations",
+        metadata={"help": "Which dataset format is used. [alpaca|conversations|chip2|self-instruct|hh-rlhf|mistral]"}
     )
 
 @dataclass
@@ -590,10 +590,10 @@ def preprocess_toolbench_dataset(
 
     # Apply prompt templates
     conversation = ""
-    for i, round in enumerate(example['dialog']):
+    for i, round in enumerate(example['conversations']):
         role = roles[round['from']]
         message = round['value']
-        if i + 1 == len(example['dialog']) and message:
+        if i + 1 == len(example['conversations']) and message:
             conversation += role + ": " + str(message) + seps[1]
         elif message:
             conversation += role + ": " + str(message) + seps[0]
@@ -682,7 +682,7 @@ def preprocess_multi_rounds_dialog(
     seps = ["\n", "</s>"]
 
     # The dialogue process is divided into multiple rounds, with each round ending when the Assistant speaks.
-    dialog = example['dialog']
+    dialog = example['conversations']
     dialog_rounds = []
     round_messages = []
     for i, round in enumerate(dialog):
@@ -783,7 +783,7 @@ class DialogDataCollatorForCausalLM(object):
 
             # human_bot_dialog = example['dialog']
             human_bot_dialog = []
-            dialog = example['dialog']
+            dialog = example['conversations']
             for _i in range(len(dialog) // 2):
                 human_input = dialog[2 * _i]['value']
                 bot_output = dialog[2 * _i + 1]['value']
@@ -1021,7 +1021,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         ):
             dataset = dataset.map(extract_alpaca_dataset, remove_columns=['instruction'])
             dataset = dataset.map(lambda x: {
-                'dialog': [(x['input'], x['output'])]
+                'conversations': [(x['input'], x['output'])]
             })
 
         elif dataset_format == 'chip2' or (dataset_format is None and args.dataset == 'chip2'):
@@ -1030,13 +1030,13 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             #     'output': x['text'].split('\n<bot>: ')[1],
             # })
             dataset = dataset.map(lambda x: {
-                'dialog': [(x['text'].split('\n<bot>: ')[0].replace('<human>: ', ''), x['text'].split('\n<bot>: ')[1])]
+                'conversations': [(x['text'].split('\n<bot>: ')[0].replace('<human>: ', ''), x['text'].split('\n<bot>: ')[1])]
             })
         elif dataset_format == 'self-instruct' or (dataset_format is None and args.dataset == 'self-instruct'):
             # for old, new in [["prompt", "input"], ["completion", "output"]]:
             #     dataset = dataset.rename_column(old, new)
             dataset = dataset.map(lambda x: {
-                'dialog': [(x['prompt'], x['completion'])]   
+                'conversations': [(x['prompt'], x['completion'])]   
             })
         elif dataset_format == 'hh-rlhf' or (dataset_format is None and args.dataset == 'hh-rlhf'):
             # dataset = dataset.map(lambda x: {
@@ -1044,7 +1044,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             #     'output': x['chosen']
             # })
             dataset = dataset.map(lambda x: {
-                'dialog': [('', x['chosen'])]
+                'conversations': [('', x['chosen'])]
             })
         elif dataset_format == 'oasst1' or (dataset_format is None and args.dataset == 'oasst1'):
             # dataset = dataset.map(lambda x: {
@@ -1052,7 +1052,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             #     'output': x['text'],
             # })
             dataset = dataset.map(lambda x: {
-                'dialog': [('', x['text'])]
+                'conversations': [('', x['text'])]
             })
         elif dataset_format == 'airoboros':
             logger.info("---------- Formatting dataset for Airoboros. ----------")
@@ -1065,7 +1065,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     #     'input': in_,
                     #     'output': out_,
                     # }
-                    return {'dialog': [(in_, out_)]}
+                    return {'conversations': [(in_, out_)]}
                 else:
                     in_ = None
                     if instruction.get("skip_prompt_formatting"):
@@ -1083,7 +1083,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     #     'input': in_,
                     #     'output': instruction['response'].strip() + "\n",
                     # }
-                    return {'dialog': [(in_, instruction['response'].strip() + "\n")]}
+                    return {'conversations': [(in_, instruction['response'].strip() + "\n")]}
 
             dataset = dataset.map(_format_airoboros)
         elif dataset_format == 'mistral':
@@ -1111,7 +1111,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     #     'input': in_,
                     #     'output': out_,
                     # }
-                    return {'dialog': [(in_, out_)]}
+                    return {'conversations': [(in_, out_)]}
                 else:
                     in_ = f"<s>[INST] {instruction['instruction']} [/INST]"
                     out_ = f"{instruction['response']}</s>"
@@ -1119,7 +1119,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     #     'input': in_,
                     #     'output': out_,
                     # }
-                    return {'dialog': [(in_, out_)]}
+                    return {'conversations': [(in_, out_)]}
             dataset = dataset.map(_format_mistral)
         elif dataset_format == 'llama2':
             logger.info("---------- Formatting dataset for Llama2. ----------")
@@ -1133,7 +1133,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 #     'input': in_,
                 #     'output': out_,
                 # }
-                return {'dialog': [(in_, out_)]}
+                return {'conversations': [(in_, out_)]}
 
             dataset = dataset.map(_format_llama2)
 
@@ -1153,7 +1153,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                     
                 # return {'input': in_,
                 #         'output': out_}
-                return {'dialog': [(in_, out_)]}
+                return {'conversations': [(in_, out_)]}
 
             dataset = dataset.map(_format_instruction_input_response)
 
@@ -1165,24 +1165,13 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 #     'input': instruction['instruction'],
                 #     'output': instruction['response'],
                 # }
-                return {'dialog': [(instruction['instruction'], instruction['response'])]}  
+                return {'conversations': [(instruction['instruction'], instruction['response'])]}  
 
             dataset = dataset.map(_format_input_output)
-        # elif dataset_format == 'sharegpt': # instruction-response
-        #     def _format_sharegpt(example):
-        #         human_bot_dialog = []
-        #         dialog = example['dialog']
-        #         for _i in range(len(dialog) // 2):
-        #             human_input = dialog[2 * _i]['value']
-        #             bot_output = dialog[2 * _i + 1]['value']
-        #             human_bot_dialog.append((human_input, bot_output))
-        #         return {'dialog': human_bot_dialog}
-                    
-        #     dataset = dataset.map(_format_sharegpt)
-        elif dataset_format == 'dialog':
+        elif dataset_format == 'conversations':
             def _format_multi_turns(example):
                 human_bot_dialog = []
-                dialog = example['dialog']
+                dialog = example['conversations']
                 for round in dialog:
                     who = round['from']
                     response = round['value']
@@ -1190,7 +1179,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                         "from": who,
                         "value": response,
                     })
-                return {'dialog': human_bot_dialog}
+                return {'conversations': human_bot_dialog}
                     
             dataset = dataset.map(_format_multi_turns)
 
@@ -1198,7 +1187,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         dataset = dataset.remove_columns(
             # FIXME
             # [col for col in dataset.column_names['train'] if col not in ['input', 'output']]
-            [col for col in dataset.column_names['train'] if col not in ['dialog', 'system_prompt', 'prompt_type']]
+            [col for col in dataset.column_names['train'] if col not in ['conversations', 'system_prompt', 'prompt_type']]
         )
         return dataset
 
