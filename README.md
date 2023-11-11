@@ -198,7 +198,7 @@
 
     🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
-    Guys called it "**Speechless SuperLongName**". My first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). It is said to be widely used by die-hard fans and hotly discussed on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
+    Guys called it "**Speechless SuperLongName**". My first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). It is said to be widely used by die-hard fans and hotly discussed on Reddit. [Funny discuss on Reddit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
 
 ## Datasets
 
