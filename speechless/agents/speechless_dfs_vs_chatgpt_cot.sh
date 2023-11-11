@@ -9,7 +9,8 @@ export REFERENCE_MODEL=chatgpt_cot
 #export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.15_dfs
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.5-5742-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.5-2871-steps
-export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-2871-steps
+# export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-2871-steps
+export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-5742-steps
 # export API_POOL_FILE=path/to/your/openai_key_json_file.json
 python eval_preference.py \
     --converted_answer_path ${CONVERTED_ANSWER_PATH} \
