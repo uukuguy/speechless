@@ -120,8 +120,8 @@ class DataArguments:
         metadata={"help": "Which dataset to finetune on. See datamodule for options."}
     )
     dataset_format: Optional[str] = field(
-        default=None,
-        metadata={"help": "Which dataset format is used. [alpaca|chip2|self-instruct|hh-rlhf|mistral]"}
+        default="dialog",
+        metadata={"help": "Which dataset format is used. [alpaca|dialog|chip2|self-instruct|hh-rlhf|mistral]"}
     )
 
 @dataclass
