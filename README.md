@@ -30,40 +30,61 @@
 ### Nov. 2023
 
 - ⭐️ **[speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01**
+
     Fine-tune on the [llm_agents/tora-code-7b-v1.0](https://huggingface.co/llm_agents/tora-code-7b-v1.0). The primary goal is to enhance the code generation capability of the model, thereby achieving a large-scale intelligent agent base model with good planning and reasoning abilities.
 
 ### Oct. 2023
 
 - ⭐️ **[speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15**
+
     This model is a merge of 6 SOTA Mistral-7B based models. [Model benchmark](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b/discussions/1) by [sethuiyer](https://huggingface.co/sethuiyer).
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
+
     The subsequent version of [Speechless SuperLOngName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
 
 - 🔥🔥 **[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10**
+
   [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
+
 - 🔥🔥 **[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10**
+
   [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
 - ⭐️🔥🔥 **[speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04**
+
   [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
   My current strongest code generation model supports 12 commonly used programming languages, including Python, Java, C++, Rust, Go etc. pass@1 on humaneval: 75.61, NL2SQL SQLEval: 71.43% (EM: 67.43%)
 
 ### Sep. 2023
 
 - ⭐️🔥🔥🔥 **[speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14**
+
   [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML) by [TheBloke](https://huggingface.co/TheBloke)
+
 - 🔥🔥 **[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19**
+
 - **[speechless-codellama-dolphin-orca-platypus-34b](https://huggingface.co/uukuguy/speechless-codellama-dolphin-orca-platypus-34b) 2023.09.14**
+
 - 🔥🔥 **[speechless-llama2-dolphin-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-llama2-dolphin-orca-platypus-13b) 2023.09.16**
+
 - **[speechless-codellama-34b-v1.0](https://huggingface.co/speechlessai/speechless-codellama-34b-v1.0) 2023.09.14**
+
 - ⭐️🔥🔥🔥 **[speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13**
+
 - ⭐️🔥🔥🔥 **[speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13**
+
 - ⭐️🔥 **[speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10**
+
   🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke) 
+
   The first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). A large amount of usage and sparked heated discussions among people on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
+
 - **[speechless-llama2-hermes-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-13b) 2023.09.02**
+
 - **[speechless-llama2-luban-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-luban-orca-platypus-13b) 2023.09.01**
+
 
 ### Aug. 2023
 
@@ -72,32 +93,46 @@
 ### CodeLlama based Models
 
 - ⭐️🔥🔥 **[speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04**
+
     [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
 - 🔥🔥 **[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19**
+
 - ⭐️🔥🔥🔥 **[speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13**
+
 - ⭐️🔥🔥🔥 **[speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13**
+
 
 ### Mistral based Models
 
 - ⭐️ **[speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15**
+
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
+
 - ⭐️🔥🔥 **[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10**
+
     [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
 ### Tora based Models
 
 - ⭐️ **[speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01**
+
     Fine-tune on the [llm_agents/tora-code-7b-v1.0](https://huggingface.co/llm_agents/tora-code-7b-v1.0). The primary goal is to enhance the code generation capability of the model, thereby achieving a large-scale intelligent agent base model with good planning and reasoning abilities.
+
 - 🔥🔥 **[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10**
+
     [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
 ### Llama2 based Models
 
 - ⭐️🔥🔥🔥 **[speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14**
+
   [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML) by [TheBloke](https://huggingface.co/TheBloke)
+
 - ⭐️🔥 **[speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10**
+
     🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
     The first model with a download volume exceeding 10K last month on [HuggingFace](https://huggingface.co/models). A large amount of usage and sparked heated discussions among people on Reddit. [Funny discuss on Reedit](https://www.reddit.com/r/LocalLLaMA/comments/16s701v/this_is_one_of_the_best_13b_models_ive_tested_for/?utm_source=share&utm_medium=web2x&context=3)
 
 ## Datasets
