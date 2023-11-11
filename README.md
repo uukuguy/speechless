@@ -15,6 +15,9 @@
 
 [Models Repositry](https://huggingface.co/uukuguy)
 
+- [speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01
+
+- [speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15
 - [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
   GPTQ GGUF AWQ
 
@@ -42,42 +45,40 @@
 
 ### CodeLlama based Models
 
-[speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
-[GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
+- [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
+    [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
 
-[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
+- [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
 
 ### Mistral based Models
 
-[speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
-[GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
+- [speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15
+- [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
+  GPTQ GGUF AWQ
+- [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
+    [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
 
 ### Tora based Models
 
-[speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
-[GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
+- [speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01
+- [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
+    [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
 
 ### Llama2 based Models
 
-[speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
-[GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
-
-[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
-GPTQ GGUF AWQ
+- [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
+    [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
+- [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
+    GPTQ GGUF AWQ
 
 ## Datasets
 
-[jondurbin/airoboros-2.2.1](https://huggingface.co/datasets/jondurbin/airoboros-2.2.1)
-
-[Open-Orca/OpenOrca](https://huggingface.co/datasets/Open-Orca/OpenOrca)
-
-[garage-bAInd/Open-Platypus](https://huggingface.co/datasets/garage-bAInd/Open-Platypus)
-
-[WizardLM/WizardLM_evol_instruct_V2_196k](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
-
-[ehartford/dolphin](https://huggingface.co/datasets/ehartford/dolphin)
-
-[ehartford/samantha-data](https://huggingface.co/datasets/ehartford/samantha-data)
+- [jondurbin/airoboros-2.2.1](https://huggingface.co/datasets/jondurbin/airoboros-2.2.1)
+- [Open-Orca/OpenOrca](https://huggingface.co/datasets/Open-Orca/OpenOrca)
+- [garage-bAInd/Open-Platypus](https://huggingface.co/datasets/garage-bAInd/Open-Platypus)
+- [WizardLM/WizardLM_evol_instruct_V2_196k](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
+- [ehartford/dolphin](https://huggingface.co/datasets/ehartford/dolphin)
+- [ehartford/samantha-data](https://huggingface.co/datasets/ehartford/samantha-data)
 
 ## speechless.finetune
 
@@ -89,59 +90,125 @@ pip install speechless
 
 ### Prepare train dataset
 
-Focus on instruction following, currently not supporting multi-turn dialogue scenarios.
-
 The training dataset is a jsonl file, with each line containing a JSON formatted instruction data. The data format is as follows:
 
 ```json
 {
-    "instruction": "<instruction>", # Cann't be empty.
-    "input': "<input>", # Can be an empty string.
-    "response': "<response>", # Cann't be empty.
-    "category": "mydata",
-    "skip_prompt_formatting': False, # Keep this setting
-    "system": "",
+    "dialog":[
+        {"from": "human", "value": "Human's Instruction"},
+        {"from": "assistant", "value": "Assistant's response"}
+    ],
+    "prompt_type": "alpaca", # Current support 'alpaca', 'toolllama-multi-rounds', default is 'alpaca' if prompt_type set to empty.
+    "system_prompt": "", # Use alpaca system prompt if system_prompt filed is empty, otherwise use it as system prompt of this instruction.
+    "category": "my_category", # User customized category, can be anythings.
 }
 ```
 
-### Run run_finetune.sh
+### Run Fine-tune
 
 ```bash
+#!/bin/bash
+SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 
-mkdir -p tasks/speechless-llama2-13b && cd tasks/speechless-llama2-13b
-python -m speechless.finetune \
-    --base_model meta-llama/Llama-2-13B-hf \
-    --dataset <path_to_your_dataset_file> \
-    --dataset_format instruction-input-response \
-    --model_max_len 4096 \
-    --bits 4 \
-    --lora_r 16 \
-    --min_batch_size 4 \
-    --gradient_accumulation_steps 16 \
-    --learning_rate 2e-4 \
-    --num_train_epochs 2 \
-    --num_gpus 2 \
-```
+# -------------------- Model --------------------
+export MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
+export BASE_MODEL_PATH=${MODELS_ROOT_DIR}/llm_agents/tora-code-7b-v1.0
+export TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/$(basename ${PWD})
 
-```bash
-python -m speechless.tools.merge_peft_adapters \
-    --base_model meta-llama/Llama-2-13B-hf \
-    --peft_model_path ${CHECKPOINT_DIR} \
-    --merged_model_path ${TASK_MODEL_PATH}
-```
+# -------------------- Dataset --------------------
+export SPEECHLESS_DATA_DIR=/opt/local/datasets/speechless_data
+export DATASET=${SPEECHLESS_DATA_DIR}/speechless-toolbench-multi-rounds.jsonl
+export DATASET_FORMAT=dialog
 
-## speechless.completion
+# -------------------- Environment --------------------
+export OUTPUT_DIR=./outputs
+export RAY_memory_monitor_refresh_ms=0
 
-```bash
-python -m speechless.completion \
-    create \
-    --model ${TASK_MODEL_PATH} \
-    --prompt ${PROMPT} \
-    --prompts_file ${PROMPTS_FILE_PATH} \
-    --temperature 0.75 \
-    --top_p 0.9 \
-    --top_k 50 \
+# -------------------- Task --------------------
+export TASK_NAME=$(basename ${TEST_MODEL_PATH})
+export TASK_CHECKPOINT_DIR=${OUTPUT_DIR}
+export WANDB_PROJECT=${TASK_NAME}
 
+# -------------------- Train --------------------
+export SAVE_STEPS=10
+export EVAL_STEPS=10
+export WARMUP_STEPS=10
+export MAX_EVAL_SAMPLES=200
+export EVAL_DATASET_SIZE=0.005
+export GROUP_BY_LENGTH=False
+export LR_SCHEDULER_TYPE=cosine
+export LEARNING_RATE=2e-4
+
+export BITS=4
+export LORA_R=32
+export LORA_ALPHA=256
+
+export MODEL_MAX_LENGTH=32768
+export ROPE_THETA=1000000
+export SLIDING_WINDOW=8192
+
+export NUM_GPUS=2
+export NUM_TRAIN_EPOCHS=3
+
+export SAVE_STRATEGY=epoch
+export SAVE_TOTAL_LIMIT="--save_total_limit ${NUM_TRAIN_EPOCHS}"
+
+export PER_DEVICE_TRAIN_BATCH_SIZE=2
+export GRADIENT_ACCUMULATION_STEPS=16
+export MAX_MEMORY_MB=32000
+
+PYTHONPATH=${SPEECHLESS_ROOT} \
+torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
+    -m speechless.finetune.finetune_dialog \
+    --task_name ${TASK_NAME} \
+    --run_name $(date +%Y%m%d-%H%M%S) \
+    --model_name_or_path ${BASE_MODEL_PATH} \
+    --output_dir ${OUTPUT_DIR} \
+    --num_train_epochs ${NUM_TRAIN_EPOCHS} \
+    --data_seed 10042 \
+    --save_strategy ${SAVE_STRATEGY} \
+    ${SAVE_TOTAL_LIMIT} \
+    --evaluation_strategy steps \
+    --eval_dataset_size ${EVAL_DATASET_SIZE} \
+    --save_steps ${SAVE_STEPS} \
+    --eval_steps ${EVAL_STEPS} \
+    --warmup_steps ${WARMUP_STEPS} \
+    --max_train_samples ${MAX_TRAIN_SAMPLES} \
+    --max_eval_samples ${MAX_EVAL_SAMPLES} \
+    --dataloader_num_workers 3 \
+    --logging_strategy steps \
+    --logging_steps 1 \
+    --report_to tensorboard \
+    --remove_unused_columns False \
+    --do_train \
+    --max_memory_MB ${MAX_MEMORY_MB} \
+    --bits ${BITS} \
+    --lora_r ${LORA_R} \
+    --lora_alpha ${LORA_ALPHA} \
+    --lora_dropout 0.05 \
+    --lora_modules all \
+    --double_quant \
+    --quant_type nf4 \
+    --bf16 \
+    --sliding_window ${SLIDING_WINDOW} \
+    --rope_theta ${ROPE_THETA} \
+    --dataset ${DATASET} \
+    --dataset_format ${DATASET_FORMAT} \
+    --max_new_tokens ${MODEL_MAX_LENGTH} \
+    --model_max_len ${MODEL_MAX_LENGTH} \
+    --per_device_train_batch_size ${PER_DEVICE_TRAIN_BATCH_SIZE} \
+    --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
+    --per_device_eval_batch_size 1 \
+    --learning_rate ${LEARNING_RATE} \
+    --lr_scheduler_type ${LR_SCHEDULER_TYPE} \
+    --weight_decay 0.0 \
+    --seed 10042 \
+    --optim paged_adamw_8bit \
+    --gradient_checkpointing True \
+    --group_by_length ${GROUP_BY_LENGTH} \
+    --ddp_find_unused_parameters False \
+    --force_remove_overlength_samples False \
+    --flash_attention True 
 ```
 
 ## speechless.api.server
@@ -162,7 +229,6 @@ Speechless supports HumanEval, MultiPL-E, SQLEval, lm-evaluation-harness.
 ### lm-evluation-harness
 
 ```bash
-# ${SPEECHLESS_ROOT}/speechless/scripts/run_lmeval.sh
 python -m speechless.eval.lmeval \
    genrate \
     --model ${TASK_MODEL_PATH} \
@@ -171,13 +237,6 @@ python -m speechless.eval.lmeval \
 python -m speechless.eval.lmeval \
     eval \
     -eval_dir ${EVAL_OUTPUT_DIR}
-```
-
-```bash
-# git clone https://github.com/EleutherAI/lm-evaluation-harness
-# cd lm-evaluation-harness
-# pip install -e .
-make lm_eval
 ```
 
 ### bigcode-evaluation-harness
@@ -201,18 +260,6 @@ python -m speechless.eval.humaneval \
 python -m speechless.eval.humaneval \
     eval \
     --eval_dir ${EVAL_OUTPUT_DIR}
-
-```
-
-```bash
-# make humaneval_gen
-# call eval/humaneval_gen_vllm.py
-bash ./eval/run_human_eval_gen.sh ${TEST_MODEL_PATH} ${HUMANEVAL_GEN_OUTPUT_FILE}
-
-# make humaneval
-python eval/run_humaneval.py \
-    ${HUMANEVAL_GEN_OUTPUT_FILE} \
-    --problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 ```
 
 ### MultiPL-E
@@ -233,28 +280,6 @@ python -m speechless.eval.multiple \
     --results_dir ${EVAL_OUTPUT_DIR}
 ```
 
-```bash
-MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${SERVED_MODEL_NAME}
-SERVED_MODEL_NAME=$(shell basename ${TEST_MODEL_PATH})
-
-#make multipl_e_gen
-python eval/multiple.py \
-    generate \
-    --name ${TEST_MODEL_PATH} \
-    --temperature 0.2 \
-    --batch-size 20 \
-    --completion-limit 20 
-
-# docker pull multipl-e-eval
-#make multipl_e_eval
-# cd eval_results/multipl_e/${SERVED_MODEL_NAME} && bash ../../eval/run_multipl_e_eval.sh
-python eval/multiple.py eval --results_dir eval_results/multipl_e/Mistral-7B-v0.1
-
-# make multipl_e_results
-# python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
-python eval/multiple.py results --results_dir eval_results/multipl_e/Mistral-7B-v0.1
-```
-
 ### SQLEval
 
 ```bash
@@ -266,10 +291,4 @@ python -m speechless.eval.sqleval \
 python -m speechless.eval.sqleval \
     eval \
     --eval_dir ${EVAL_OUTPUT_DIR}
-
-```
-
-```bash
-# Run docker postgres-sql-eval
-cd nl2sql/sqleval && make codellama
 ```
