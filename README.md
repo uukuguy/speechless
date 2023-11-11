@@ -23,6 +23,7 @@
 ## Models
 
 [Models Repositry](https://huggingface.co/uukuguy)
+🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month
 
 - [speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01
 
@@ -30,23 +31,23 @@
 - [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
   GPTQ GGUF AWQ
 
-- [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
+- 🔥🔥 [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
   [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
-- [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
+- 🔥🔥 [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
   [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
 
-- [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
+- 🔥🔥 [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
   [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
-- [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
+- 🔥🔥 [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
   [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML)
-- [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
+- 🔥🔥 [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
 - [speechless-codellama-dolphin-orca-platypus-34b](https://huggingface.co/uukuguy/speechless-codellama-dolphin-orca-platypus-34b) 2023.09.14
-- [speechless-llama2-dolphin-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-llama2-dolphin-orca-platypus-13b) 2023.09.16
+- 🔥🔥 [speechless-llama2-dolphin-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-llama2-dolphin-orca-platypus-13b) 2023.09.16
 - [speechless-codellama-34b-v1.0](https://huggingface.co/speechlessai/speechless-codellama-34b-v1.0) 2023.09.14
-- [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
-- [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
+- 🔥🔥🔥 [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
+- 🔥🔥🔥 [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
 
-- [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
+- 🔥🔥🔥 [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
   [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
 - [speechless-llama2-hermes-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-13b) 2023.09.02
 - [speechless-llama2-luban-orca-platypus-13b](https://huggingface.co/uukuguy/speechless-llama2-luban-orca-platypus-13b) 2023.09.01
@@ -54,33 +55,33 @@
 
 ### CodeLlama based Models
 
-- [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
+- 🔥🔥 [speechless-codellama-34b-v2.0](https://huggingface.co/uukuguy/speechless-codellama-34b-v2.0) 2023.10.04
     [GPTQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-codellama-34b-v2.0-AWQ)
 
 - [speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19
-- [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
-- [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
+- 🔥🔥🔥 [speechless-codellama-platypus-13b](https://huggingface.co/uukuguy/speechless-codellama-platypus-13b) 2023.09.13
+- 🔥🔥🔥 [speechless-codellama-orca-13b](https://huggingface.co/uukuguy/speechless-codellama-orca-13b) 2023.09.13
 
 ### Mistral based Models
 
 - [speechless-mistral-six-in-one-7b](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b) 2023.10.15
 - [speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14
   GPTQ GGUF AWQ
-- [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
+- 🔥🔥 [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0) 2023.10.10
     [GPTQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-code-mistral-7B-v1.0-AWQ)
 
 ### Tora based Models
 
 - [speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora) 2023.11.01
-- [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
+- 🔥🔥 [speechless-tora-code-7b-v1.0](https://huggingface.co/uukuguy/speechless-tora-code-7b-v1.0) 2023.10.10
     [GPTQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-tora-code-7B-v1.0-AWQ)
 
 ### Llama2 based Models
 
-- [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
+- 🔥🔥🔥 [speechless-llama2-13b](https://huggingface.co/uukuguy/speechless-llama2-13b) 2023.09.14
   [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGUF) [GGML (deprecated)](https://huggingface.co/TheBloke/Speechless-Llama2-13B-GGML)
-- [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
-    [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
+- 🔥 [speechless-llama2-hermes-orca-platypus-wizardlm-13b](https://huggingface.co/uukuguy/speechless-llama2-hermes-orca-platypus-wizardlm-13b) 2023.09.10
+    🔥🔥🔥 [GPTQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) [GGUF](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GGUF) [AWQ](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-AWQ)
 
 ## Datasets
 
