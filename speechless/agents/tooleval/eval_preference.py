@@ -19,6 +19,7 @@
 #           intra-collection multi-tool instruction
 #           test the model's instruction generalization ability
 from glob import glob
+from rich import print
 import os
 import argparse
 import json
@@ -134,16 +135,23 @@ if __name__=='__main__':
     evaluators = [load_registered_automatic_evaluator(evaluator_name=args.evaluator, evaluators_cfg_path=os.path.join(abs_dir,'evaluators')) for _ in range(args.max_eval_threads)]
     
     def get_preference(query_id, task_status, answer_statuss, ref_example, output_example):
-        print(f"{query_id=}")
+        # print(f"{query_id=}")
         global evaluators
         evaluator = random.choice(evaluators)
+
+        # print(f"{ref_example=}")
+        # print(f"{output_example=}")
         
-        preference = evaluator.annotate_preference(
-            ref_example['query'],
-            ref_example['available_tools'],
-            [ref_example['answer'], output_example['answer']],
-            task_status=task_status, answer_statuss=answer_statuss
-        )
+        if len(f"{output_example}") > 16384:
+            print(f"{query_id=}: output_example len > 16384")
+            preference = 0
+        else:
+            preference = evaluator.annotate_preference(
+                ref_example['query'],
+                ref_example['available_tools'],
+                [ref_example['answer'], output_example['answer']],
+                task_status=task_status, answer_statuss=answer_statuss
+            )
         if preference == 0:
             return query_id, "ref"
         elif preference == 1:
