@@ -15,9 +15,11 @@ INPUT_QUERY_FILE=${TOOLBENCH_DATA_DIR}/test_instruction/G1_instruction.json
 RETRIEVED_API_NUMS=5
 METHOD=DFS_woFilter_w2
 
-EXEC_ARGS=--max_observation_length 1024 --observ_compress_method truncate --method ${METHOD}
+SAMPLING_ARGS="--temperature 0.5 --max_tokens 512 --top_p 1.0 --top_k 50"
+EXEC_ARGS=--max_observation_length 512 --observ_compress_method truncate --method ${METHOD}
 
 RETRIEVAL_ARGS="--corpus_tsv_path ${CORPUS_TSV_PATH} --retrieval_model_path ${RETRIEVAL_MODEL_PATH} --retrieved_api_nums ${RETRIEVED_API_NUMS} "
+
 
 MODEL_NAME=$(shell basename ${TOOLLLAMA_MODEL_PATH})
 # OUTPUT_DIR=${PWD}/outputs/${MODEL_NAME}.${METHOD}
@@ -31,6 +33,7 @@ toolbench_G1_instruction:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_instruction.json \
 		--output_answer_file ${OUTPUT_DIR}/G1_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -43,6 +46,7 @@ toolbench_G1_tool:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_tool.json \
 		--output_answer_file ${OUTPUT_DIR}/G1_tool \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -55,6 +59,7 @@ toolbench_G1_category:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G1_category.json \
 		--output_answer_file ${OUTPUT_DIR}/G1_category \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -67,6 +72,7 @@ toolbench_G2_instruction:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_instruction.json \
 		--output_answer_file ${OUTPUT_DIR}/G2_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -79,6 +85,7 @@ toolbench_G2_category:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G2_category.json \
 		--output_answer_file ${OUTPUT_DIR}/G2_category \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -91,6 +98,7 @@ toolbench_G3_instruction:
 		--backbone_model vllm \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${TOOLBENCH_DATA_DIR}/test_instruction/G3_instruction.json \
 		--output_answer_file ${OUTPUT_DIR}/G3_instruction \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -103,6 +111,7 @@ toolbench_speechless:
 		--backbone_model toolllama \
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${INPUT_QUERY_FILE} \
 		--output_answer_file ${OUTPUT_DIR} \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -115,6 +124,7 @@ toolbench_openai:
 		--backbone_model chatgpt_function \
 		--openai_key ${OPENAI_KEY} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${INPUT_QUERY_FILE} \
 		--output_answer_file chatgpt_dfs_inference_result \
 		--toolbench_key ${TOOLBENCH_KEY}
@@ -128,6 +138,7 @@ toolbench_opendomain:
 		--model_path ${TOOLLLAMA_MODEL_PATH} \
 		${RETRIEVAL_ARGS} \
 		${EXEC_ARGS} \
+		${SAMPLING_ARGS} \
 		--input_query_file ${INPUT_QUERY_FILE} \
 		--output_answer_file ${PWD}/toolllama_dfs_open_domain_inference_result \
 		--toolbench_key ${TOOLBENCH_KEY}
