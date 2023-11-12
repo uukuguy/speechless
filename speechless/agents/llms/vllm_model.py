@@ -130,7 +130,7 @@ class VllmModel:
         self.max_sequence_length = max_sequence_length
         defaul_sampling_params = {
             'temperature': 0.5,
-            'max_tokens': 2048,
+            'max_tokens': 512,
             "top_p": 1.0,
             "top_k": 50,
             # "repetition_penalty": 1.2,

@@ -434,7 +434,15 @@ class pipeline_runner:
             logger.info(f"Use VLLM model with {args.model_path}")
             ratio = int(args.max_sequence_length/args.max_source_sequence_length)
             replace_llama_with_condense(ratio=ratio)
-            backbone_model = VllmModel(model_name_or_path=args.model_path)
+
+            sampling_params = {
+                'temperature': args.temperature, 
+                'max_tokens': args.max_tokens,
+                "top_p": args.top_p,
+                "top_k": args.top_k,
+                # "repetition_penalty": 1.2,
+            }
+            backbone_model = VllmModel(model_name_or_path=args.model_path, sampling_params=sampling_params)
         elif args.backbone_model == "toolllama":
             logger.info(f"Use ToolLLaMA model with {args.model_path}")
             # ratio = 4 means the sequence length is expanded by 4, remember to change the model_max_length to 8192 (2048 * ratio) for ratio = 4
@@ -646,6 +654,11 @@ if __name__ == "__main__":
     parser.add_argument('--rapidapi_key', type=str, default="",required=False, help='your rapidapi key to request rapidapi service')
     parser.add_argument('--use_rapidapi_key', action="store_true", help="To use customized rapidapi service or not.")
     parser.add_argument('--api_customization', action="store_true", help="To use customized api or not. NOT SUPPORTED currently under open domain setting.")
+
+    parser.add_argument("--temperature", default=0.5, type=float)
+    parser.add_argument("--max_tokens", default=512, type=int)
+    parser.add_argument("--top_p", default=1.0)
+    parser.add_argument("--top_k", default=50)
     
     args = parser.parse_args()
 
