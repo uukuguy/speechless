@@ -3,6 +3,7 @@ import json
 from typing import List,Dict
 import requests
 from tenacity import retry, wait_random_exponential, stop_after_attempt
+from loguru import logger
 
 import openai
 import random
@@ -55,6 +56,15 @@ class OpenaiPoolRequest:
         kwargs['api_key'] = item['api_key']
         if item.get('organization',None) is not None:
             kwargs['organization'] = item['organization'] 
+
+        # # FIXME
+        # messages_len = 0
+        # for i, msg in enumerate(messages):
+        #     messages_len += len(f"{msg}")
+        #     if messages_len > 16384:
+        #         logger.warning(f"{messages_len=} > 16384! Make truncation.\n{messages=}")
+        #         messages = messages[:i]
+
         return openai.ChatCompletion.create(messages=messages,**kwargs)
     
     def __call__(self,messages,**kwargs):
