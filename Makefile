@@ -2,7 +2,8 @@
 
 MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
-BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+#BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
+BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 
 # pass@1: 75.61
 # TEST_MODEL_PATH=/opt/local/llm_models/huggingface.co/speechlessai/speechless-codellama-34b-v2.0
@@ -68,8 +69,9 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Phind/Phind-CodeLlama-34B-v2
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/stabilityai/stablelm-3b-4e1t
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-1357-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-mistral-2714-steps
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-v1.3-mistral-2715-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 
@@ -133,12 +135,12 @@ inference_with_lora:
 HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
 
 humaneval_gen:
-	bash ./eval/run_humaneval_gen.sh \
+	bash ./speechless/eval/run_humaneval_gen.sh \
 		${TEST_MODEL_PATH} \
 		${HUMANEVAL_GEN_OUTPUT_FILE}
 
 humaneval:
-	# python eval/run_humaneval.py \
+	# python ./speechless/eval/run_humaneval.py \
 	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
 	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
@@ -212,7 +214,7 @@ multiple_gen:
 	# 	--do_convert \
 	# 	--output_dir output_multiple_gen/${TASK_NAME}
 
-	bash eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
+	bash ./speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
 
 multiple_gen_50:
 	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 50 20
@@ -228,7 +230,7 @@ multiple:
 	# 	results \
 	# 	--results_dir output_multiple_gen/${TASK_NAME}/multiple
 
-	bash eval/run_multiple.sh ${TEST_MODEL_PATH}
+	bash ./speechless/eval/run_multiple.sh ${TEST_MODEL_PATH}
 
 
 # multipl_e_eval:
@@ -324,7 +326,7 @@ multiple:
 # 		--output_path eval_results/lm_eval/${TASK_NAME} 
 
 lm_eval:
-	bash eval/run_lm_eval.sh ${TEST_MODEL_PATH}
+	bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
 
 
 # BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"

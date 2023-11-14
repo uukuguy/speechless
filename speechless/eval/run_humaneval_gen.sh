@@ -5,6 +5,9 @@
 #    which evaluate_functional_correctness
 #"""
 
+SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
+
 model=$1
 output_file=$2
 output_path=$(dirname ${output_file})
@@ -48,7 +51,7 @@ mkdir -p ${output_path}
 echo 'Output file: '$output_file
 echo 'Model to eval: '$model
 PYTHONPATH=${SPEECHLESS_ROOT} \
-python eval/humaneval_gen_vllm.py \
+python ${SCRIPT_PATH}/humaneval_gen_vllm.py \
     --model ${model} \
     --start_index 0 \
     --end_index 164 \
