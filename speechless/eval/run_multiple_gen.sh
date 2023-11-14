@@ -35,7 +35,7 @@ MULTIPL_E_RESULTS_DIR=${OUTPUT_DIR}/${TASK_NAME}/${COMPLETION_LIMIT}-completions
 
 	# --langs py java js cpp rs go sh jl ts \
 
-python eval/multiple_gen.py \
+python ${SCRIPT_PATH}/multiple_gen.py \
 	--do_generate \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
@@ -46,6 +46,6 @@ python eval/multiple_gen.py \
 	--parallel_threads ${PARALLEL_THREADS} \
 	--timeout 30 \
 	--completion_limit ${COMPLETION_LIMIT} && \
-python eval/multiple_gen.py \
+python ${SCRIPT_PATH}/multiple_gen.py \
 	--do_convert \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} 
