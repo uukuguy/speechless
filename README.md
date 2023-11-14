@@ -46,6 +46,8 @@
 
 - ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
 
+    [GPTQ](https://huggingface.co/TheBloke/speechless-mistral-dolphin-orca-platypus-samantha-7B-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-mistral-dolphin-orca-platypus-samantha-7B-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-mistral-dolphin-orca-platypus-samantha-7B-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
     The subsequent version of [Speechless SuperLongName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
 
     **Open LLM Language Model Evaluation Harness**
