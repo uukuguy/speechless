@@ -14,4 +14,4 @@ HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples
 
 python ${SCRIPT_PATH}/humaneval.py \
     ${HUMANEVAL_GEN_OUTPUT_FILE} \
-    --problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+    --problem_file ${SCRIPT_PATH}/datasets/openai_humaneval/HumanEval.jsonl.gz

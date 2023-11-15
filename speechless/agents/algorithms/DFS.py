@@ -243,7 +243,7 @@ class DFS_tree_search(base_search_method):
                 function_name = new_message["function_call"]["name"]
                 # FIXME
                 # Too long function name may be wrong
-                function_name = function_name[:128]
+                function_name = function_name[:512]
 
                 temp_node = tree_node()
                 temp_node.node_type = "Action"

@@ -18,7 +18,9 @@ python ${SCRIPT_PATH}/lm_eval.py \
         "hellaswag|10|100" \
         "hendrycksTest-*|5|100" \
         "truthfulqa_mc|0|100" \
-        "gsm8k|8|100" \
+        "winogrande|5|100" \
+        "gsm8k|5|100" \
+        "drop|3|100" \
     --batch_size 4 \
     --no_cache \
     --write_out \
