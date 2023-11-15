@@ -71,7 +71,10 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-1357-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-mistral-2714-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-v1.3-mistral-2715-steps
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-v1.3-mistral-1357-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-v1.3-mistral-2715-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-v1.3-mistral-4071-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 
@@ -144,7 +147,7 @@ humaneval:
 	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
 	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
 
-	bash ./eval/run_humaneval.sh ${TEST_MODEL_PATH}
+	bash ./speechless/eval/run_humaneval.sh ${TEST_MODEL_PATH}
 		
 # -------------------- MultiPL-E --------------------
 
