@@ -104,7 +104,7 @@
 
 - 🔥🔥 **[speechless-codellama-airoboros-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-codellama-airoboros-orca-platypus-13b) 2023.09.19**
 
-- **[speechless-codellama-dolphin-orca-platypus-34b](https://huggingface.co/uukuguy/speechless-codellama-dolphin-orca-platypus-34b) 2023.09.14**
+- 🔥🔥 **[speechless-codellama-dolphin-orca-platypus-34b](https://huggingface.co/uukuguy/speechless-codellama-dolphin-orca-platypus-34b) 2023.09.14**
 
 - 🔥🔥 **[speechless-llama2-dolphin-orca-platypus-13b](https://huggingface.co/speechlessai/speechless-llama2-dolphin-orca-platypus-13b) 2023.09.16**
 
@@ -160,7 +160,7 @@
 
     This model is a merge of 6 SOTA Mistral-7B based models. [Model benchmark](https://huggingface.co/uukuguy/speechless-mistral-six-in-one-7b/discussions/1) by [sethuiyer](https://huggingface.co/sethuiyer).
 
-- ⭐️🔥🔥 **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
+- ⭐️ **[speechless-mistral-dolphin-orca-platypus-samantha-7b](https://huggingface.co/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b) 2023.10.14**
 
     The subsequent version of [Speechless SuperLongName](https://huggingface.co/TheBloke/Speechless-Llama2-Hermes-Orca-Platypus-WizardLM-13B-GPTQ) based on Mistral. Ranked high in the Mistral category on the open-llm leaderboard of new evaluation indicators.
 
