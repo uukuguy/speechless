@@ -1,4 +1,5 @@
 # Derived from: Liuhong99/Sophia/blob/main/sophia.py
+# 2x faster than AdamW said in paper https://arxiv.org/abs/2305.14342
 import math
 import torch
 from torch import Tensor
