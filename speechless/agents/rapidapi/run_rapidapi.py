@@ -6,7 +6,7 @@ import requests
 from tqdm import tqdm
 from loguru import logger
 from rich import print
-from termcolor import colored
+# from termcolor import colored
 import random
 from speechless.agents.llms.chatgpt_function_model import ChatGPTFunction
 from speechless.agents.llms.tool_llama_lora_model import ToolLLaMALoRA
@@ -19,11 +19,15 @@ from speechless.agents.rapidapi.rapidapi_server import get_rapidapi_response
 from speechless.agents.utils import (
     standardize,
     change_name,
-    replace_llama_with_condense
+    replace_llama_with_condense,
 )
+from speechless.agents.algorithms.base_env import base_env
+
 
 from toolbench_cache import ToolBenchCache
+
 tb_cache = None
+
 
 # For pipeline environment preparation
 def get_white_list(tool_root_dir):
@@ -31,18 +35,22 @@ def get_white_list(tool_root_dir):
     white_list_dir = os.path.join(tool_root_dir)
     white_list = {}
     for cate in tqdm(os.listdir(white_list_dir), ncols=100, desc="White list"):
-        if not os.path.isdir(os.path.join(white_list_dir,cate)):
+        if not os.path.isdir(os.path.join(white_list_dir, cate)):
             continue
-        for file in os.listdir(os.path.join(white_list_dir,cate)):
+        for file in os.listdir(os.path.join(white_list_dir, cate)):
             if not file.endswith(".json"):
                 continue
             standard_tool_name = file.split(".")[0]
             # print(standard_tool_name)
-            with open(os.path.join(white_list_dir,cate,file)) as reader:
+            with open(os.path.join(white_list_dir, cate, file)) as reader:
                 js_data = json.load(reader)
             origin_tool_name = js_data["tool_name"]
-            white_list[standardize(origin_tool_name)] = {"description": js_data["tool_description"], "standard_tool_name": standard_tool_name}
+            white_list[standardize(origin_tool_name)] = {
+                "description": js_data["tool_description"],
+                "standard_tool_name": standard_tool_name,
+            }
     return white_list
+
 
 def contain(candidate_list, white_list):
     output = []
@@ -52,7 +60,6 @@ def contain(candidate_list, white_list):
         output.append(white_list[cand])
     return output
 
-from speechless.agents.algorithms.base_env import base_env
 
 # rapidapi env wrapper
 class rapidapi_wrapper(base_env):
@@ -78,15 +85,21 @@ class rapidapi_wrapper(base_env):
         self.api_name_reflect = {}
 
         if self.retriever is not None:
-            query_json = self.retrieve_rapidapi_tools(self.input_description, args.retrieved_api_nums, args.tool_root_dir)
+            query_json = self.retrieve_rapidapi_tools(
+                self.input_description, args.retrieved_api_nums, args.tool_root_dir
+            )
             data_dict = self.fetch_api_json(query_json)
             tool_descriptions = self.build_tool_description(data_dict)
         else:
             data_dict = self.fetch_api_json(query_json)
 
-        for k,api_json in enumerate(data_dict["api_list"]):
+        for k, api_json in enumerate(data_dict["api_list"]):
             standard_tool_name = tool_descriptions[k][0]
-            openai_function_json,cate_name, pure_api_name = self.api_json_to_openai_json(api_json,standard_tool_name)
+            (
+                openai_function_json,
+                cate_name,
+                pure_api_name,
+            ) = self.api_json_to_openai_json(api_json, standard_tool_name)
             self.functions.append(openai_function_json)
 
             self.api_name_reflect[openai_function_json["name"]] = pure_api_name
@@ -95,38 +108,40 @@ class rapidapi_wrapper(base_env):
 
         finish_func = {
             "name": "Finish",
-            "description": "If you believe that you have obtained a result that can answer the task, please call this function to provide the final answer. Alternatively, if you recognize that you are unable to proceed with the task in the current state, call this function to restart. Remember: you must ALWAYS call this function at the end of your attempt, and the only part that will be shown to the user is the final answer, so it should contain sufficient information.",
+            "description": """If you believe that you have obtained a result that can answer the task, please call this function to provide the final answer. Alternatively, if you recognize that you are unable to proceed with the task in the current state, call this function to restart. Remember: you must ALWAYS call this function at the end of your attempt, and the only part that will be shown to the user is the final answer, so it should contain sufficient information.""",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "return_type": {
                         "type": "string",
-                        "enum": ["give_answer","give_up_and_restart"],
+                        "enum": ["give_answer", "give_up_and_restart"],
                     },
                     "final_answer": {
                         "type": "string",
-                        "description": "The final answer you want to give the user. You should have this field if \"return_type\"==\"give_answer\"",
-                    }
+                        "description": 'The final answer you want to give the user. You should have this field if "return_type"=="give_answer"',
+                    },
                 },
                 "required": ["return_type"],
-            }
+            },
         }
 
         self.functions.append(finish_func)
         self.CALL_MAX_TIME = 3
-        self.task_description = f'''You should use functions to help handle the real time user querys. Remember:
+        self.task_description = f"""You should use functions to help handle the real time user querys. Remember:
 1.ALWAYS call \"Finish\" function at the end of the task. And the final answer should contain enough information to show to the user,If you can't handle the task, or you find that function calls always fail(the function is not valid now), use function Finish->give_up_and_restart.
 2.Do not use origin tool names, use only subfunctions' names.
-You have access of the following tools:\n'''
-        
+You have access of the following tools:\n"""
+
         unduplicated_reflection = {}
         for standardize_tool_name, tool_des in tool_descriptions:
             if tool_des:
                 unduplicated_reflection[standardize_tool_name] = tool_des
 
         # print(f"{unduplicated_reflection=}")
-        for k,(standardize_tool_name, tool_des) in enumerate(unduplicated_reflection.items()):
-            striped = tool_des[:512].replace('\n','').strip()
+        for k, (standardize_tool_name, tool_des) in enumerate(
+            unduplicated_reflection.items()
+        ):
+            striped = tool_des[:512].replace("\n", "").strip()
             if striped == "":
                 striped = "None"
             self.task_description += f"{k+1}.{standardize_tool_name}: {striped}\n"
@@ -135,14 +150,18 @@ You have access of the following tools:\n'''
 
     def build_tool_description(self, data_dict):
         white_list = get_white_list(self.tool_root_dir)
-        origin_tool_names = [standardize(cont["tool_name"]) for cont in data_dict["api_list"]]
-        tool_des = contain(origin_tool_names,white_list)
-        tool_descriptions = [[cont["standard_tool_name"], cont["description"]] for cont in tool_des]
+        origin_tool_names = [
+            standardize(cont["tool_name"]) for cont in data_dict["api_list"]
+        ]
+        tool_des = contain(origin_tool_names, white_list)
+        tool_descriptions = [
+            [cont["standard_tool_name"], cont["description"]] for cont in tool_des
+        ]
         return tool_descriptions
-    
+
     def retrieve_rapidapi_tools(self, query, top_k, jsons_path):
         retrieved_tools = self.retriever.retrieving(query, top_k=top_k)
-        query_json = {"api_list":[]}
+        query_json = {"api_list": []}
         for tool_dict in retrieved_tools:
             if len(query_json["api_list"]) == top_k:
                 break
@@ -151,21 +170,30 @@ You have access of the following tools:\n'''
             api_name = tool_dict["api_name"]
             if os.path.exists(jsons_path):
                 if os.path.exists(os.path.join(jsons_path, category)):
-                    if os.path.exists(os.path.join(jsons_path, category, tool_name+".json")):
-                        query_json["api_list"].append({
-                            "category_name": category,
-                            "tool_name": tool_name,
-                            "api_name": api_name
-                        })
+                    if os.path.exists(
+                        os.path.join(jsons_path, category, tool_name + ".json")
+                    ):
+                        query_json["api_list"].append(
+                            {
+                                "category_name": category,
+                                "tool_name": tool_name,
+                                "api_name": api_name,
+                            }
+                        )
         return query_json
-    
+
     def fetch_api_json(self, query_json):
-        data_dict = {"api_list":[]}
+        data_dict = {"api_list": []}
         for item in query_json["api_list"]:
             cate_name = item["category_name"]
             tool_name = standardize(item["tool_name"])
             api_name = change_name(standardize(item["api_name"]))
-            tool_json = json.load(open(os.path.join(self.tool_root_dir, cate_name, tool_name + ".json"), "r"))
+            tool_json = json.load(
+                open(
+                    os.path.join(self.tool_root_dir, cate_name, tool_name + ".json"),
+                    "r",
+                )
+            )
             append_flag = False
             api_dict_names = []
             for api_dict in tool_json["api_list"]:
@@ -187,36 +215,45 @@ You have access of the following tools:\n'''
                 print(api_name, api_dict_names)
         return data_dict
 
-    def api_json_to_openai_json(self, api_json,standard_tool_name):
-        description_max_length=256
-        templete =     {
+    def api_json_to_openai_json(self, api_json, standard_tool_name):
+        description_max_length = 256
+        templete = {
             "name": "",
             "description": "",
             "parameters": {
                 "type": "object",
-                "properties": {
-                },
+                "properties": {},
                 "required": [],
                 "optional": [],
-            }
+            },
         }
-        
-        map_type = {
-            "NUMBER": "integer",
-            "STRING": "string",
-            "BOOLEAN": "boolean"
-        }
+
+        map_type = {"NUMBER": "integer", "STRING": "string", "BOOLEAN": "boolean"}
 
         pure_api_name = change_name(standardize(api_json["api_name"]))
-        templete["name"] = pure_api_name+ f"_for_{standard_tool_name}"
+        templete["name"] = pure_api_name + f"_for_{standard_tool_name}"
         templete["name"] = templete["name"][-64:]
 
-        templete["description"] = f"This is the subfunction for tool \"{standard_tool_name}\", you can use this tool."
-        
+        templete[
+            "description"
+        ] = f'This is the subfunction for tool "{standard_tool_name}", you can use this tool.'
+
         if api_json["api_description"].strip() != "":
-            tuncated_description = api_json['api_description'].strip().replace(api_json['api_name'],templete['name'])[:description_max_length]
-            templete["description"] = templete["description"] + f"The description of this function is: \"{tuncated_description}\""
-        if "required_parameters" in api_json.keys() and len(api_json["required_parameters"]) > 0:
+            tuncated_description = (
+                api_json["api_description"]
+                .strip()
+                .replace(api_json["api_name"], templete["name"])[
+                    :description_max_length
+                ]
+            )
+            templete["description"] = (
+                templete["description"]
+                + f'The description of this function is: "{tuncated_description}"'
+            )
+        if (
+            "required_parameters" in api_json.keys()
+            and len(api_json["required_parameters"]) > 0
+        ):
             for para in api_json["required_parameters"]:
                 name = standardize(para["name"])
                 name = change_name(name)
@@ -225,21 +262,21 @@ You have access of the following tools:\n'''
                 else:
                     param_type = "string"
                 prompt = {
-                    "type":param_type,
-                    "description":para["description"][:description_max_length],
+                    "type": param_type,
+                    "description": para["description"][:description_max_length],
                 }
 
-                default_value = para['default']
-                if len(str(default_value)) != 0:    
+                default_value = para["default"]
+                if len(str(default_value)) != 0:
                     prompt = {
-                        "type":param_type,
-                        "description":para["description"][:description_max_length],
-                        "example_value": default_value
+                        "type": param_type,
+                        "description": para["description"][:description_max_length],
+                        "example_value": default_value,
                     }
                 else:
                     prompt = {
-                        "type":param_type,
-                        "description":para["description"][:description_max_length]
+                        "type": param_type,
+                        "description": para["description"][:description_max_length],
                     }
 
                 templete["parameters"]["properties"][name] = prompt
@@ -252,23 +289,23 @@ You have access of the following tools:\n'''
                 else:
                     param_type = "string"
 
-                default_value = para['default']
-                if len(str(default_value)) != 0:    
+                default_value = para["default"]
+                if len(str(default_value)) != 0:
                     prompt = {
-                        "type":param_type,
-                        "description":para["description"][:description_max_length],
-                        "example_value": default_value
+                        "type": param_type,
+                        "description": para["description"][:description_max_length],
+                        "example_value": default_value,
                     }
                 else:
                     prompt = {
-                        "type":param_type,
-                        "description":para["description"][:description_max_length]
+                        "type": param_type,
+                        "description": para["description"][:description_max_length],
                     }
 
                 templete["parameters"]["properties"][name] = prompt
                 templete["parameters"]["optional"].append(name)
 
-        return templete, api_json["category_name"],  pure_api_name
+        return templete, api_json["category_name"], pure_api_name
 
     def check_success(self):
         return self.success
@@ -282,31 +319,31 @@ You have access of the following tools:\n'''
     def get_score(self):
         return 0.0
 
-    def step(self,**args):
+    def step(self, **args):
         obs, code = self._step(**args)
         if len(obs) > self.max_observation_length:
-            obs = obs[:self.max_observation_length] + "..."
+            obs = obs[: self.max_observation_length] + "..."
         return obs, code
 
     def _step(self, action_name="", action_input=""):
         """Need to return an observation string and status code:
-            0 means normal response
-            1 means there is no corresponding api name
-            2 means there is an error in the input
-            3 represents the end of the generation and the final answer appears
-            4 means that the model decides to pruning by itself
-            5 represents api call timeout
-            6 for 404
-            7 means not subscribed
-            8 represents unauthorized
-            9 represents too many requests
-            10 stands for rate limit
-            11 message contains "error" field
-            12 error sending request
+        0 means normal response
+        1 means there is no corresponding api name
+        2 means there is an error in the input
+        3 represents the end of the generation and the final answer appears
+        4 means that the model decides to pruning by itself
+        5 represents api call timeout
+        6 for 404
+        7 means not subscribed
+        8 represents unauthorized
+        9 represents too many requests
+        10 stands for rate limit
+        11 message contains "error" field
+        12 error sending request
         """
         if action_name == "Finish":
             try:
-                json_data = json.loads(action_input,strict=False)
+                json_data = json.loads(action_input, strict=False)
             except:
                 json_data = {}
                 if '"return_type": "' in action_input:
@@ -315,27 +352,29 @@ You have access of the following tools:\n'''
                     elif '"return_type": "give_up_and_restart"' in action_input:
                         return_type = "give_up_and_restart"
                     else:
-                        return_type = action_input[action_input.find('"return_type": "')+len('"return_type": "'):action_input.find('",')]
+                        p0 = action_input.find('"return_type": "') + len('"return_type": "')
+                        p1 = action_input.find('",')
+                        return_type = action_input[p0:p1]
                     json_data["return_type"] = return_type
                 if '"final_answer": "' in action_input:
-                    final_answer = action_input[action_input.find('"final_answer": "')+len('"final_answer": "'):]
+                    p0 = action_input.find('"final_answer": "') + len('"final_answer": "')
+                    final_answer = action_input[p0:]
                     json_data["final_answer"] = final_answer
             if "return_type" not in json_data.keys():
-                return "{error:\"must have \"return_type\"\"}", 2
+                return '{error:"must have "return_type""}', 2
             if json_data["return_type"] == "give_up_and_restart":
-                return "{\"response\":\"chose to give up and restart\"}",4
+                return '{"response":"chose to give up and restart"}', 4
             elif json_data["return_type"] == "give_answer":
                 if "final_answer" not in json_data.keys():
-                    return "{error:\"must have \"final_answer\"\"}", 2
-                
-                self.success = 1 # succesfully return final_answer
-                return "{\"response\":\"successfully giving the final answer.\"}", 3
-            else:
-                return "{error:\"\"return_type\" is not a valid choice\"}", 2
-        else:
+                    return '{error:"must have "final_answer""}', 2
 
+                self.success = 1  # succesfully return final_answer
+                return '{"response":"successfully giving the final answer."}', 3
+            else:
+                return '{error:""return_type" is not a valid choice"}', 2
+        else:
             for k, function in enumerate(self.functions):
-                if function["name"].endswith(action_name):
+                if function["name"].endswith(action_name) and function["name"] in self.api_name_reflect:
                     pure_api_name = self.api_name_reflect[function["name"]]
                     payload = {
                         "category": self.cate_names[k],
@@ -343,11 +382,12 @@ You have access of the following tools:\n'''
                         "api_name": pure_api_name,
                         "tool_input": action_input,
                         "strip": self.observ_compress_method,
-                        "toolbench_key": self.toolbench_key
+                        "toolbench_key": self.toolbench_key,
                     }
                     if self.process_id == 0:
-                        #print(colored(f"query to {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}",color="yellow"))
-                        logger.debug(f"Calling {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}")
+                        logger.debug(
+                            f"Calling {self.cate_names[k]}-->{self.tool_names[k]}-->{action_name}"
+                        )
                     # # Don't retrival from cache, only save cache to review.
                     # if tb_cache is not None:
                     #     response, status_code = tb_cache.get_response_from_cache(payload)
@@ -356,20 +396,34 @@ You have access of the following tools:\n'''
 
                     if self.use_rapidapi_key or self.api_customization:
                         payload["rapidapi_key"] = self.rapidapi_key
-                        response = get_rapidapi_response(payload, api_customization=self.api_customization)
+                        response = get_rapidapi_response(
+                            payload, api_customization=self.api_customization
+                        )
                     else:
-                        time.sleep(2) # rate limit: 30 per minute
+                        time.sleep(2)  # rate limit: 30 per minute
                         headers = {"toolbench_key": self.toolbench_key}
                         try:
-                            response = requests.post(self.service_url, json=payload, headers=headers, timeout=15)
+                            response = requests.post(
+                                self.service_url,
+                                json=payload,
+                                headers=headers,
+                                timeout=15,
+                            )
                         except Exception as e:
-                            response = json.dumps({"error": f"Timeout error...{e}", "response": ""})
+                            response = json.dumps(
+                                {"error": f"Timeout error...{e}", "response": ""}
+                            )
                             if tb_cache is not None:
                                 tb_cache.cache_query_response(payload, response, 5)
                             return response, 5
 
                         if response.status_code != 200:
-                            response = json.dumps({"error": f"request invalid, data error. status_code={response.status_code}", "response": ""})
+                            response = json.dumps(
+                                {
+                                    "error": f"request invalid, data error. status_code={response.status_code}",
+                                    "response": "",
+                                }
+                            )
                             if tb_cache is not None:
                                 tb_cache.cache_query_response(payload, response, 12)
                             return response, 12
@@ -377,7 +431,12 @@ You have access of the following tools:\n'''
                             response = response.json()
                         except:
                             print(response)
-                            response = json.dumps({"error": f"request invalid, data error", "response": ""})
+                            response = json.dumps(
+                                {
+                                    "error": "request invalid, data error",
+                                    "response": "",
+                                }
+                            )
                             if tb_cache is not None:
                                 tb_cache.cache_query_response(payload, response, 12)
                             return response, 12
@@ -414,51 +473,69 @@ You have access of the following tools:\n'''
                     return response, status_code
                     # except Exception as e:
                     #     return json.dumps({"error": f"Timeout error...{e}", "response": ""}), 5
-            return json.dumps({"error": f"No such function name: {action_name}", "response": ""}), 1
+            return (
+                json.dumps(
+                    {"error": f"No such function name: {action_name}", "response": ""}
+                ),
+                1,
+            )
 
 
 class pipeline_runner:
     def __init__(self, args, add_retrieval=False, process_id=0, server=False):
-
         self.args = args
         self.add_retrieval = add_retrieval
         self.process_id = process_id
         self.server = server
-        if not self.server: self.task_list = self.generate_task_list()
-        else: self.task_list = []
-
+        if not self.server:
+            self.task_list = self.generate_task_list()
+        else:
+            self.task_list = []
 
     def get_backbone_model(self):
         args = self.args
         if args.backbone_model == "vllm":
             logger.info(f"Use VLLM model with {args.model_path}")
-            ratio = int(args.max_sequence_length/args.max_source_sequence_length)
+            ratio = int(args.max_sequence_length / args.max_source_sequence_length)
             replace_llama_with_condense(ratio=ratio)
 
             sampling_params = {
-                'temperature': args.temperature, 
-                'max_tokens': args.max_tokens,
+                "temperature": args.temperature,
+                "max_tokens": args.max_tokens,
                 "top_p": args.top_p,
                 "top_k": args.top_k,
                 # "repetition_penalty": 1.2,
             }
-            backbone_model = VllmModel(model_name_or_path=args.model_path, sampling_params=sampling_params)
+            backbone_model = VllmModel(
+                model_name_or_path=args.model_path, sampling_params=sampling_params
+            )
         elif args.backbone_model == "toolllama":
             logger.info(f"Use ToolLLaMA model with {args.model_path}")
-            # ratio = 4 means the sequence length is expanded by 4, remember to change the model_max_length to 8192 (2048 * ratio) for ratio = 4
-            ratio = int(args.max_sequence_length/args.max_source_sequence_length)
+            # ratio = 4 means the sequence length is expanded by 4,
+            # remember to change the model_max_length to 8192 (2048 * ratio) for ratio = 4
+            ratio = int(args.max_sequence_length / args.max_source_sequence_length)
             replace_llama_with_condense(ratio=ratio)
             if args.lora:
-                backbone_model = ToolLLaMALoRA(base_name_or_path=args.model_path, model_name_or_path=args.lora_path, max_sequence_length=args.max_sequence_length)
+                backbone_model = ToolLLaMALoRA(
+                    base_name_or_path=args.model_path,
+                    model_name_or_path=args.lora_path,
+                    max_sequence_length=args.max_sequence_length,
+                )
             else:
-                backbone_model = ToolLLaMA(model_name_or_path=args.model_path, max_sequence_length=args.max_sequence_length)
+                backbone_model = ToolLLaMA(
+                    model_name_or_path=args.model_path,
+                    max_sequence_length=args.max_sequence_length,
+                )
         else:
             logger.info(f"Use ChatGPTFunction model with {args.model_path}")
             backbone_model = args.backbone_model
         return backbone_model
 
     def get_retriever(self):
-        return ToolRetriever(corpus_tsv_path=self.args.corpus_tsv_path, model_path=self.args.retrieval_model_path)
+        return ToolRetriever(
+            corpus_tsv_path=self.args.corpus_tsv_path,
+            model_path=self.args.retrieval_model_path,
+        )
 
     def get_args(self):
         return self.args
@@ -477,18 +554,44 @@ class pipeline_runner:
             if "query_id" in data_dict:
                 query_id = data_dict["query_id"]
             if "api_list" in data_dict:
-                origin_tool_names = [standardize(cont["tool_name"]) for cont in data_dict["api_list"]]
-                tool_des = contain(origin_tool_names,white_list)
-                if tool_des == False:
+                origin_tool_names = [
+                    standardize(cont["tool_name"]) for cont in data_dict["api_list"]
+                ]
+                tool_des = contain(origin_tool_names, white_list)
+                if tool_des is False:
                     continue
-                tool_des = [[cont["standard_tool_name"], cont["description"]] for cont in tool_des]
+                tool_des = [
+                    [cont["standard_tool_name"], cont["description"]]
+                    for cont in tool_des
+                ]
             else:
                 tool_des = None
-            task_list.append((method, backbone_model, query_id, data_dict, args, answer_dir, tool_des))
+            task_list.append(
+                (
+                    method,
+                    backbone_model,
+                    query_id,
+                    data_dict,
+                    args,
+                    answer_dir,
+                    tool_des,
+                )
+            )
         return task_list
-    
-    def method_converter(self, backbone_model, openai_key, method, env, process_id, single_chain_max_step=12, max_query_count=60, callbacks=None):
-        if callbacks is None: callbacks = []
+
+    def method_converter(
+        self,
+        backbone_model,
+        openai_key,
+        method,
+        env,
+        process_id,
+        single_chain_max_step=12,
+        max_query_count=60,
+        callbacks=None,
+    ):
+        if callbacks is None:
+            callbacks = []
         if backbone_model == "chatgpt_function":
             model = "gpt-3.5-turbo-16k-0613"
             llm_forward = ChatGPTFunction(model=model, openai_key=openai_key)
@@ -499,62 +602,81 @@ class pipeline_runner:
             model = backbone_model
             llm_forward = model
         # print(f"{llm_forward=}")
-        
+
         if method.startswith("CoT"):
             passat = int(method.split("@")[-1])
-            chain = single_chain(llm=llm_forward, io_func=env,process_id=process_id)
+            chain = single_chain(llm=llm_forward, io_func=env, process_id=process_id)
             result = chain.start(
-                                pass_at=passat,
-                                single_chain_max_step=single_chain_max_step,
-                                answer=1)
+                pass_at=passat, single_chain_max_step=single_chain_max_step, answer=1
+            )
         elif method.startswith("DFS"):
             pattern = r".+_w(\d+)"
-            re_result = re.match(pattern,method)
-            assert re_result != None
+            re_result = re.match(pattern, method)
+            assert re_result is not None
             width = int(re_result.group(1))
             with_filter = True
             if "woFilter" in method:
                 with_filter = False
-            chain = DFS_tree_search(llm=llm_forward, io_func=env,process_id=process_id, callbacks=callbacks)
+            chain = DFS_tree_search(
+                llm=llm_forward, io_func=env, process_id=process_id, callbacks=callbacks
+            )
             result = chain.start(
-                                single_chain_max_step=single_chain_max_step,
-                                tree_beam_size = width,
-                                max_query_count = max_query_count,
-                                answer=1,
-                                with_filter=with_filter)
+                single_chain_max_step=single_chain_max_step,
+                tree_beam_size=width,
+                max_query_count=max_query_count,
+                answer=1,
+                with_filter=with_filter,
+            )
         else:
             print("invalid method")
             raise NotImplementedError
         return chain, result
-    
-    def run_single_task(self, method, backbone_model, query_id, data_dict, args, output_dir_path, tool_des, retriever=None, process_id=0, callbacks=None, server= None):
+
+    def run_single_task(
+        self,
+        method,
+        backbone_model,
+        query_id,
+        data_dict,
+        args,
+        output_dir_path,
+        tool_des,
+        retriever=None,
+        process_id=0,
+        callbacks=None,
+        server=None,
+    ):
         if server is None:
             server = self.server
         if callbacks is None:
-            if server: print("Warning: no callbacks are defined for server mode")
+            if server:
+                print("Warning: no callbacks are defined for server mode")
             callbacks = []
         splits = output_dir_path.split("/")
-        os.makedirs("/".join(splits[:-1]),exist_ok=True)
-        os.makedirs("/".join(splits),exist_ok=True)
+        os.makedirs("/".join(splits[:-1]), exist_ok=True)
+        os.makedirs("/".join(splits), exist_ok=True)
 
-        output_file_path = os.path.join(output_dir_path,f"{query_id}_{method}.json")
+        output_file_path = os.path.join(output_dir_path, f"{query_id}_{method}.json")
         if (not server) and os.path.exists(output_file_path):
             return
         [callback.on_tool_retrieval_start() for callback in callbacks]
         # print(f"{tool_des=}")
-        env = rapidapi_wrapper(data_dict, tool_des, retriever, args, process_id=process_id)
-        [callback.on_tool_retrieval_end(
-            tools=env.functions
-        ) for callback in callbacks]
+        env = rapidapi_wrapper(
+            data_dict, tool_des, retriever, args, process_id=process_id
+        )
+        [callback.on_tool_retrieval_end(tools=env.functions) for callback in callbacks]
         query = data_dict["query"]
         if process_id == 0:
             # print(colored(f"[process({process_id})]now playing {query}, with {len(env.functions)} APIs", "green"))
             logger.info(f"Q: {query} (with {len(env.functions)} APIs)")
-        [callback.on_request_start(
-            user_input=query,
-            method=method,
-        ) for callback in callbacks]
-        chain,result = self.method_converter(
+        [
+            callback.on_request_start(
+                user_input=query,
+                method=method,
+            )
+            for callback in callbacks
+        ]
+        chain, result = self.method_converter(
             backbone_model=backbone_model,
             openai_key=args.openai_key,
             method=method,
@@ -562,35 +684,41 @@ class pipeline_runner:
             process_id=process_id,
             single_chain_max_step=12,
             max_query_count=200,
-            callbacks=callbacks
+            callbacks=callbacks,
         )
-        [callback.on_request_end(
-            chain=chain.terminal_node[0].messages,
-            outputs=chain.terminal_node[0].description,
-        ) for callback in callbacks]
+        [
+            callback.on_request_end(
+                chain=chain.terminal_node[0].messages,
+                outputs=chain.terminal_node[0].description,
+            )
+            for callback in callbacks
+        ]
         success = False
         if output_dir_path is not None:
-            with open(output_file_path,"w") as writer:
-                data = chain.to_json(answer=True,process=True)
+            with open(output_file_path, "w") as writer:
+                data = chain.to_json(answer=True, process=True)
                 data["answer_generation"]["query"] = query
                 json.dump(data, writer, indent=2)
-                success = data["answer_generation"]["valid_data"] and "give_answer" in data["answer_generation"]["final_answer"]
+                success = (
+                    data["answer_generation"]["valid_data"]
+                    and "give_answer" in data["answer_generation"]["final_answer"]
+                )
                 # print(colored(f"[process({process_id})]valid={success}", "green"))
                 # print(f"data['answer_generation']['final_answer']=")
-                answer_generation = data['answer_generation']
+                answer_generation = data["answer_generation"]
                 print(f"{answer_generation['valid_data']=}")
                 print(f"{answer_generation['query_count']=}")
                 print(f"{answer_generation['total_tokens']=}")
                 print(f"{answer_generation['finish_type']=}")
-                print(f"---------- final_answer ----------")
-                final_answer = answer_generation['final_answer']
+                print("---------- final_answer ----------")
+                final_answer = answer_generation["final_answer"]
                 try:
                     json_data = json.loads(final_answer)
                     print(json_data)
                 except:
                     print(final_answer)
         return result, success
-        
+
     def run(self):
         task_list = self.task_list
         random.seed(42)
@@ -600,7 +728,9 @@ class pipeline_runner:
         for task in task_list:
             out_dir_path = task[-2]
             query_id = task[2]
-            output_file_path = os.path.join(out_dir_path,f"{query_id}_{self.args.method}.json")
+            output_file_path = os.path.join(
+                out_dir_path, f"{query_id}_{self.args.method}.json"
+            )
             if not os.path.exists(output_file_path):
                 new_task_list.append(task)
         task_list = new_task_list
@@ -611,59 +741,171 @@ class pipeline_runner:
             retriever = None
         num_successes = 0
         import time
+
         run_start_time = time.time()
         last_task_end_time = run_start_time
         for k, task in enumerate(tqdm(task_list, ncols=100, desc="Task")):
-            method, backbone_model, query_id, data_dict, args, answer_dir, tool_des = task
-            logger.info(f"process[{self.process_id}] doing task {k+1}/{len(task_list)}: real_task_id_{task[2]}")
-            result, success = self.run_single_task(*task, retriever=retriever, process_id=self.process_id)
+            (
+                method,
+                backbone_model,
+                query_id,
+                data_dict,
+                args,
+                answer_dir,
+                tool_des,
+            ) = task
+            logger.info(
+                f"process[{self.process_id}] doing task {k+1}/{len(task_list)}: real_task_id_{task[2]}"
+            )
+            result, success = self.run_single_task(
+                *task, retriever=retriever, process_id=self.process_id
+            )
             task_end_time = time.time()
-            avg_task_time = (task_end_time - run_start_time)/(k+1)
+            avg_task_time = (task_end_time - run_start_time) / (k + 1)
             if success:
                 num_successes += 1
-                logger.info(f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) {query_id=} ({task_end_time - last_task_end_time:.2f} s), average task time: {avg_task_time:.2f} s")
+                logger.info(
+                    f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) " +
+                    f"{query_id=} ({task_end_time - last_task_end_time:.2f} s), " +
+                    f"average task time: {avg_task_time:.2f} s"
+                )
             else:
-                logger.warning(f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) {query_id=} ({task_end_time - last_task_end_time:.2f} s), average task time: {avg_task_time:.2f} s")
+                logger.warning(
+                    f"valid={success} {num_successes * 100 / (k+1):.2f}%({num_successes}/{k+1}) " +
+                    f"{query_id=} ({task_end_time - last_task_end_time:.2f} s), " +
+                    f"average task time: {avg_task_time:.2f} s"
+                )
             last_task_end_time = task_end_time
 
         run_end_time = time.time()
-        print(f"{num_successes * 100 / len(task_list):.2f}%({num_successes}/{len(task_list)})")
-        print(f"total time: {run_end_time - run_start_time:.2f} s, average task time: {(run_end_time - run_start_time)/len(task_list):.2f} s")
+        print(
+            f"{num_successes * 100 / len(task_list):.2f}%({num_successes}/{len(task_list)})"
+        )
+        print(
+            f"total time: {run_end_time - run_start_time:.2f} s, " +
+            f"average task time: {(run_end_time - run_start_time)/len(task_list):.2f} s"
+        )
 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--corpus_tsv_path', type=str, default=None, required=False, help='')
-    parser.add_argument('--retrieval_model_path', type=str, default=None, required=False, help='')
-    parser.add_argument('--retrieved_api_nums', type=int, default=5, required=False, help='')
-    parser.add_argument('--backbone_model', type=str, default="toolllama", required=False, help='chatgpt_function or davinci or toolllama')
-    parser.add_argument('--openai_key', type=str, default="", required=False, help='openai key for chatgpt_function or davinci model')
-    parser.add_argument('--model_path', type=str, default="your_model_path/", required=False, help='')
-    parser.add_argument('--tool_root_dir', type=str, default="your_tools_path/", required=True, help='')
+    parser.add_argument(
+        "--corpus_tsv_path", type=str, default=None, required=False, help=""
+    )
+    parser.add_argument(
+        "--retrieval_model_path", type=str, default=None, required=False, help=""
+    )
+    parser.add_argument(
+        "--retrieved_api_nums", type=int, default=5, required=False, help=""
+    )
+    parser.add_argument(
+        "--backbone_model",
+        type=str,
+        default="toolllama",
+        required=False,
+        help="chatgpt_function or davinci or toolllama",
+    )
+    parser.add_argument(
+        "--openai_key",
+        type=str,
+        default="",
+        required=False,
+        help="openai key for chatgpt_function or davinci model",
+    )
+    parser.add_argument(
+        "--model_path", type=str, default="your_model_path/", required=False, help=""
+    )
+    parser.add_argument(
+        "--tool_root_dir", type=str, default="your_tools_path/", required=True, help=""
+    )
     parser.add_argument("--lora", action="store_true", help="Load lora model or not.")
-    parser.add_argument('--lora_path', type=str, default="your_lora_path if lora", required=False, help='')
-    parser.add_argument('--max_observation_length', type=int, default=1024, required=False, help='maximum observation length')
-    parser.add_argument('--max_source_sequence_length', type=int, default=4096, required=False, help='original maximum model sequence length')
-    parser.add_argument('--max_sequence_length', type=int, default=8192, required=False, help='maximum model sequence length')
-    parser.add_argument('--observ_compress_method', type=str, default="truncate", choices=["truncate", "filter", "random"], required=False, help='observation compress method')
-    parser.add_argument('--method', type=str, default="CoT@1", required=False, help='method for answer generation: CoT@n,Reflexion@n,BFS,DFS,UCT_vote')
-    parser.add_argument('--input_query_file', type=str, default="", required=False, help='input path')
-    parser.add_argument('--output_answer_file', type=str, default="",required=False, help='output path')
-    parser.add_argument('--toolbench_key', type=str, default="",required=False, help='your toolbench key to request rapidapi service')
-    parser.add_argument('--rapidapi_key', type=str, default="",required=False, help='your rapidapi key to request rapidapi service')
-    parser.add_argument('--use_rapidapi_key', action="store_true", help="To use customized rapidapi service or not.")
-    parser.add_argument('--api_customization', action="store_true", help="To use customized api or not. NOT SUPPORTED currently under open domain setting.")
+    parser.add_argument(
+        "--lora_path",
+        type=str,
+        default="your_lora_path if lora",
+        required=False,
+        help="",
+    )
+    parser.add_argument(
+        "--max_observation_length",
+        type=int,
+        default=1024,
+        required=False,
+        help="maximum observation length",
+    )
+    parser.add_argument(
+        "--max_source_sequence_length",
+        type=int,
+        default=4096,
+        required=False,
+        help="original maximum model sequence length",
+    )
+    parser.add_argument(
+        "--max_sequence_length",
+        type=int,
+        default=8192,
+        required=False,
+        help="maximum model sequence length",
+    )
+    parser.add_argument(
+        "--observ_compress_method",
+        type=str,
+        default="truncate",
+        choices=["truncate", "filter", "random"],
+        required=False,
+        help="observation compress method",
+    )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default="CoT@1",
+        required=False,
+        help="method for answer generation: CoT@n,Reflexion@n,BFS,DFS,UCT_vote",
+    )
+    parser.add_argument(
+        "--input_query_file", type=str, default="", required=False, help="input path"
+    )
+    parser.add_argument(
+        "--output_answer_file", type=str, default="", required=False, help="output path"
+    )
+    parser.add_argument(
+        "--toolbench_key",
+        type=str,
+        default="",
+        required=False,
+        help="your toolbench key to request rapidapi service",
+    )
+    parser.add_argument(
+        "--rapidapi_key",
+        type=str,
+        default="",
+        required=False,
+        help="your rapidapi key to request rapidapi service",
+    )
+    parser.add_argument(
+        "--use_rapidapi_key",
+        action="store_true",
+        help="To use customized rapidapi service or not.",
+    )
+    parser.add_argument(
+        "--api_customization",
+        action="store_true",
+        help="To use customized api or not. NOT SUPPORTED currently under open domain setting.",
+    )
 
     parser.add_argument("--temperature", default=0.5, type=float)
     parser.add_argument("--max_tokens", default=512, type=int)
     parser.add_argument("--top_p", default=1.0)
     parser.add_argument("--top_k", default=50)
-    
+
     args = parser.parse_args()
 
     add_retrieval = True if args.corpus_tsv_path is not None else False
 
-    tb_cache = ToolBenchCache(cache_file=f"{args.output_answer_file}/toolbench_cache.jsonl")
+    tb_cache = ToolBenchCache(
+        cache_file=f"{args.output_answer_file}/toolbench_cache.jsonl"
+    )
     pipeline_runner = pipeline_runner(args, add_retrieval=add_retrieval)
     pipeline_runner.run()

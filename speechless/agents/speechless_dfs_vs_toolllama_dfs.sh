@@ -6,12 +6,14 @@ export CONVERTED_ANSWER_PATH=${TOOLBENCH_DATA_DIR}/reproduction_data/model_predi
 export SAVE_PATH=preference_results
 export PASS_TARE_PATH=pass_rate_results
 export REFERENCE_MODEL=toolllama_dfs
+
+export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-2-2870-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.15_dfs
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.5-2871-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.5-5742-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-2871-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-5742-steps
-export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-1435-steps
+# export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-1435-steps
 # export API_POOL_FILE=path/to/your/openai_key_json_file.json
 python eval_preference.py \
     --converted_answer_path ${CONVERTED_ANSWER_PATH} \

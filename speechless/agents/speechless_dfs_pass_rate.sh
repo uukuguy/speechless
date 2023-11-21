@@ -9,7 +9,8 @@ export SAVE_PATH=pass_rate_results
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-v0.5-5742-steps
 # export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-2871-steps
 #export CANDIDATE_MODEL=speechless-tools-7b-32k-mistral-5742-steps
-export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-1435-steps
+# export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-1435-steps
+export CANDIDATE_MODEL=speechless-tools-7b-32k-tora-3e-2-2870-steps
 python eval_pass_rate.py \
     --converted_answer_path ${CONVERTED_ANSWER_PATH} \
     --save_path ${SAVE_PATH} \
