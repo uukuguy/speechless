@@ -1447,15 +1447,24 @@ def train():
     # if args.mpt:
     #     tokenizer_kwargs["padding_side"] = "left"
     #     tokenizer_kwargs.pop("use_fast")
+    print(f"---------- Original tokens----------")
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, **tokenizer_kwargs)
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = 0
-    tokenizer.pad_token = '<unk>'
-    tokenizer.bos_token = '<s>'
-    tokenizer.eos_token = '</s>'
-    tokenizer.pad_token_id = 0
-    tokenizer.bos_token_id = 1
-    tokenizer.eos_token_id = 2
+        tokenizer.pad_token = '<unk>'
+    # tokenizer.bos_token = '<s>'
+    # tokenizer.eos_token = '</s>'
+    # tokenizer.bos_token_id = 1
+    # tokenizer.eos_token_id = 2
+    print(f"---------- Fixed tokens ----------")
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
     data_module = make_data_module(tokenizer=tokenizer, args=args)
     trainer = Seq2SeqTrainer(
     # trainer = PeftTrainer(
