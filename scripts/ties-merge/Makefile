@@ -15,6 +15,7 @@ merge_models:
 		--merge ${SUB_MODEL_2} \
 		--cuda
 
+# ---------- speechless-mistral-dolphin-orca-platypus-samantha-7b ----------
 # BASE_MODEL=${LLM_MODELS}/mistralai/Mistral-7B-v0.1
 # SUB_MODEL_1=${LLM_MODELS}/prepare_merge_mistral/dolphin-2.1-mistral-7b
 # SUB_MODEL_2=${LLM_MODELS}/prepare_merge_mistral/Mistral-7B-OpenOrca
@@ -23,15 +24,28 @@ merge_models:
 
 # TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
 
-BASE_MODEL=${LLM_MODELS}/mistralai/Mistral-7B-v0.1
-SUB_MODEL_1=${LLM_MODELS}/prepare_merge_mistral/dolphin-2.1-mistral-7b
-SUB_MODEL_2=${LLM_MODELS}/prepare_merge_mistral/Mistral-7B-OpenOrca
-SUB_MODEL_3=${LLM_MODELS}/prepare_merge_mistral/mistral-7b-platypus-fp16
-SUB_MODEL_4=${LLM_MODELS}/prepare_merge_mistral/samantha-1.2-mistral-7b
-SUB_MODEL_5=${LLM_MODELS}/prepare_merge_mistral/CollectiveCognition-v1.1-Mistral-7B
-SUB_MODEL_6=${LLM_MODELS}/prepare_merge_mistral/zephyr-7b-alpha
+# ---------- speechless-six-in-one-7b ----------
+# BASE_MODEL=${LLM_MODELS}/mistralai/Mistral-7B-v0.1
+# SUB_MODEL_1=${LLM_MODELS}/prepare_merge_mistral/dolphin-2.1-mistral-7b
+# SUB_MODEL_2=${LLM_MODELS}/prepare_merge_mistral/Mistral-7B-OpenOrca
+# SUB_MODEL_3=${LLM_MODELS}/prepare_merge_mistral/mistral-7b-platypus-fp16
+# SUB_MODEL_4=${LLM_MODELS}/prepare_merge_mistral/samantha-1.2-mistral-7b
+# SUB_MODEL_5=${LLM_MODELS}/prepare_merge_mistral/CollectiveCognition-v1.1-Mistral-7B
+# SUB_MODEL_6=${LLM_MODELS}/prepare_merge_mistral/zephyr-7b-alpha
 
-TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-six-in-one-7b
+# TARGET_MODEL=${LLM_MODELS}/speechlessai/speechless-six-in-one-7b
+
+# ---------- speechless-mistral-7b-dare-0.85 ----------
+MIXTURE_OF_MUTLI_LORAS_DIR=/opt/local/llm_models/mixture_of_multi_loras
+BASE_MODEL=${MIXTURE_OF_MUTLI_LORAS_DIR}/mistralai/Mistral-7B-v0.1
+SUB_MODEL_1=${MIXTURE_OF_MUTLI_LORAS_DIR}/Intel/neural-chat-7b-v3-1-dare-0.85
+SUB_MODEL_2=${MIXTURE_OF_MUTLI_LORAS_DIR}/bhenrym14/mistral-7b-platypus-fp16-dare-0.85
+SUB_MODEL_3=${MIXTURE_OF_MUTLI_LORAS_DIR}/jondurbin/airoboros-m-7b-3.1.2-dare-0.85
+SUB_MODEL_4=${MIXTURE_OF_MUTLI_LORAS_DIR}/migtissera/SynthIA-7B-v1.3-dare-0.85
+SUB_MODEL_5=${MIXTURE_OF_MUTLI_LORAS_DIR}/teknium/CollectiveCognition-v1.1-Mistral-7B
+SUB_MODEL_6=${MIXTURE_OF_MUTLI_LORAS_DIR}/uukuguy/speechless-mistral-dolphin-orca-platypus-samantha-7b-dare-0.85
+
+TARGET_MODEL=${MIXTURE_OF_MUTLI_LORAS_DIR}/uukuguy/speechless-mistral-7b-dare-0.85
 
 merge_speechless_mistral:
 	PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python \

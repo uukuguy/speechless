@@ -13,12 +13,38 @@
 
 - Ultimately, we integrate it with real business scenarios, ensuring that the intelligent entity seamlessly aligns with various business processes, delivering tangible value to enterprises.
 
-## TODO
+## What's New
 
-- Multi-LoRAs: Load multiple LoRA modules simultaneously and automatically switch the appropriate combination of LoRA modules to generate the best answer based on user queries. [uukuguy/multi-loras](https://github.com/uukuguy/multi_loras)
-- speechless.tools: The general tool-use capability started from ToolBench. Will be under uukuguy/speechless-tools.
+- [2023/11/21] Speechless.Tools: Released [speechless-tools-7b](https://huggingface.co/uukuguy/speechless-tools-7b) which is trained 3 epochs on the ToolEval dataset, achieving performance comparable to [ToolLlama-2-7b-v2](https://huggingface.co/ToolBench/ToolLLaMA-2-7b-v2).
+- [2023/10/16] Multi-LoRAs: Load multiple LoRA modules simultaneously and automatically switch the appropriate combination of LoRA modules to generate the best answer based on user queries. [uukuguy/multi-loras](https://github.com/uukuguy/multi_loras)
 
 ![speechless.ai.overview](imgs/speechless.ai.overview.png)
+
+## Speechless.Tools
+
+The [speechless-tools-7b](https://huggingface.co/uukuguy/speechless-tools-7b) model is fine-tuned on [speechless-coding-7b-16k-tora](https://huggingface.co/uukuguy/speechless-coding-7b-16k-tora), following the guidance of the [ToolLlama](https://github.com/OpenBMB/ToolBench) project, aims to empower open-source LLMs with the ability to handle thousands of diverse real-world APIs.
+
+speechless-tools-7b-dfs vs chatgpt-cot
+
+| Dataset | Win Rate |
+| ------  | ------   |
+| G1_instruction | 0.465 |
+| G1_category | 0.495 |
+| G1_tool | 0.505 |
+| G2_instruction | 0.61 |
+| G2_category | 0.585 |
+| G3_instruction | 0.66 |
+
+speechless-tools-7b-dfs vs toolllama-dfs
+
+| Dataset | Win Rate |
+| ------  | ------   |
+| G1_instruction | 0.45 |
+| G1_category | 0.45 |
+| G1_tool | 0.51 |
+| G2_instruction | 0.53 |
+| G2_category | 0.575 |
+| G3_instruction | 0.46 |
 
 ## Models
 
