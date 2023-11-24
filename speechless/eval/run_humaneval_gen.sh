@@ -47,6 +47,8 @@ num_seqs_per_iter=1
 #     --output_path ${output_path} 
 
 
+# python ${SCRIPT_PATH}/humaneval_gen.py \
+
 mkdir -p ${output_path}
 echo 'Output file: '$output_file
 echo 'Model to eval: '$model
