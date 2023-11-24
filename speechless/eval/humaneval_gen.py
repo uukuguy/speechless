@@ -5,7 +5,7 @@ import os
 import re
 from tqdm import tqdm
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM, GenerationConfig
 from human_eval.data import write_jsonl, read_problems, stream_jsonl
 
 if torch.cuda.is_available():
@@ -90,6 +90,7 @@ def main():
     parser.add_argument('--num_seqs_per_iter', type=int, default=50, help='')
     parser.add_argument('--greedy_decode', action='store_true', help='')
     parser.add_argument('--overwrite', action='store_true', help='')
+    parser.add_argument('--sliding_window', type=int, default=0, help='')
     parser.add_argument('--output_file', type=str, help="")
 
     args = parser.parse_args()
