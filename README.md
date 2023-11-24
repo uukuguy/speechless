@@ -59,20 +59,27 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
     A part of [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras)
 
-- **[speechless-mistral-7b-dare-0.85](https://huggingface.co/speechlessai/speechless-mistral-7b-dare-0.85) 2023.11.23**
+- ⭐ ️**[speechless-mistral-7b-dare-0.85](https://huggingface.co/speechlessai/speechless-mistral-7b-dare-0.85) 2023.11.23**
+
     [GPTQ](https://huggingface.co/TheBloke/speechless-mistral-7B-dare-0.85-GPTQ) [GGUF](https://huggingface.co/TheBloke/speechless-mistral-7B-dare-0.85-GGUF) [AWQ](https://huggingface.co/TheBloke/speechless-mistral-7B-dare-0.85-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
     A part of [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras)
 
 - **[CollectiveCognition-v1.1-Mistral-7B-dare-0.85](https://huggingface.co/uukuguy/CollectiveCognition-v1.1-Mistral-7B-dare-0.85) 2023.11.23**
 
+    [GPTQ](https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-dare-0.85-GPTQ) [GGUF](https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-dare-0.85-GGUF) [AWQ](https://huggingface.co/TheBloke/CollectiveCognition-v1.1-Mistral-7B-dare-0.85-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
     A part of [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras)
 
 - **[SynthIA-7B-v1.3-dare-0.85](https://huggingface.co/uukuguy/SynthIA-7B-v1.3-dare-0.85) 2023.11.22**
 
+    [GPTQ](https://huggingface.co/TheBloke/SynthIA-7B-v1.3-dare-0.85-GPTQ) [GGUF](https://huggingface.co/TheBloke/SynthIA-7B-v1.3-dare-0.85-GGUF) [AWQ](https://huggingface.co/TheBloke/SynthIA-7B-v1.3-dare-0.85-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
+
     A part of [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras)
 
 - **[airoboros-m-7b-3.1.2-dare-0.85](https://huggingface.co/uukuguy/airoboros-m-7b-3.1.2-dare-0.85) 2023.11.22**
+
+    [GPTQ](https://huggingface.co/TheBloke/airoboros-m-7B-3.1.2-dare-0.85-GPTQ) [GGUF](https://huggingface.co/TheBloke/airoboros-m-7B-3.1.2-dare-0.85-GGUF) [AWQ](https://huggingface.co/TheBloke/airoboros-m-7B-3.1.2-dare-0.85-AWQ) by [TheBloke](https://huggingface.co/TheBloke)
 
     A part of [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras)
 
