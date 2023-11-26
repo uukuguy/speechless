@@ -443,14 +443,15 @@ docker tag ghcr.io/bigcode-project/evaluation-harness evaluation-harness
 Execute the HumanEval geenrate command on the GPU server where the model is located.
 
 ```bash
-python -m speechless.eval.humaneval \
-    genrate \
-    --model ${TASK_MODEL_PATH} \
-    --output_dir ${EVAL_OUTPUT_DIR} \
+HUMANEVAL_OUTPUT_DIR=eval_results/human_eval/${TASK_NAME}
 
-python -m speechless.eval.humaneval \
-    eval \
-    --eval_dir ${EVAL_OUTPUT_DIR}
+humaneval:
+    PYTHONLIB=${SPEECHLESS_ROOT} \
+    python -m speechless.eval.humaneval \
+        --do_gen \
+        --do_eval \
+        --model ${TEST_MODEL_PATH} \
+        --output_dir ${HUMANEVAL_OUTPUT_DIR}
 ```
 
 ### MultiPL-E

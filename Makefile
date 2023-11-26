@@ -139,7 +139,7 @@ inference_with_lora:
 		--test_file_path ${TEST_FILE} \
 
 # -------------------- HumanEval --------------------
-HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
+HUMANEVAL_OUTPUT_DIR=eval_results/human_eval/${TASK_NAME}
 
 humaneval:
 	PYTHONLIB=${SPEECHLESS_ROOT} \
@@ -147,20 +147,8 @@ humaneval:
 		--do_gen \
 		--do_eval \
 		--model ${TEST_MODEL_PATH} \
-		--humaneval_samples_file ${HUMANEVAL_GEN_OUTPUT_FILE} 
+        --output_dir ${HUMANEVAL_OUTPUT_DIR}
 
-# humaneval_gen:
-# 	bash ./speechless/eval/run_humaneval_gen.sh \
-# 		${TEST_MODEL_PATH} \
-# 		${HUMANEVAL_GEN_OUTPUT_FILE}
-
-# humaneval:
-# 	# python ./speechless/eval/run_humaneval.py \
-# 	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
-# 	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
-
-# 	bash ./speechless/eval/run_humaneval.sh ${TEST_MODEL_PATH}
-		
 # -------------------- MultiPL-E --------------------
 
 # https://huggingface.co/spaces/bigcode/bigcode-models-leaderboard

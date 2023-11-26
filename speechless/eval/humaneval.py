@@ -67,9 +67,11 @@ def do_gen(args):
 
     print(f"Loaded {args.model}.")
 
-    output_dir = os.path.dirname(args.humaneval_samples_file)
+    output_dir = args.output_dir
     os.makedirs(output_dir, exist_ok=True)
-    fd = open(args.humaneval_samples_file, 'w')
+
+    humaneval_samples_file = f"{output_dir}/humaneval_samples.jsonl"
+    fd = open(humaneval_samples_file, 'w')
     num_writed = 0
     for i in trange(num_samples // args.gen_batch_size + 1, ncols=100):
 
@@ -114,12 +116,12 @@ def do_gen(args):
                     fd.write(f"{json.dumps(result, ensure_ascii=False)}\n")
                     num_writed += 1
     fd.close()
-    print(f"Gnerated {num_writed} samples, and saved to {args.humaneval_samples_file}")
+    print(f"Gnerated {num_writed} samples, and saved to {humaneval_samples_file}")
 
 
 
 def do_eval(args):
-    sample_file = args.humaneval_samples_file
+    sample_file = f"{args.output_dir}/humaneval_samples.jsonl"
     k = args.k
     n_workers = args.n_workers
     timeout = args.timeout
@@ -136,7 +138,7 @@ def get_args():
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--humaneval_samples_file', type=str, help="")
+    parser.add_argument("--output_dir", type=str, default="eval_results/humaneval")
 
     parser.add_argument("--do_eval", action="store_true", help="")
     parser.add_argument("--k", type=str, default="1,10,100", help="")
