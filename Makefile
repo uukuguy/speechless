@@ -79,7 +79,8 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2-32k-mistral
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1357-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-dare-0.85
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -140,17 +141,25 @@ inference_with_lora:
 # -------------------- HumanEval --------------------
 HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
 
-humaneval_gen:
-	bash ./speechless/eval/run_humaneval_gen.sh \
-		${TEST_MODEL_PATH} \
-		${HUMANEVAL_GEN_OUTPUT_FILE}
-
 humaneval:
-	# python ./speechless/eval/run_humaneval.py \
-	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
-	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+	PYTHONLIB=${SPEECHLESS_ROOT} \
+	python -m speechless.eval.humaneval \
+		--do_gen \
+		--do_eval \
+		--model ${TEST_MODEL_PATH} \
+		--humaneval_samples_file ${HUMANEVAL_GEN_OUTPUT_FILE} 
 
-	bash ./speechless/eval/run_humaneval.sh ${TEST_MODEL_PATH}
+# humaneval_gen:
+# 	bash ./speechless/eval/run_humaneval_gen.sh \
+# 		${TEST_MODEL_PATH} \
+# 		${HUMANEVAL_GEN_OUTPUT_FILE}
+
+# humaneval:
+# 	# python ./speechless/eval/run_humaneval.py \
+# 	# 	${HUMANEVAL_GEN_OUTPUT_FILE} \
+# 	# 	--problem_file ${PWD}/eval/datasets/openai_humaneval/HumanEval.jsonl.gz
+
+# 	bash ./speechless/eval/run_humaneval.sh ${TEST_MODEL_PATH}
 		
 # -------------------- MultiPL-E --------------------
 
