@@ -12,6 +12,7 @@ echo "Task Name: ${TASK_NAME}"
 
 HUMANEVAL_GEN_OUTPUT_FILE=eval_results/human_eval/${TASK_NAME}/humaneval_samples.jsonl
 
-python ${SCRIPT_PATH}/humaneval.py \
+PYTHONPATH=${SPEECHLESS_ROOT} \
+python -m speechless.eval.humaneval \
     ${HUMANEVAL_GEN_OUTPUT_FILE} \
     --problem_file ${SCRIPT_PATH}/datasets/openai_humaneval/HumanEval.jsonl.gz
