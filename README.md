@@ -420,14 +420,17 @@ Speechless supports HumanEval, MultiPL-E, SQLEval, lm-evaluation-harness.
 ### lm-evluation-harness
 
 ```bash
-python -m speechless.eval.lmeval \
-   genrate \
-    --model ${TASK_MODEL_PATH} \
-    --output_dir ${EVAL_OUTPUT_DIR} \
+python -m speechless.eval.lm_eval \
+    --do_gen \
+    --model hf-causal-experimental \
+    --model_args pretrained=${TEST_MODEL_PATH},use_accelerate=True \
+    --batch_size 4 \
+    --write_out \
+    --output_path eval_results/lm_eval/${TASK_NAME} 
 
-python -m speechless.eval.lmeval \
-    eval \
-    -eval_dir ${EVAL_OUTPUT_DIR}
+python -m speechless.eval.lm_eval \
+    --do_eval \
+    --output_path eval_results/lm_eval/${TASK_NAME} 
 ```
 
 ### bigcode-evaluation-harness

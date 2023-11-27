@@ -138,6 +138,14 @@ inference_with_lora:
 		--lora_weights ${CHECKPOINT_DIR} \
 		--test_file_path ${TEST_FILE} \
 
+# -------------------- lm-evaluation-harness --------------------
+
+#https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard
+
+lm_eval:
+	bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
+
+
 # -------------------- HumanEval --------------------
 HUMANEVAL_OUTPUT_DIR=eval_results/human_eval/${TASK_NAME}
 
@@ -148,6 +156,61 @@ humaneval:
 		--do_eval \
 		--model ${TEST_MODEL_PATH} \
         --output_dir ${HUMANEVAL_OUTPUT_DIR}
+
+# -------------------- Big Code Evaluation Harness --------------------
+# BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
+
+# Don't run generation but benchmark groundtruth (useful for debugging)
+# BIGCODE_CHECK_REFERENCES="--check_references"
+
+# BITS="--load_in_8bit" 
+# LIMIT="--limit 10"
+# MAX_LENGTH_GENERATION=2048
+# TEMPERATURE=0.2
+# BITS="--load_in_8bit"
+# PRECISION=bf16
+# N_SAMPLES=1
+# BATCH_SIZE=16
+
+# bigcode_eval_gen:
+# 	accelerate launch \
+# 		--num_processes=2 \
+# 		--num_machines=1 \
+# 		--mixed_precision=${PRECISION} \
+# 		--dynamo_backend=no \
+# 		eval/bigcode_eval.py \
+# 		--model ${TEST_MODEL_PATH} \
+# 		${BITS} \
+# 		--tasks ${BIGCODE_TASKS} \
+# 		--limit 20 \
+# 		--max_length_generation ${MAX_LENGTH_GENERATION} \
+# 		--temperature ${TEMPERATURE} \
+# 		--do_sample \
+# 		--n_samples ${N_SAMPLES} \
+# 		--batch_size ${BATCH_SIZE} \
+# 		--precision ${PRECISION}\
+# 		--trust_remote_code \
+# 		--eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
+# 		--generation_only \
+# 		--save_generations \
+# 		${BIGCODE_CHECK_REFERENCES}
+bigcode_eval_gen:
+	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
+
+bigcode_offical_gen:
+	./eval/bigcode_offical_gen.sh ${TEST_MODEL_PATH}
+
+# bigcode_eval_exec:
+# 	accelerate launch  eval/bigcode_eval.py \
+# 		--model ${TEST_MODEL_PATH}
+# 		--tasks ${BIGCODE_TASKS} \
+# 		--allow_code_execution  \
+# 		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
+# 		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
+
+bigcode_eval:
+	./eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
+
 
 # -------------------- MultiPL-E --------------------
 
@@ -254,221 +317,12 @@ multiple:
 # 		--results_dir ${MULTIPL_E_RESULTS_DIR}
 
 
-# -------------------- lm-evaluation-harness --------------------
 
-#https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard
-
-# lm_eval_arc:
-# 	python eval/run_lm_eval.py \
-# 		--model hf-causal \
-# 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--tasks arc_challenge \
-# 		--batch_size 16 \
-# 		--limit 100 \
-# 		--no_cache \
-# 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME}/arc_challenge_25shot.json \
-# 		--device cuda \
-# 		--num_fewshot 25
-
-# lm_eval_hellaswag:
-# 	python eval/run_lm_eval.py \
-# 		--model hf-causal \
-# 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--tasks hellaswag \
-# 		--batch_size 16 \
-# 		--limit 100 \
-# 		--no_cache \
-# 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME}/hellaswag_10shot.json \
-# 		--device cuda \
-# 		--num_fewshot 10
-
-# lm_eval_mmlu:
-# 	python eval/run_lm_eval.py \
-# 		--model hf-causal \
-# 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--tasks hendrycksTest-* \
-# 		--batch_size 16 \
-# 		--limit 100 \
-# 		--no_cache \
-# 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME}/mmlu_5shot.json \
-# 		--device cuda \
-# 		--num_fewshot 5
-
-# lm_eval_truthfulqa:
-# 	python eval/run_lm_eval.py \
-# 		--model hf-causal \
-# 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--tasks truthfulqa_mc \
-# 		--batch_size 16 \
-# 		--limit 100 \
-# 		--no_cache \
-# 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME}/truthfullqa_0shot.json \
-# 		--device cuda \
-# 		--num_fewshot 0
-
-# lmeval_open_llm: lm_eval_arc lm_eval_hellaswag lm_eval_mmlu lm_eval_truthfulqa
-# 	@echo "lm_eval done"
-
-# lmeval:
-# 	python eval/lm_eval.py \
-# 		--model hf-causal \
-# 		--model_args pretrained=${TEST_MODEL_PATH} \
-# 		--task \
-# 			"arc_challenge|25|100" \
-# 			"hellaswag|10|100" \
-# 			"hendrycksTest-*|5|100" \
-# 			"truthfulqa_mc|0|100" \
-# 			"gsm8k|8|100" \
-# 		--batch_size 4 \
-# 		--no_cache \
-# 		--write_out \
-# 		--output_path eval_results/lm_eval/${TASK_NAME} 
-
-lm_eval:
-	bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
-
-
-# BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
-
-# Don't run generation but benchmark groundtruth (useful for debugging)
-# BIGCODE_CHECK_REFERENCES="--check_references"
-
-# BITS="--load_in_8bit" 
-# LIMIT="--limit 10"
-# MAX_LENGTH_GENERATION=2048
-# TEMPERATURE=0.2
-# BITS="--load_in_8bit"
-# PRECISION=bf16
-# N_SAMPLES=1
-# BATCH_SIZE=16
-
-# bigcode_eval_gen:
-# 	accelerate launch \
-# 		--num_processes=2 \
-# 		--num_machines=1 \
-# 		--mixed_precision=${PRECISION} \
-# 		--dynamo_backend=no \
-# 		eval/bigcode_eval.py \
-# 		--model ${TEST_MODEL_PATH} \
-# 		${BITS} \
-# 		--tasks ${BIGCODE_TASKS} \
-# 		--limit 20 \
-# 		--max_length_generation ${MAX_LENGTH_GENERATION} \
-# 		--temperature ${TEMPERATURE} \
-# 		--do_sample \
-# 		--n_samples ${N_SAMPLES} \
-# 		--batch_size ${BATCH_SIZE} \
-# 		--precision ${PRECISION}\
-# 		--trust_remote_code \
-# 		--eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
-# 		--generation_only \
-# 		--save_generations \
-# 		${BIGCODE_CHECK_REFERENCES}
-bigcode_eval_gen:
-	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
-
-bigcode_offical_gen:
-	./eval/bigcode_offical_gen.sh ${TEST_MODEL_PATH}
-
-# bigcode_eval_exec:
-# 	accelerate launch  eval/bigcode_eval.py \
-# 		--model ${TEST_MODEL_PATH}
-# 		--tasks ${BIGCODE_TASKS} \
-# 		--allow_code_execution  \
-# 		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
-# 		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
-
-bigcode_eval:
-	./eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
-
-# -------------------- vllm --------------------
-
-# Run this command on the remote server which has the model.
-# vllm:
-# 	python -m vllm.entrypoints.openai.api_server \
-# 		--host 0.0.0.0 \
-# 		--port 8009 \
-# 		--served-model-name ${TASK_NAME} \
-# 		--dtype half \
-# 		--trust-remote-code \
-# 		--model ${TEST_MODEL_PATH}
-
+# -------------------- speechless.api.server --------------------
 api_server:
-	# PYTHONPATH=${PWD}/.. \
-	# python .api/server.py \
-
 	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python -m speechless.api.server \
 		--model_name_or_path ${TEST_MODEL_PATH} \
 		--model_family vllm \
 
 include ../Makefile.remote
-
-# # -------------------- Sync Remote --------------------
-
-# BASENAME=$(shell basename $(shell pwd))
-# TARGET_DIR=./sandbox/LLM/speechless.ai/${BASENAME}/
-
-# # rsync -rav --exclude=.git --exclude=__pycache__ --rsh='ssh -p 45724' * root@connect.neimeng.seetacloud.com:${TARGET_DIR}
-# define push_to_remote
-# 	@echo "push to remote: $(1), port: $(2), target: $(3)"
-# 	rsync -rav \
-# 		--exclude=tmp \
-# 		--exclude=outputs \
-# 		--exclude=saved_models \
-# 		--exclude=.git \
-# 		--exclude=__pycache__ \
-# 		--exclude=tasks \
-# 		--exclude=eval_results \
-# 		--rsh='ssh -p $(2)' \
-# 		* \
-# 		$(1):$(3)
-# endef
-
-# define pull_from_remote
-# 	@echo "pull from remote: $(1), port: $(2), source: $(3), subdir: $(4)"
-# 	rsync -rav \
-# 		--exclude=tmp \
-# 		--exclude=outputs \
-# 		--exclude=saved_models \
-# 		--exclude=.git \
-# 		--exclude=__pycache__ \
-# 		--exclude=checkpoint* \
-# 		--rsh='ssh -p $(2)' \
-# 		$(1):$(3)/$(4)/ \
-# 		$(4)/
-# endef
-
-# # ----- push to remote -----
-# push_autodl_nm800_a40x2:
-# 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,54192,$(TARGET_DIR))
-
-# push_autodl_nm799_a40x2:
-# 	$(call push_to_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR))
-
-# push_gpushare_h800x2:
-# 	$(call push_to_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR))
-
-# push_gpushare_a800x2:
-# 	$(call push_to_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR))
-
-# push_gpushare_a100x4:
-# 	$(call push_to_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR))
-
-
-# # ----- pull from remote -----
-# pull_autodl_nm799_a40x2_eval_results:
-# 	$(call pull_from_remote,root@connect.neimeng.seetacloud.com,45724,$(TARGET_DIR),eval_results)
-
-# pull_gpushare_h800x2_eval_results:
-# 	$(call pull_from_remote,root@i-1.gpushare.com,5893,$(TARGET_DIR),eval_results)
-
-# pull_gpushare_a800x2_eval_results:
-# 	$(call pull_from_remote,root@i-1.gpushare.com,12391,$(TARGET_DIR),eval_results)
-
-# pull_gpushare_a100x4_eval_results:
-# 	$(call pull_from_remote,root@i-1.gpushare.com,2917,$(TARGET_DIR),eval_results)
