@@ -96,7 +96,7 @@ def do_gen(args):
         for _ in range(loops):
 
             with torch.no_grad():
-                completions = llm.generate(prompt_batch, sampling_params)
+                completions = llm.generate(prompt_batch, sampling_params, use_tqdm=True)
             gen_seqs = [completion.outputs[0].text for completion in completions]
 
             if gen_seqs is not None:
