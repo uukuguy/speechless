@@ -38,6 +38,7 @@ class MultiChoice:
         for choice in self.choices:
             yield choice
 
+BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
 def parse_args():
     parser = HfArgumentParser(EvalArguments)
@@ -76,7 +77,7 @@ def parse_args():
     )
     parser.add_argument(
         "--tasks",
-        default=None,
+        default=BIGCODE_TASKS,
         choices=MultiChoice(ALL_TASKS),
         help=f"Evaluation tasks from {ALL_TASKS}",
     )

@@ -1,5 +1,6 @@
 from pprint import pprint
 from typing import List, Union
+from tqdm import tqdm
 
 import sacrebleu
 import lm_eval.base
@@ -414,7 +415,7 @@ def get_task_name_from_object(task_object):
 def get_task_dict(task_name_list: List[Union[str, lm_eval.base.Task]]):
     task_name_dict = {
         task_name: get_task(task_name)()
-        for task_name in task_name_list
+        for task_name in tqdm(task_name_list, ncols=50, desc="Loading tasks")
         if isinstance(task_name, str)
     }
     task_name_from_object_dict = {
