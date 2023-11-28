@@ -224,6 +224,8 @@ def evaluate(
                     if key.startswith('logit_'):
                         i = int(key[len('logit_'):])
                         resp = doc_json_data[key]
+                        if task_name == "drop":
+                            resp = "".join(resp.split("\n")[:1])
                         process_res_queue[(task_name, doc_id)].append((i, resp))
 
                         if write_out:
@@ -302,6 +304,8 @@ def evaluate(
         resps = [x if req.index is None else x[req.index] for x, req in zip(resps, reqs)]
 
         for resp, (i, task_name, doc, doc_id) in zip(resps, requests_origin[reqtype]):
+            if task_name == "drop":
+                resp = "".join(resp.split("\n")[:1])
             process_res_queue[(task_name, doc_id)].append((i, resp))
 
             if write_out:
@@ -472,7 +476,7 @@ def summarize_results(json_data):
                     hellaswag_acc_norm = results[k]['acc_norm']
                 elif k == 'truthfulqa_mc':
                     truthfullqa_mc2 = results[k]['mc2']
-                elif k == 'winoground':
+                elif k == 'winogrande':
                     winoground_acc = results[k]['acc']
                 elif k == 'gsm8k':
                     gsm8k_acc = results[k]['acc']
@@ -481,7 +485,7 @@ def summarize_results(json_data):
 
     mmlu_acc /= (mmlu_n + 1e-12)
 
-    open_llm_score = (arc_acc_norm + hellaswag_acc_norm + mmlu_acc + truthfullqa_mc2) / 4
+    open_llm_score = (arc_acc_norm + hellaswag_acc_norm + mmlu_acc + truthfullqa_mc2 + winoground_acc + drop_f1) / 7
 
     summary = {
         'ARC (acc_norm)': arc_acc_norm,
@@ -688,6 +692,7 @@ def parse_args():
     parser.add_argument("--write_out", action="store_true", default=False)
     parser.add_argument("--output_base_path", type=str, default=None)
 
+    parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--summary", action="store_true")
     parser.add_argument("--results_file", type=str)
 
@@ -735,6 +740,10 @@ def do_gen(args):
             task_names = pattern_match(str_task_names.split(","), tasks.ALL_TASKS)
         else:
             raise ValueError(f"Invalid task format: {t}, must be <task1 name>,<task2 name>...|<num_fewshot>|<limit>")
+        if args.limit is not None:
+            limit = args.limit
+            if limit <= 0:
+                limit = None
         eval_tasks.append((task_names, num_fewshot, limit))
 
     print(f"Selected Tasks: {eval_tasks}")
@@ -785,7 +794,7 @@ def do_gen(args):
         with open(results_file, "w") as f:
             f.write(dumped)
         latest_results_file = f"{args.output_path}/lmeval_results_latest.json"
-        if os.path.issymlink(latest_results_file):
+        if os.path.islink(latest_results_file):
             os.remove(latest_results_file)
         os.symlink(os.path.basename(results_file), latest_results_file)
 

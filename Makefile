@@ -19,7 +19,7 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-dolphin-orca-platypus-samantha-7b
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-mistral-six-in-one-7b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/Open-Orca/Mistral-7B-OpenOrca
@@ -81,6 +81,8 @@ TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1357-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-dare-0.85
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mixture-of-multi-loras/Intel/neural-chat-7b-v3-1-dare-0.85
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -138,12 +140,25 @@ inference_with_lora:
 		--lora_weights ${CHECKPOINT_DIR} \
 		--test_file_path ${TEST_FILE} \
 
-# -------------------- lm-evaluation-harness --------------------
 
+# -------------------- lm-evaluation-harness --------------------
 #https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard
 
 lm_eval:
-	bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
+	# bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
+	PYTHONPATH=${SPEECHLES_ROOT} \
+	python -m speechless.eval.lm_eval \
+		--do_gen \
+		--model hf-causal-experimental \
+		--model_args pretrained=${TEST_MODEL_PATH},use_accelerate=True \
+		--batch_size 4 \
+		--write_out \
+		--output_path eval_results/lm_eval/${TASK_NAME} 
+
+lm_eval_results:
+	python -m speechless.eval.lm_eval \
+		--do_eval \
+		--output_path eval_results/lm_eval/${TASK_NAME} 
 
 
 # -------------------- HumanEval --------------------
@@ -154,132 +169,37 @@ humaneval:
 	python -m speechless.eval.humaneval \
 		--do_gen \
 		--do_eval \
+		--task \
+			"arc_challenge|25|1000" \
+			"hellaswag|10|1000" \
+			"hendrycksTest-*|5|100" \
+			"truthfulqa_mc|0|1000" \
+			"winogrande|5|1000" \
+			"gsm8k|5|1000" \
+			"drop|3|1000" \
 		--model ${TEST_MODEL_PATH} \
         --output_dir ${HUMANEVAL_OUTPUT_DIR}
 
+humaneval_results:
+	PYTHONLIB=${SPEECHLESS_ROOT} \
+	python -m speechless.eval.humaneval \
+		--do_eval \
+		--model ${TEST_MODEL_PATH} \
+        --output_dir ${HUMANEVAL_OUTPUT_DIR}
+
+
 # -------------------- Big Code Evaluation Harness --------------------
-# BIGCODE_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
-
-# Don't run generation but benchmark groundtruth (useful for debugging)
-# BIGCODE_CHECK_REFERENCES="--check_references"
-
-# BITS="--load_in_8bit" 
-# LIMIT="--limit 10"
-# MAX_LENGTH_GENERATION=2048
-# TEMPERATURE=0.2
-# BITS="--load_in_8bit"
-# PRECISION=bf16
-# N_SAMPLES=1
-# BATCH_SIZE=16
-
-# bigcode_eval_gen:
-# 	accelerate launch \
-# 		--num_processes=2 \
-# 		--num_machines=1 \
-# 		--mixed_precision=${PRECISION} \
-# 		--dynamo_backend=no \
-# 		eval/bigcode_eval.py \
-# 		--model ${TEST_MODEL_PATH} \
-# 		${BITS} \
-# 		--tasks ${BIGCODE_TASKS} \
-# 		--limit 20 \
-# 		--max_length_generation ${MAX_LENGTH_GENERATION} \
-# 		--temperature ${TEMPERATURE} \
-# 		--do_sample \
-# 		--n_samples ${N_SAMPLES} \
-# 		--batch_size ${BATCH_SIZE} \
-# 		--precision ${PRECISION}\
-# 		--trust_remote_code \
-# 		--eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
-# 		--generation_only \
-# 		--save_generations \
-# 		${BIGCODE_CHECK_REFERENCES}
 bigcode_eval_gen:
 	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
-
-bigcode_offical_gen:
-	./eval/bigcode_offical_gen.sh ${TEST_MODEL_PATH}
-
-# bigcode_eval_exec:
-# 	accelerate launch  eval/bigcode_eval.py \
-# 		--model ${TEST_MODEL_PATH}
-# 		--tasks ${BIGCODE_TASKS} \
-# 		--allow_code_execution  \
-# 		--load_generations_path ${BIGCODE_SAVE_GENERATIONS_PATH} \
-# 		--metric_output_path ${BIGCODE_METRIC_RESULTS_FILE} \
 
 bigcode_eval:
 	./eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
 
 
 # -------------------- MultiPL-E --------------------
-
 # https://huggingface.co/spaces/bigcode/bigcode-models-leaderboard
 
-MULTIPL_E_RESULTS_DIR=eval_results/multipl_e/${TASK_NAME}
-
-# MULTIPLE_E_LANG=mkdir -p ${MULTIPL_E_RESULTS_DIR} && \
-# 	python eval/MultiPL-E/automodel.py \
-# 		--name ${TEST_MODEL_PATH} \
-# 		--root-dataset humaneval \
-# 		--temperature 0.2 \
-# 		--batch-size 20 \
-# 		--completion-limit 20 \
-# 		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
-MULTIPLE_E_LANG=python eval/multiple.py \
-		generate \
-		--name ${TEST_MODEL_PATH} \
-		--root-dataset humaneval \
-		--temperature 0.2 \
-		--batch-size 20 \
-		--completion-limit 10 \
-		--output-dir-prefix ${MULTIPL_E_RESULTS_DIR} 
-
-# 34b ~ 56m
-multipl_e_python:
-	${MULTIPLE_E_LANG} \
-		--lang py \
-
-# 34b: ~ 1h 27m
-multipl_e_java:
-	${MULTIPLE_E_LANG} \
-		--lang java \
-
-# 34b: ~ 47m
-multipl_e_js:
-	${MULTIPLE_E_LANG} \
-		--lang js \
-
-# 34b: ~ 1h 40m
-multipl_e_cpp:
-	${MULTIPLE_E_LANG} \
-		--lang cpp \
-
-multipl_e_rust:
-	${MULTIPLE_E_LANG} \
-		--lang rs \
-
-multipl_e_go:
-	${MULTIPLE_E_LANG} \
-		--lang go \
-
-# multipl_e_gen: multipl_e_python multipl_e_java multipl_e_js multipl_e_cpp multipl_e_rust multipl_e_go
-# 	@echo "multipl_e_gen done"
-
-# multipl_e_gen:
-# 	${MULTIPLE_E_LANG} \
-# 		--langs py java js cpp rs go sh jl \
-
 multiple_gen:
-	# python eval/multiple_gen.py \
-	# 	--do_generate \
-	# 	-m ${TASK_NAME}  \
-	# 	--langs py java js cpp rs go sh jl \
-	# 	--completion_limit 5 && \
-	# python eval/multiple_gen.py \
-	# 	--do_convert \
-	# 	--output_dir output_multiple_gen/${TASK_NAME}
-
 	bash ./speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH}
 
 multiple_gen_50:
@@ -289,33 +209,7 @@ multiple_50:
 	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 50
 
 multiple:
-	# python eval/multiple.py \
-	# 	eval \
-	# 	--results_dir output_multiple_gen/${TASK_NAME}/multiple && \
-	# python eval/multiple.py \
-	# 	results \
-	# 	--results_dir output_multiple_gen/${TASK_NAME}/multiple
-
 	bash ./speechless/eval/run_multiple.sh ${TEST_MODEL_PATH}
-
-
-# multipl_e_eval:
-# 	cd ${MULTIPL_E_RESULTS_DIR} && \
-# 	bash ${PWD}/eval/run_multipl_e_eval.sh
-
-# multipl_e_eval:
-# 	python eval/multiple.py \
-# 		eval \
-# 		--results_dir ${MULTIPL_E_RESULTS_DIR}
-
-# multipl_e_results:
-# 	python ${PWD}/eval/MultiPL-E/pass_k.py -k 1 ${MULTIPL_E_RESULTS_DIR}/*
-
-# multipl_e_results:
-# 	python eval/multiple.py \
-# 		results \
-# 		--results_dir ${MULTIPL_E_RESULTS_DIR}
-
 
 
 # -------------------- speechless.api.server --------------------
