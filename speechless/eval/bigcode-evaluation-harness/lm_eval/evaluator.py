@@ -6,6 +6,7 @@ import warnings
 from lm_eval import tasks
 from lm_eval.generation import parallel_generations
 
+
 _WARNING = """
 ################################################################################
                                   !!!WARNING!!!
