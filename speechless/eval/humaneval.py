@@ -120,7 +120,7 @@ def do_gen(args):
 
 
 
-def do_eval(args):
+def show_results(args):
     sample_file = f"{args.output_dir}/humaneval_samples.jsonl"
     k = args.k
     n_workers = args.n_workers
@@ -140,7 +140,7 @@ def get_args():
 
     parser.add_argument("--output_dir", type=str, default="eval_results/humaneval")
 
-    parser.add_argument("--do_eval", action="store_true", help="")
+    parser.add_argument("--show_results", action="store_true", help="")
     parser.add_argument("--k", type=str, default="1,10,100", help="")
     parser.add_argument("--n_workers", type=int, default=4, help="")
     parser.add_argument("--timeout", type=float, default=3.0, help="")
@@ -163,8 +163,8 @@ def main():
     args = get_args()
     if args.do_gen:
         do_gen(args)
-    if args.do_eval:
-        do_eval(args)
+    if args.show_results:
+        show_results(args)
 
 if __name__ == "__main__":
     main()

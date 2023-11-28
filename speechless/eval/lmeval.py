@@ -670,7 +670,7 @@ openllm_tasks = [
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--do_eval", action="store_true", help="")
+    parser.add_argument("--show_results", action="store_true", help="")
     parser.add_argument("--do_gen", action="store_true", help="")
 
     parser.add_argument("--model", type=str, default="hf-causal-experimental")
@@ -689,7 +689,7 @@ def parse_args():
     parser.add_argument("--decontamination_ngrams_path", default=None)
     parser.add_argument("--description_dict_path", default=None)
     parser.add_argument("--check_integrity", action="store_true")
-    parser.add_argument("--write_out", action="store_true", default=False)
+    parser.add_argument("--write_out", action="store_true", default=True)
     parser.add_argument("--output_base_path", type=str, default=None)
 
     parser.add_argument("--limit", type=int, default=None)
@@ -813,7 +813,7 @@ def do_gen(args):
 
     print(f"Done.\n")
 
-def do_eval(args):
+def show_results(args):
     results_file = args.results_file
     if results_file is None:
         latest_results_file = f"{args.output_path}/lmeval_results_latest.json"
@@ -832,8 +832,8 @@ def main():
 
     if args.do_gen:
         do_gen(args)
-    if args.do_eval:
-        do_eval(args)
+    if args.show_results:
+        show_results(args)
 
 if __name__ == "__main__":
     main()
