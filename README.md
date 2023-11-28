@@ -420,25 +420,21 @@ Speechless supports HumanEval, MultiPL-E, SQLEval, lm-evaluation-harness.
 ### lm-evluation-harness
 
 ```bash
-python -m speechless.eval.lm_eval \
+LMEVAL_OUTPUT_DIR=eval_results/lm_eval/${TASK_NAME}
+
+# lmeval
+python -m speechless.eval.lmeval \
     --do_gen \
     --model hf-causal-experimental \
     --model_args pretrained=${TEST_MODEL_PATH},use_accelerate=True \
     --batch_size 4 \
-    --write_out \
+    --output_path ${LMEVAL_OUTPUT_DIR} 
+
+# lmeval_show_results
+python -m speechless.eval.lmeval \
+    --show_results \
     --output_path eval_results/lm_eval/${TASK_NAME} 
-
-python -m speechless.eval.lm_eval \
-    --do_eval \
-    --output_path eval_results/lm_eval/${TASK_NAME} 
-```
-
-### bigcode-evaluation-harness
-
-```bash
-docker pull ghcr.io/bigcode-project/evaluation-harness
-docker tag ghcr.io/bigcode-project/evaluation-harness evaluation-harness
-
+    --output_path ${LMEVAL_OUTPUT_DIR} 
 ```
 
 ### HumanEval
@@ -448,13 +444,28 @@ Execute the HumanEval geenrate command on the GPU server where the model is loca
 ```bash
 HUMANEVAL_OUTPUT_DIR=eval_results/human_eval/${TASK_NAME}
 
-humaneval:
-    PYTHONLIB=${SPEECHLESS_ROOT} \
-    python -m speechless.eval.humaneval \
-        --do_gen \
-        --do_eval \
-        --model ${TEST_MODEL_PATH} \
-        --output_dir ${HUMANEVAL_OUTPUT_DIR}
+# humaneval
+PYTHONLIB=${SPEECHLESS_ROOT} \
+python -m speechless.eval.humaneval \
+    --do_gen \
+    --do_eval \
+    --model ${TEST_MODEL_PATH} \
+    --output_dir ${HUMANEVAL_OUTPUT_DIR}
+
+# humaneval_show_results
+PYTHONLIB=${SPEECHLESS_ROOT} \
+python -m speechless.eval.lmeval \
+    --show_result \
+    --output_path ${HUMANEVAL_OUTPU_DIR}
+
+```
+
+### bigcode-evaluation-harness
+
+```bash
+docker pull ghcr.io/bigcode-project/evaluation-harness
+docker tag ghcr.io/bigcode-project/evaluation-harness evaluation-harness
+
 ```
 
 ### MultiPL-E

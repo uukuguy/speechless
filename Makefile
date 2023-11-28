@@ -144,10 +144,9 @@ inference_with_lora:
 # -------------------- lm-evaluation-harness --------------------
 #https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard
 
-lm_eval:
-	# bash ./speechless/eval/run_lm_eval.sh ${TEST_MODEL_PATH}
+lmeval:
 	PYTHONPATH=${SPEECHLES_ROOT} \
-	python -m speechless.eval.lm_eval \
+	python -m speechless.eval.lmeval \
 		--do_gen \
 		--model hf-causal-experimental \
 		--model_args pretrained=${TEST_MODEL_PATH},use_accelerate=True \
@@ -155,9 +154,9 @@ lm_eval:
 		--write_out \
 		--output_path eval_results/lm_eval/${TASK_NAME} 
 
-lm_eval_results:
-	python -m speechless.eval.lm_eval \
-		--do_eval \
+lmeval_show_results:
+	python -m speechless.eval.lmeval \
+		--show_result \
 		--output_path eval_results/lm_eval/${TASK_NAME} 
 
 
@@ -180,10 +179,10 @@ humaneval:
 		--model ${TEST_MODEL_PATH} \
         --output_dir ${HUMANEVAL_OUTPUT_DIR}
 
-humaneval_results:
+humaneval_show_results:
 	PYTHONLIB=${SPEECHLESS_ROOT} \
 	python -m speechless.eval.humaneval \
-		--do_eval \
+		--show_results \
 		--model ${TEST_MODEL_PATH} \
         --output_dir ${HUMANEVAL_OUTPUT_DIR}
 
