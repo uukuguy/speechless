@@ -485,7 +485,7 @@ def summarize_results(json_data):
 
     mmlu_acc /= (mmlu_n + 1e-12)
 
-    open_llm_score = (arc_acc_norm + hellaswag_acc_norm + mmlu_acc + truthfullqa_mc2 + winoground_acc + drop_f1) / 7
+    open_llm_score = (arc_acc_norm + hellaswag_acc_norm + mmlu_acc + truthfullqa_mc2 + winoground_acc + gsm8k_acc + drop_f1) / 7
 
     summary = {
         'ARC (acc_norm)': arc_acc_norm,
