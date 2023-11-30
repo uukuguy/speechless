@@ -43,6 +43,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --rope_theta ${ROPE_THETA} \
     --dataset ${DATASET} \
     --dataset_format ${DATASET_FORMAT} \
+    --prompt_type ${PROMPT_TYPE} \
     --max_new_tokens ${MODEL_MAX_LENGTH} \
     --model_max_len ${MODEL_MAX_LENGTH} \
     --per_device_train_batch_size ${PER_DEVICE_TRAIN_BATCH_SIZE} \

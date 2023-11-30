@@ -38,7 +38,7 @@ accelerate launch \
     --num_machines=1 \
     --mixed_precision=${PRECISION} \
     --dynamo_backend=no \
-    ${SPEECHLES_ROOT}/eval/bigcode_eval.py \
+    ${SPEECHLESS_ROOT}/speechless/eval/bigcode_eval.py \
         --model ${TEST_MODEL_PATH} \
         ${BITS} \
         --tasks ${BIGCODE_TASKS} \

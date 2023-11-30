@@ -59,7 +59,6 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-agents-7b-v0.2.2-32k-tora
 
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-tora-code-7b-v1.0
-# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v1.0
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 #TEST_MODEL_PATH=${MODELS_ROOT_DIR}/llm_agents/tora-code-7b-v1.0
@@ -81,11 +80,13 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1357-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-dare-0.85
-# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mixture-of-multi-loras/Intel/neural-chat-7b-v3-1-dare-0.85
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/Orca-2-13b-f16
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/Orca-2-7b-f16
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/Orca-2-7b-f16
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-130-steps
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -174,6 +175,15 @@ humaneval:
 		--model ${TEST_MODEL_PATH} \
         --output_dir ${HUMANEVAL_OUTPUT_DIR}
 
+humaneval_chatlm:
+	PYTHONLIB=${SPEECHLESS_ROOT} \
+	python -m speechless.eval.humaneval \
+		--do_gen \
+		--show_results \
+		--model ${TEST_MODEL_PATH} \
+        --output_dir ${HUMANEVAL_OUTPUT_DIR} \
+		--prompt_type chatlm
+
 humaneval_show_results:
 	PYTHONLIB=${SPEECHLESS_ROOT} \
 	python -m speechless.eval.humaneval \
@@ -184,10 +194,10 @@ humaneval_show_results:
 
 # -------------------- Big Code Evaluation Harness --------------------
 bigcode_eval_gen:
-	./eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
+	./speechless/eval/run_bigcode_eval_gen.sh ${TEST_MODEL_PATH}
 
 bigcode_eval:
-	./eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
+	./speechless/eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} multiple-py
 
 
 # -------------------- MultiPL-E --------------------

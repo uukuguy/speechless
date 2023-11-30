@@ -36,6 +36,11 @@ Create a Python script for this problem:
     return INSTRUCTION
 
 
+def generate_chatlm_prompt(input):
+    INSTRUCTION = f"""<|im_start|>system\nYou are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.<|im_end|>\n<|im_start|>user\nCreate a Python script for this problem:{input}<|im_end|>\n<|im_start|>assistant"""
+    return INSTRUCTION
+
+
 def generate_llama2_prompt(input):
     INSTRUCTION = f"""<INST>{input}</INST>"""
     return INSTRUCTION
@@ -82,7 +87,14 @@ def do_gen(args):
             if n >= num_samples:
                 break
             prompt = prompts[n].replace('    ', '\t')
-            prompt_batch.append(generate_alpaca_prompt(prompt))
+
+            if args.prompt_type == 'chatlm':
+                prompt = generate_chatlm_prompt(prompt)
+            elif args.prompt_type == 'llama2':
+                prompt = generate_llama2_prompt(prompt)
+            else:
+                prompt = generate_alpaca_prompt(prompt)
+            prompt_batch.append(prompt)
             ids_batch.append(task_ids[n])
 
         if len(prompt_batch) == 0:
@@ -155,6 +167,7 @@ def get_args():
     parser.add_argument('--num_gpus', type=int, default=0, help="")
     parser.add_argument('--decoding_style', type=str, default=None, help="")
     parser.add_argument('--gen_batch_size', type=int, default=16, help='')
+    parser.add_argument('--prompt_type', type=str, default="alpaca", help="alpaca, chatlm, llama2")
 
     args = parser.parse_args()
     return args

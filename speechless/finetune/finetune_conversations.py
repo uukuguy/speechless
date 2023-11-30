@@ -7,7 +7,7 @@ import math
 import gc, ctypes
 #from rich import print
 
-# if os.environ.get('ENABLE_FLASH_ATTENTION', 'False') == 'True': 
+# if os.environ.get('ENABLE_FLASH_ATTENTION', 'False') == 'True':
 #     from flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
 #     replace_llama_attn_with_flash_attn(packed=True)
 #     print(f"Enabled flash attention monkey patching.")
@@ -123,6 +123,10 @@ class DataArguments:
         default="conversations",
         metadata={"help": "Which dataset format is used. [alpaca|conversations|chip2|self-instruct|hh-rlhf|mistral]"}
     )
+    prompt_type: Optional[str] = field(
+        default=None,
+        metadata={"help": "Which prompt type to use. [alpaca|chatlm|conversations|chip2|self-instruct|hh-rlhf|mistral]"}
+    )
 
 @dataclass
 class TrainingArguments(transformers.Seq2SeqTrainingArguments):
@@ -133,7 +137,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     flash_attention: bool = field(
         default=True,
         metadata={"help": "Use flash attention."}
-    ) 
+    )
 
     long_lora: bool = field(
         default=False,
@@ -141,7 +145,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     )
 
     rerope: bool = field(
-        default=False, 
+        default=False,
         metadata={"help": "Use rerope."}
     )
     rerope_window: int = field(
@@ -599,7 +603,7 @@ def preprocess_toolbench_dataset(
             conversation += role + ": " + str(message) + seps[0]
         else:
             conversation += role + ":"
-    
+
 
 
     # Tokenize conversations
@@ -617,7 +621,7 @@ def preprocess_toolbench_dataset(
 
     input_ids = torch.tensor(input_ids)
     labels = torch.tensor(labels)
-    
+
     # Mask targets. Only compute loss on the assistant outputs.
     sep = seps[0] + roles['assistant'] + ": "
 
@@ -631,7 +635,7 @@ def preprocess_toolbench_dataset(
         turn_len = len(tokenizer(turn).input_ids)
 
         parts = turn.split(sep)
-        
+
         # only train on the last assistant reply, treat the history chat as instruction
         prefix = parts[:-1]
         instruction = ""
@@ -718,7 +722,7 @@ def preprocess_multi_rounds_dialog(
         tokenized_source = tokenizer(source, max_length=model_max_len, truncation=True, add_special_tokens=False)
         tokenized_target = tokenizer(target, max_length=model_max_len, truncation=True, add_special_tokens=False)
         tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
-        tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] + 
+        tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] +
                                         copy.deepcopy(tokenized_target['input_ids']))
         if idx == 0:
             example_input_ids = tokenized_input
@@ -735,10 +739,88 @@ def preprocess_multi_rounds_dialog(
         # attention_mask=input_ids.ne(tokenizer.pad_token_id),
     )
 
+
+def generate_round_prompt_toolllama(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    if idx == 0:
+        if system_prompt:
+            source = f"{system_prompt} Human: {human_input} Assistant: "
+        else:
+            system_prompt = "A chat between a curious user and an artificial intelligence assistant who can use external tools and APIs to solve the user's question."
+            "The assistant gives tools and APIs calling processes or final answer to the human's question."
+            human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
+            source = f"{system_prompt} {human_input}"
+    else:
+        human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
+        source = f"{human_input}"
+    source = f"{bos_token}{source}"
+    target = f"{bot_response.strip()}\n{eos_token}"
+
+    return source, target
+
+
+def generate_round_prompt_alpaca(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    if idx == 0:
+        if system_prompt:
+            source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:"
+        else:
+            system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
+            human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
+            source = f"{system_prompt}{human_input}"
+    else:
+        human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
+        source = f"{human_input}"
+
+    source = f"{bos_token}{source}"
+    target = f"{bot_response.strip()}\n{eos_token}"
+
+    return source, target
+
+def generate_round_prompt_chatlm(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    # f"<|im_start|>system\n{system_message}<|im_end|>\n<|im_start|>user\n{user_message}<|im_end|>\n<|im_start|>assistant"
+    if idx == 0:
+        # if system_prompt:
+        #     # source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:"
+        #     source = f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+        # else:
+        #     # system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
+        system_prompt = "You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+        human_input = f"<|im_start|>user\n{human_input}<|im_end|>\n<|im_start|>assistant"
+        source = f"<|im_start|>system\n{system_prompt}<|im_end|>\n{human_input}"
+    else:
+        human_input = f"<|im_start|>user\n{human_input}<|im_end|>\n<|im_start|>assistant"
+        source = f"{human_input}"
+
+    source = f"{bos_token}{source}"
+    target = f"{bot_response.strip()}\n{eos_token}"
+
+    return source, target
+
 @dataclass
 class DialogDataCollatorForCausalLM(object):
     tokenizer: transformers.PreTrainedTokenizer
     model_max_len: int
+    prompt_type: str = None
 
     def __call__(self, instances: Sequence[Dict]) -> Dict[str, torch.Tensor]:
         # Extract elements
@@ -746,11 +828,14 @@ class DialogDataCollatorForCausalLM(object):
         labels = []
         for example in instances:
             # system_prompt = example.get('system_prompt', 'A Bot').strip() + "\n\n"
-            prompt_type = example['prompt_type']
+            if self.prompt_type is not None:
+                prompt_type = self.prompt_type
+            else:
+                prompt_type = example.get('prompt_type', None)
             if prompt_type == "tool-llama-single-round":
-                data_dict = preprocess_toolbench_dataset(example, 
-                                                   model_max_len=self.model_max_len, 
-                                                   tokenizer=self.tokenizer, 
+                data_dict = preprocess_toolbench_dataset(example,
+                                                   model_max_len=self.model_max_len,
+                                                   tokenizer=self.tokenizer,
                                                    template="tool-llama-single-round")
                 example_input_ids = data_dict['input_ids']
                 example_labels = data_dict['labels']
@@ -762,9 +847,9 @@ class DialogDataCollatorForCausalLM(object):
                 continue
 
             elif prompt_type == "tool-llama-multi-rounds":
-                data_dict = preprocess_multi_rounds_dialog(example, 
-                                                   model_max_len=self.model_max_len, 
-                                                   tokenizer=self.tokenizer, 
+                data_dict = preprocess_multi_rounds_dialog(example,
+                                                   model_max_len=self.model_max_len,
+                                                   tokenizer=self.tokenizer,
                 )
                 example_input_ids = data_dict['input_ids']
                 example_labels = data_dict['labels']
@@ -791,52 +876,47 @@ class DialogDataCollatorForCausalLM(object):
             if len(human_bot_dialog) < 1:
                 continue
             for idx, round in enumerate(human_bot_dialog):
+                human_input, bot_response = round
                 if prompt_type == 'toolllama':
-                    human_input, bot_response = round
-                    if idx == 0:
-                        if system_prompt:
-                            source = f"{system_prompt} Human: {human_input} Assistant: "
-                        else:
-                            system_prompt = "A chat between a curious user and an artificial intelligence assistant who can use external tools and APIs to solve the user's question."
-                            "The assistant gives tools and APIs calling processes or final answer to the human's question."
-                            human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
-                            source = f"{system_prompt} {human_input}"
-                    else:
-                        human_input = "Human: {instruction} Assistant: ".format(instruction=human_input)
-                        source = f"{human_input}"
-                    source = f"{self.tokenizer.bos_token}{source}"
-                    target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
+                    source, target = generate_round_prompt_toolllama(
+                        idx,
+                        human_input,
+                        bot_response,
+                        bos_token=self.tokenizer.bos_token,
+                        eos_token=self.tokenizer.eos_token,
+                        system_prompt=system_prompt,
+                    )
+                elif prompt_type == "chatlm":
+                    source, target = generate_round_prompt_chatlm(
+                        idx,
+                        human_input,
+                        bot_response,
+                        bos_token=self.tokenizer.bos_token,
+                        eos_token=self.tokenizer.eos_token,
+                        system_prompt=system_prompt,
+                    )
                 else: # default alpaca
-                    human_input, bot_response = round
-                    if idx == 0:
-                        if system_prompt:
-                            # source = f"{self.tokenizer.bos_token}{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:\n"
-                            source = f"{system_prompt}\n\n### Instruction:\n{human_input}\n\n### Response:"
-                        else:
-                            system_prompt = "Below is an instruction that describes a task.\nWrite a response that appropriately completes the request.\n\n"
-                            human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
-                            # source = f"{self.tokenizer.bos_token}{system_prompt}{human_input}"
-                            source = f"{system_prompt}{human_input}"
-                    else:
-                        human_input = "### Instruction:\n{instruction}\n\n### Response:".format(instruction=human_input)
-                        # source = f"{self.tokenizer.bos_token}{human_input}"
-                        source = f"{human_input}"
+                    source, target = generate_round_prompt_alpaca(
+                        idx,
+                        human_input,
+                        bot_response,
+                        bos_token=self.tokenizer.bos_token,
+                        eos_token=self.tokenizer.eos_token,
+                        system_prompt=system_prompt,
+                    )
 
-                    source = f"{self.tokenizer.bos_token}{source}"
-                    target = f"{bot_response.strip()}\n{self.tokenizer.eos_token}"
-
-                tokenized_source = self.tokenizer(source, 
-                                                  max_length=self.model_max_len, 
-                                                  truncation=True, 
+                tokenized_source = self.tokenizer(source,
+                                                  max_length=self.model_max_len,
+                                                  truncation=True,
                                                   add_special_tokens=False,
                                                   )
-                tokenized_target = self.tokenizer(target, 
-                                                  max_length=self.model_max_len, 
-                                                  truncation=True, 
+                tokenized_target = self.tokenizer(target,
+                                                  max_length=self.model_max_len,
+                                                  truncation=True,
                                                   add_special_tokens=False,
                                                   )
                 tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
-                tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] + 
+                tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] +
                                                 copy.deepcopy(tokenized_target['input_ids']))
 
                 # print(f"{source=}")
@@ -852,7 +932,7 @@ class DialogDataCollatorForCausalLM(object):
 
             input_ids.append(example_input_ids)
             labels.append(example_output_ids)
-                                            
+
         # print(f"{example=}")
         # print(f"{input_ids=}")
         # print(f"{labels=}")
@@ -1036,7 +1116,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             # for old, new in [["prompt", "input"], ["completion", "output"]]:
             #     dataset = dataset.rename_column(old, new)
             dataset = dataset.map(lambda x: {
-                'conversations': [(x['prompt'], x['completion'])]   
+                'conversations': [(x['prompt'], x['completion'])]
             })
         elif dataset_format == 'hh-rlhf' or (dataset_format is None and args.dataset == 'hh-rlhf'):
             # dataset = dataset.map(lambda x: {
@@ -1150,7 +1230,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 #     if out_lines[0].startswith("```"):
                 #         in_ += out_lines[0] + "\n"
                 #         out_ = "\n".join(out_lines[1:])
-                    
+
                 # return {'input': in_,
                 #         'output': out_}
                 return {'conversations': [(in_, out_)]}
@@ -1165,7 +1245,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                 #     'input': instruction['instruction'],
                 #     'output': instruction['response'],
                 # }
-                return {'conversations': [(instruction['instruction'], instruction['response'])]}  
+                return {'conversations': [(instruction['instruction'], instruction['response'])]}
 
             dataset = dataset.map(_format_input_output)
         elif dataset_format == 'conversations':
@@ -1180,7 +1260,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                         "value": response,
                     })
                 return {'conversations': human_bot_dialog}
-                    
+
             dataset = dataset.map(_format_multi_turns)
 
         # Remove unused columns.
@@ -1191,7 +1271,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         )
         return dataset
 
-     # Load dataset.
+    # Load dataset.
     dataset = load_data(args.dataset)
     dataset = format_dataset(dataset, args.dataset_format)
 
@@ -1230,7 +1310,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
 
         if args.group_by_length:
             train_dataset = train_dataset.map(lambda x: {'length': len(x['input']) + len(x['output'])})
-            
+
     # Remove any training data that exceeds the max length.
     def _get_data_length(item):
         prompt = f"{tokenizer.bos_token}{item['input']}{item['output']}{tokenizer.eos_token}"
@@ -1243,7 +1323,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             ).input_ids
         )
     if args.force_remove_overlength_samples:
-        logger.info(f"---------- Filtering out samples longer than {args.model_max_len} ----------")  
+        logger.info(f"---------- Filtering out samples longer than {args.model_max_len} ----------")
         prev_len = len(train_dataset)
         train_dataset = train_dataset.filter(
             lambda x: _get_data_length(x) < args.model_max_len - 10
@@ -1255,13 +1335,14 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     data_collator = DialogDataCollatorForCausalLM(
         tokenizer=tokenizer,
         model_max_len=args.model_max_len,
+        prompt_type=args.prompt_type,
     )
 
     # FIXME
     if args.repeat_steps > 0:
         one_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps * torch.cuda.device_count()
         train_dataset = RepeatDataset(train_dataset, repeat_batch_size= one_batch_size, repeat_steps = args.repeat_steps)
-    
+
     return dict(
         train_dataset=train_dataset if args.do_train else None,
         eval_dataset=eval_dataset if args.do_eval else None,
@@ -1393,7 +1474,7 @@ def train():
 
     if args.task_name is None:
         args.task_name = os.path.basename(os.curdir)
-        
+
     from datetime import datetime
     logger.add(f"{args.output_dir}/logs/{args.task_name}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", level="INFO")
     logger.info(f"{args=}")
@@ -1423,7 +1504,7 @@ def train():
     # if args.sliding_window > 0:
     #     if 'mistral' not in args.model_name_or_path:
     #         from speechless.patches.sliding_window_monkey_patch import replace_llama_attn
-    #         replace_llama_attn() 
+    #         replace_llama_attn()
 
     checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
     if completed_training:
