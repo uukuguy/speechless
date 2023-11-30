@@ -13,20 +13,22 @@ echo "Task Name: ${TASK_NAME}"
 # CUSTOM_TASKS="humaneval,mbpp,multiple-py,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl"
 
 # langs=(py js java cpp swift php d jl lua r rkt rs)
-BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+
+# BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+
+BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+
 # BIGCODE_TASKS="humaneval,multiple-*"
 
 # # Don't run generation but benchmark groundtruth (useful for debugging)
 # BIGCODE_CHECK_REFERENCES="--check_references"
-
-BITS="--load_in_8bit" 
 
 TEMPERATURE=0.2
 MAX_LENGTH_GENERATION=512
 N_SAMPLES=50
 TOP_P=0.95
 
-BITS="--load_in_8bit"
+# BITS="--load_in_8bit"
 PRECISION=bf16
 # LIMIT=100
 # --limit ${LIMIT} \
