@@ -10,12 +10,6 @@ TASK_NAME=$(basename ${TEST_MODEL_PATH})
 
 BIGCODE_TASKS="humaneval multiple-java multiple-js multiple-cpp multiple-rs multiple-jl multiple-swift multiple-php multiple-d multiple-lua multiple-r multiple-rkt"
 
-# No go and sh
-# BIGCODE_TASKS="multiple-go multiple-sh"
-
-TASK_RESULTS_DIR=${PWD}/eval_results/bigcode_eval/${TASK_NAME}
-
-
 TEMPERATURE=0.2
 N_SAMPLES=50
 # LIMIT=100
@@ -23,6 +17,7 @@ N_SAMPLES=50
 
 for TASK in ${BIGCODE_TASKS}; do
     echo "Running ${task}"
+    TASK_RESULTS_DIR=${PWD}/eval_results/bigcode_eval/${TASK_NAME}
     TASK_GENERATIONS_FILE=bigcode_${TASK}_generations.json
     TASK_GENERATIONS_PATH=${TASK_RESULTS_DIR}/${TASK_GENERATIONS_FILE} 
     TASK_METRIC_RESULTS_FILE=bigcode_${TASK}_results.json
@@ -37,4 +32,4 @@ for TASK in ${BIGCODE_TASKS}; do
             --allow_code_execution  \
             --temperature ${TEMPERATURE} \
             --n_samples ${N_SAMPLES}
-done
+done;
