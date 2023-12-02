@@ -23,11 +23,6 @@ BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,mult
 # # Don't run generation but benchmark groundtruth (useful for debugging)
 # BIGCODE_CHECK_REFERENCES="--check_references"
 
-<<<<<<< HEAD
-=======
-# BITS="--load_in_8bit" 
-
->>>>>>> dev
 TEMPERATURE=0.2
 MAX_LENGTH_GENERATION=512
 N_SAMPLES=50
