@@ -19,14 +19,14 @@ BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,mult
 # # Don't run generation but benchmark groundtruth (useful for debugging)
 # BIGCODE_CHECK_REFERENCES="--check_references"
 
-BITS="--load_in_8bit" 
+# BITS="--load_in_8bit" 
 
 TEMPERATURE=0.2
 MAX_LENGTH_GENERATION=512
 N_SAMPLES=50
 TOP_P=0.95
 
-BITS="--load_in_8bit"
+# BITS="--load_in_8bit"
 PRECISION=bf16
 # LIMIT=100
 # --limit ${LIMIT} \
