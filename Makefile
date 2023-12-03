@@ -80,20 +80,19 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1357-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-dare-0.85
-<<<<<<< HEAD
-=======
-# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
->>>>>>> dev
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/mixture-of-multi-loras/Intel/neural-chat-7b-v3-1-dare-0.85
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/Orca-2-13b-f16
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/Orca-2-7b-f16
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-1e
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-orca2-130-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/llm-agents/tora-code-34b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-16k-tora-640-steps
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
