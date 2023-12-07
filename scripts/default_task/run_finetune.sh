@@ -53,7 +53,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --lr_scheduler_type ${LR_SCHEDULER_TYPE} \
     --weight_decay 0.0 \
     --seed 10042 \
-    --optim paged_adamw_8bit \
+    --optim ${OPTIM} \
     --gradient_checkpointing True \
     --group_by_length ${GROUP_BY_LENGTH} \
     --ddp_find_unused_parameters False \
