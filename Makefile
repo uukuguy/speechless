@@ -92,8 +92,12 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/llm-agents/tora-code-34b-v1.0
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-16k-tora-640-steps
+
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v2.0-2628-steps
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 

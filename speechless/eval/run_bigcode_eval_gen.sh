@@ -25,7 +25,7 @@ BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,mult
 
 TEMPERATURE=0.2
 MAX_LENGTH_GENERATION=512
-N_SAMPLES=5
+N_SAMPLES=50
 TOP_P=0.95
 
 BITS="--load_in_8bit"
@@ -34,7 +34,7 @@ PRECISION=bf16
 # LIMIT=100
 # --limit ${LIMIT} \
 
-BATCH_SIZE=5
+BATCH_SIZE=50
 
 accelerate launch \
     --num_processes=2 \
