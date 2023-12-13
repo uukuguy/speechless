@@ -399,7 +399,7 @@ def get_accelerate_model(args, checkpoint_dir):
             bnb_4bit_use_double_quant=args.double_quant,
             bnb_4bit_quant_type=args.quant_type,
         ) if args.bits in (4, 8) else None,
-        "torch_dtype": (torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
+        "torch_dtype": (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
         "trust_remote_code": args.trust_remote_code,
         "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
@@ -435,6 +435,7 @@ def get_accelerate_model(args, checkpoint_dir):
         else:
             logger.info(f'adding LoRA modules...')
             modules = find_all_linear_names(args, model)
+            print(f"LoRA modules: {modules}")
             config = LoraConfig(
                 r=args.lora_r,
                 lora_alpha=args.lora_alpha,
@@ -1534,13 +1535,23 @@ def train():
     print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
     print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
     print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
-    if tokenizer.pad_token_id is None:
-        tokenizer.pad_token_id = 0
-        tokenizer.pad_token = '<unk>'
-    # tokenizer.bos_token = '<s>'
-    # tokenizer.eos_token = '</s>'
-    # tokenizer.bos_token_id = 1
-    # tokenizer.eos_token_id = 2
+
+    if "qwen" in args.model_name_or_path.lower():
+        tokenizer.eos_token = "<|endoftext|>"
+        tokenizer.unk_token = "<|extra_3|>"
+        tokenizer.bos_token = "<|extra_2|>"
+        tokenizer.pad_token = "<|extra_1|>"
+    else:
+        if tokenizer.unk_token_id is None:
+            tokenizer.unk_token_id = 0
+            tokenizer.unk_token = "<unk>"
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = 0
+            tokenizer.pad_token = "<unk>"
+        tokenizer.bos_token = "<s>"
+        tokenizer.eos_token = "</s>"
+        tokenizer.bos_token_id = 1
+        tokenizer.eos_token_id = 2
     print(f"---------- Fixed tokens ----------")
     print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
     print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
