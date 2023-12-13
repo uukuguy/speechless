@@ -64,6 +64,45 @@ from peft import (
 from peft.tuners.lora import LoraLayer
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
+def qwen_prepare_model_for_kbit_training(model, use_gradient_checkpointing=True):
+    """
+    This method wraps the entire protocol for preparing a model before running a training. This includes:
+        1- Cast the layernorm in fp32 2- making output embedding layer require grads 3- Add the upcasting of the lm
+        head to fp32
+
+    Args:
+        model, (`transformers.PreTrainedModel`):
+            The loaded model from `transformers`
+    """
+    loaded_in_kbit = getattr(model, "is_loaded_in_8bit", False) or getattr(model, "is_loaded_in_4bit", False)
+    is_gptq_quantized = getattr(model, "quantization_method", None) == "gptq"
+    for name, param in model.named_parameters():
+        # freeze base model's layers
+        param.requires_grad = False
+
+    # if not is_gptq_quantized:
+    #     # cast all non INT8 parameters to fp32
+    #     for param in model.parameters():
+    #         if (param.dtype == torch.float16) or (param.dtype == torch.bfloat16):
+    #             param.data = param.data.to(torch.float32)
+
+    if (loaded_in_kbit or is_gptq_quantized) and use_gradient_checkpointing:
+        # For backward compatibility
+        if hasattr(model, "enable_input_require_grads"):
+            model.enable_input_require_grads()
+        else:
+
+            def make_inputs_require_grad(module, input, output):
+                output.requires_grad_(True)
+
+            model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
+
+        # enable gradient checkpointing for memory efficiency
+        model.gradient_checkpointing_enable()
+
+    return model
+
+
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
@@ -383,6 +422,13 @@ def get_accelerate_model(args, checkpoint_dir):
     config.sliding_window = args.sliding_window
     config.rope_theta = args.rope_theta
 
+
+    if "qwen" in args.model_name_or_path.lower():
+        if args.bf16:
+            config.bf16 = True
+        elif args.fp16:
+            config.fp16 = True
+
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
         "cache_dir": args.cache_dir,
@@ -421,10 +467,15 @@ def get_accelerate_model(args, checkpoint_dir):
     setattr(model, 'model_parallel', True)
     setattr(model, 'is_parallelizable', True)
 
-    model.config.torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+    model.config.torch_dtype=(torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
 
     if not args.full_finetune:
-        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=args.gradient_checkpointing)
+
+        if "qwen" in args.model_name_or_path.lower():
+            model = qwen_prepare_model_for_kbit_training(model, use_gradient_checkpointing=args.gradient_checkpointing)
+        else:
+            model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=args.gradient_checkpointing)
+
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
 

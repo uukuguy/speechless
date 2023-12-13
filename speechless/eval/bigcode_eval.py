@@ -16,10 +16,16 @@ from transformers import (
 )
 
 script_path = os.path.dirname(os.path.realpath(__file__))
+# sys.path.insert(0, f"{script_path}/bigcode-evaluation-harness")
+# from lm_eval.arguments import EvalArguments
+# from lm_eval.evaluator import Evaluator
+# from lm_eval.tasks import ALL_TASKS
+
+# ------ Qwen Eval ------
 sys.path.insert(0, f"{script_path}/bigcode-evaluation-harness")
-from lm_eval.arguments import EvalArguments
-from lm_eval.evaluator import Evaluator
-from lm_eval.tasks import ALL_TASKS
+from bigcode_eval_qwen.arguments import EvalArguments
+from bigcode_eval_qwen.evaluator import Evaluator
+from bigcode_eval_qwen.tasks import ALL_TASKS
 
 
 class MultiChoice:
@@ -310,19 +316,49 @@ def main():
             truncation_side="left",
             padding_side="right",  # padding on the right is needed to cut off padding in `complete_code`
         )
-        if not tokenizer.eos_token:
-            if tokenizer.bos_token:
-                tokenizer.eos_token = tokenizer.bos_token
-                print("bos_token used as eos_token")
-            else:
-                raise ValueError("No eos_token or bos_token found")
-        try:
-            tokenizer.pad_token = tokenizer.eos_token
+
+        # if not tokenizer.eos_token:
+        #     if tokenizer.bos_token:
+        #         tokenizer.eos_token = tokenizer.bos_token
+        #         print("bos_token used as eos_token")
+        #     else:
+        #         raise ValueError("No eos_token or bos_token found")
+        # try:
+        #     tokenizer.pad_token = tokenizer.eos_token
             
-        # Some models like CodeGeeX2 have pad_token as a read-only property
-        except AttributeError:
-            print("Not setting pad_token to eos_token")
-            pass
+        # # Some models like CodeGeeX2 have pad_token as a read-only property
+        # except AttributeError:
+        #     print("Not setting pad_token to eos_token")
+        #     pass
+
+        print(f"---------- Original tokens----------")
+        print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+        print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+        print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+        print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+        if "qwen" in args.model.lower():
+            tokenizer.eos_token = "<|endoftext|>"
+            tokenizer.unk_token = "<|extra_3|>"
+            tokenizer.bos_token = "<|extra_2|>"
+            tokenizer.pad_token = "<|extra_1|>"
+        else:
+            if tokenizer.unk_token_id is None:
+                tokenizer.unk_token_id = 0
+                tokenizer.unk_token = "<unk>"
+            if tokenizer.pad_token_id is None:
+                tokenizer.pad_token_id = 0
+                tokenizer.pad_token = "<unk>"
+            tokenizer.bos_token = "<s>"
+            tokenizer.eos_token = "</s>"
+            tokenizer.bos_token_id = 1
+            tokenizer.eos_token_id = 2
+        print(f"---------- Fixed tokens ----------")
+        print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+        print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+        print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+        print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
         WIZARD_LLAMA_MODELS = [
             "WizardLM/WizardCoder-Python-34B-V1.0",
             "WizardLM/WizardCoder-34B-V1.0",
@@ -337,7 +373,8 @@ def main():
 
         pbar = tqdm(task_names, ncols=100)
         for task in pbar:
-            args.save_generations_path = f"{args.eval_results_dir}/bigcode_{task}_generations.json"
+            # args.save_generations_path = f"{args.eval_results_dir}/bigcode_{task}_generations.json"
+            args.save_generations_path = f"{args.eval_results_dir}/generations_{task}_{os.path.basename(args.model)}.json"
             pbar.set_description(f"{task}")
             if args.generation_only:
                 if accelerator.is_main_process:
