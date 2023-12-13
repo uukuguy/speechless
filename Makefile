@@ -97,7 +97,9 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v2.0-2628-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v2.0-2628-steps
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-qwen-1_8b
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -209,6 +211,13 @@ bigcode_eval_gen:
 
 bigcode_eval:
 	./speechless/eval/run_bigcode_eval.sh ${TEST_MODEL_PATH} 
+
+# -------------------- CodeQwen Evaluation --------------------
+codeqwen_eval_gen:
+	./speechless/eval/run_codeqwen_eval_gen.sh ${TEST_MODEL_PATH}
+
+codeqwen_eval:
+	./speechless/eval/run_codeqwen_eval.sh ${TEST_MODEL_PATH} 
 
 
 # -------------------- MultiPL-E --------------------
