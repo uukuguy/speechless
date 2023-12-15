@@ -16,7 +16,7 @@ echo "Task Name: ${TASK_NAME}"
 
 # BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
-# BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
 CODEQWEN_TASKS="humanevalsynthesize-python,humanevalsynthesize-java,humanevalsynthesize-js,humanevalsynthesize-cpp,humanevalsynthesize-go,humanevalsynthesize-rust,humanevalfixtests-python,humanevalfixtests-java,humanevalfixtests-js,humanevalfixtests-cpp,humanevalfixtests-go,humanevalfixtests-rust,mbpp"
 
@@ -39,6 +39,10 @@ PRECISION=bf16
 
 BATCH_SIZE=1
 
+        # --temperature ${TEMPERATURE} \
+        # --top_p ${TOP_P} \
+
+
 accelerate launch \
     --main_process_port 29501 \
     --num_processes=2 \
@@ -51,9 +55,10 @@ accelerate launch \
         ${BITS} \
         --tasks ${CODEQWEN_TASKS} \
         --max_length_generation ${MAX_LENGTH_GENERATION} \
-        --temperature ${TEMPERATURE} \
-        --top_p ${TOP_P} \
         --do_sample False \
+        --temperature 1.0 \
+        --top_p 1.0 \
+        --top_k 50 \
         --n_samples ${N_SAMPLES} \
         --batch_size ${BATCH_SIZE} \
         --precision ${PRECISION}\

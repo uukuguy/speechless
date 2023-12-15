@@ -24,17 +24,17 @@ class EvalArguments:
         metadata={"help": "option to control whether adding special tokens when tokenizing text"},
     )
     do_sample: Optional[bool] = field(
-        default=True,
+        default=False,
         metadata={"help": "Sample from the language model's output distribution."},
     )
     temperature: Optional[float] = field(
-        default=0.2, metadata={"help": "Sampling temperature used for generation."}
+        default=None, metadata={"help": "Sampling temperature used for generation."}
     )
     top_k: Optional[int] = field(
-        default=0, metadata={"help": "Top-k parameter used for generation."}
+        default=0, metadata={"help": "Top-k parameter used for generation. 0"}
     )
     top_p: Optional[float] = field(
-        default=0.95, metadata={"help": "Top-p parameter used for nucleus sampling."}
+        default=None, metadata={"help": "Top-p parameter used for nucleus sampling. 0.95"}
     )
     n_samples: Optional[int] = field(
         default=1,

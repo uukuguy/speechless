@@ -217,8 +217,26 @@ def get_gpus_max_memory(max_memory, num_gpus):
     return max_memory
 
 
+def set_prefix_suffix_chatlm(args, tokenizer):
+    system_prompt = "You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+
+    prefix = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n"
+    suffix = f"<|im_end|>\n<|im_start|>assistant"
+
+    # prefix = f"{tokenizer.bos_token}{prefix}"
+
+    args.prefix = prefix
+    args.suffix = suffix
+
+    print(f"{args.prefix=}")
+    print(f"{args.suffix=}")
+
+    return args
+
+
 def main():
     args = parse_args()
+
     transformers.logging.set_verbosity_error()
     datasets.logging.set_verbosity_error()
 
@@ -314,6 +332,7 @@ def main():
             trust_remote_code=args.trust_remote_code,
             use_auth_token=args.use_auth_token,
             truncation_side="left",
+            # padding_side="left",
             padding_side="right",  # padding on the right is needed to cut off padding in `complete_code`
         )
 
@@ -358,6 +377,9 @@ def main():
         print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
         print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
         print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+        # if 'qwen' in args.model.lower():    
+        #     args = set_prefix_suffix_chatlm(args, tokenizer)
 
         WIZARD_LLAMA_MODELS = [
             "WizardLM/WizardCoder-Python-34B-V1.0",
