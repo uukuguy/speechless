@@ -51,13 +51,25 @@ def parallel_generations(task, dataset, accelerator, model, tokenizer, n_tasks, 
     set_seed(args.seed, device_specific=True)
 
     # Setup generation settings
+    # gen_kwargs = {
+    #     "do_sample": args.do_sample,
+    #     "temperature": args.temperature,
+    #     "top_p": args.top_p,
+    #     "top_k": args.top_k,
+    #     "max_length": args.max_length_generation,
+    # }
     gen_kwargs = {
         "do_sample": args.do_sample,
-        "temperature": args.temperature,
-        "top_p": args.top_p,
         "top_k": args.top_k,
         "max_length": args.max_length_generation,
     }
+    if args.temperature is not None:
+        gen_kwargs['temperature'] = args.temperature
+    if args.top_p is not None:
+        gen_kwargs['top_p'] = args.top_p
+    if args.top_k is not None:
+        gen_kwargs['top_k'] = args.top_k
+
     stopping_criteria = []
     # The input_length / start_length set to 0 for now will be adjusted later
     # Check if the task has a custom check_fn method for the stopping criteria
