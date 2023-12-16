@@ -241,6 +241,7 @@ def main():
     datasets.logging.set_verbosity_error()
 
     os.makedirs(args.eval_results_dir, exist_ok=True)
+    os.makedirs(f"{args.eval_results_dir}/results", exist_ok=True)
     # os.makedirs(os.path.dirname(args.save_generations_path), exist_ok=True)
     # os.makedirs(os.path.dirname(args.metric_output_path), exist_ok=True)
 
@@ -398,7 +399,8 @@ def main():
             # args.save_generations_path = f"{args.eval_results_dir}/bigcode_{task}_generations.json"
             args.save_generations_path = f"{args.eval_results_dir}/generations_{task}_{os.path.basename(args.model)}.json"
             pbar.set_description(f"{task}")
-            if args.generation_only:
+            # if args.generation_only:
+            if True:
                 if accelerator.is_main_process:
                     print("generation mode only")
                 generations, references = evaluator.generate_text(task)
@@ -410,18 +412,25 @@ def main():
                         with open("references.json", "w") as fp:
                             json.dump(references, fp)
                             print("references were saved")
-            else:
+            if args.allow_code_execution:
                 results[task] = evaluator.evaluate(task)
+                results["config"] = vars(args)
+                dumped = json.dumps(results, indent=2)
+                if accelerator.is_main_process:
+                    print(dumped)
+                results_file_path = f"{args.eval_results_dir}/results/generations_{task}_{os.path.basename(args.model)}_results.json"
+                with open(results_file_path, "w") as f:
+                    f.write(dumped)
 
-    # Save all args to config
-    results["config"] = vars(args)
-    if not args.generation_only:
-        dumped = json.dumps(results, ensure_ascii=False, indent=2)
-        if accelerator.is_main_process:
-            print(dumped)
-        metric_output_path = f"{args.eval_results_dir}/bigcode_eval_results.json"
-        with open(metric_output_path, "w") as f:
-            f.write(dumped)
+    # # Save all args to config
+    # results["config"] = vars(args)
+    # if not args.generation_only:
+    #     dumped = json.dumps(results, ensure_ascii=False, indent=2)
+    #     if accelerator.is_main_process:
+    #         print(dumped)
+    #     metric_output_path = f"{args.eval_results_dir}/bigcode_eval_results.json"
+    #     with open(metric_output_path, "w") as f:
+    #         f.write(dumped)
 
 
 if __name__ == "__main__":

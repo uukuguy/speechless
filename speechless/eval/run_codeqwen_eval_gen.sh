@@ -16,12 +16,14 @@ echo "Task Name: ${TASK_NAME}"
 
 # BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
-BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+# BIGCODE_TASKS="humaneval,multiple-*"
+
+# BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
 CODEQWEN_TASKS="humanevalsynthesize-python,humanevalsynthesize-java,humanevalsynthesize-js,humanevalsynthesize-cpp,humanevalsynthesize-go,humanevalsynthesize-rust,humanevalfixtests-python,humanevalfixtests-java,humanevalfixtests-js,humanevalfixtests-cpp,humanevalfixtests-go,humanevalfixtests-rust,mbpp"
 
+# CODEQWEN_TASKS="humanevalfixtests-python"
 
-# BIGCODE_TASKS="humaneval,multiple-*"
 
 # # Don't run generation but benchmark groundtruth (useful for debugging)
 # BIGCODE_CHECK_REFERENCES="--check_references"
@@ -42,6 +44,8 @@ BATCH_SIZE=1
         # --temperature ${TEMPERATURE} \
         # --top_p ${TOP_P} \
 
+        # --generation_only \
+        # --allow_code_execution  \
 
 accelerate launch \
     --main_process_port 29501 \
@@ -51,6 +55,7 @@ accelerate launch \
     --dynamo_backend=no \
     ${SPEECHLESS_ROOT}/speechless/eval/bigcode_eval.py \
         --model ${TEST_MODEL_PATH} \
+        --generation_only \
         --prompt instruct \
         ${BITS} \
         --tasks ${CODEQWEN_TASKS} \
@@ -65,6 +70,5 @@ accelerate launch \
         --seed 999999999 \
         --trust_remote_code \
         --eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
-        --generation_only \
         --save_generations \
         ${BIGCODE_CHECK_REFERENCES}

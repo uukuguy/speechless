@@ -459,7 +459,7 @@ class HumanEvalPackGenerative(HumanEvalPack):
         with open("logs.json", "w") as f:
             json.dump(logs, f, indent=4, ensure_ascii=False)
 
-        """Debugging help
+        # """Debugging help
         for i, (gen, ref) in enumerate(zip(generations, references)):
             import time
             starttime = time.time()            
@@ -481,7 +481,7 @@ class HumanEvalPackGenerative(HumanEvalPack):
                 print(gen[0])
                 print("Ref")
                 print(ref)
-        """
+        # """
         return results
 
 
