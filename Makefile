@@ -101,7 +101,11 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-qwen-1_8b-7884-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-qwen-1_8b-5874-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/bigcode/starcoderbase-1b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/bigcode/starcoderbase-1b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-code-mistral-7b-v1.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-code-mistral-7b-v2.0
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
