@@ -12,7 +12,6 @@ TASK_NAME=$(basename ${TEST_MODEL_PATH})
 
 CODEQWEN_TASKS="humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp"
 
-
 # TEMPERATURE=0.2
 # N_SAMPLES=1
 # # LIMIT=100
