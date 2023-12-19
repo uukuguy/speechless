@@ -1,0 +1,11 @@
+FROM task2_base
+
+COPY atec_project/conf /home/admin/atec_project/conf
+COPY atec_project/init.sh /home/admin/atec_project
+COPY atec_project/solution.py /home/admin/atec_project
+COPY atec_project/solution.json /home/admin/atec_project
+COPY atec_project/utils /home/admin/atec_project/utils
+
+# if you have trained model, copy to image.
+# No need to copy the base-model, as it is already available
+#COPY atec_project/model_output /home/admin/atec_project/model_output
