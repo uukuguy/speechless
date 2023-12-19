@@ -1,0 +1,4 @@
+FROM task2_base
+
+COPY atec_project/src /home/admin/atec_project/src
+COPY atec_project/run.sh /home/admin/atec_project

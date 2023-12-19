@@ -1,0 +1,5 @@
+FROM task4_base
+COPY conf /home/admin/atec_project/conf
+COPY init.sh /home/admin/atec_project/init.sh
+COPY output /home/admin/atec_project/output
+COPY solution.py /home/admin/atec_project/solution.py
