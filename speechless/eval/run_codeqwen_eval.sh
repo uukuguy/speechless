@@ -10,7 +10,8 @@ TASK_NAME=$(basename ${TEST_MODEL_PATH})
 
 # BIGCODE_TASKS="humaneval multiple-java multiple-js multiple-cpp multiple-rs multiple-jl multiple-swift multiple-php multiple-d multiple-lua multiple-r multiple-rkt"
 
-CODEQWEN_TASKS="humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp"
+# CODEQWEN_TASKS="humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp"
+
 
 # TEMPERATURE=0.2
 # N_SAMPLES=1
@@ -47,17 +48,18 @@ model=${TASK_NAME}
 TASK_RESULTS_DIR=${PWD}/eval_results/bigcode_eval/${TASK_NAME}
 
 #tasks=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
+#tasks=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
 tasks=(humanevalsynthesize-go)
 
 # if you provide absolute paths remove the $(pwd) from the command below
 generations_path=${TASK_RESULTS_DIR}
 metrics_path=metrics_$model
 
-if [ -d $metrics_path ]; then
-    echo "Folder exists. Deleting folder: $metrics_path"
-    rm -rf $metrics_path
-fi
-mkdir $metrics_path
+# if [ -d $metrics_path ]; then
+#     echo "Folder exists. Deleting folder: $metrics_path"
+#     rm -rf $metrics_path
+# fi
+mkdir -p $metrics_path
 
 batch_size=1
 n_samples=1
