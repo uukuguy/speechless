@@ -10,7 +10,12 @@ class AlgSolution:
     def __init__(self):
 
         model_name = "/adabench_mnt/llm/chatglm2-6b"
-        ptuning_path = "output/ptuing-chatglm2-6b-pt-128-2e-4/checkpoint-700/"
+        # 0.917505
+        ptuning_path = "output/ptuing-chatglm2-6b-pt-128-2e-2/checkpoint-750/"
+        # 0.917323
+        ptuning_path = "output/ptuing-chatglm2-6b-pt-128-2e-2/checkpoint-500/"
+        # 0.849785
+        ptuning_path = "output/ptuing-chatglm2-6b-pt-128-2e-2/checkpoint-250/"
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         if ptuning_path is not None:
