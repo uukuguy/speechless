@@ -24,7 +24,7 @@ torchrun --standalone --nnodes=1 --nproc-per-node=$NUM_GPUS ptuning/main.py \
     --gradient_accumulation_steps 16 \
     --predict_with_generate \
     --logging_steps 10 \
-    --num_train_epochs 1 \
+    --num_train_epochs 3 \
     --save_strategy epoch \
     --learning_rate $LR \
     --pre_seq_len $PRE_SEQ_LEN \
