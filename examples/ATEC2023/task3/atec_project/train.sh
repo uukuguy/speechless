@@ -16,7 +16,7 @@ CUDA_VISIBLE_DEVICES=0 torchrun --standalone --nnodes=1 --nproc-per-node=$NUM_GP
     --model_name_or_path /adabench_mnt/llm/chatglm2-6b \
     --output_dir /home/admin/workspace/job/output/data/ptuing-chatglm2-6b-pt-$PRE_SEQ_LEN-$LR \
     --overwrite_output_dir \
-    --max_source_length 512 \
+    --max_source_length 2048 \
     --max_target_length 64 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
