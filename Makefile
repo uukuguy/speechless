@@ -116,6 +116,8 @@ TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-1934-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0-w4g128-awq
 
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/deepseek-ai/deepseek-coder-6.7b-base
+
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
 OUTPUT_DIR=./outputs
