@@ -169,7 +169,12 @@ class OpenAICompletion:
             tokens_used = titoken_count_tokens(model_name=self.model_name, prompt=prompt)
 
 
-        try:
+        # try:
+        if True:
+            # print(f"{self.model_name=}")
+            # print(f"{prompt_or_messages=}")
+            # print(f"{sampling_params=}")
+            # print(f"{self.sampling_params=}")
             self.completion = func_timeout(
                 self.timeout,
                 function_to_run,
@@ -188,17 +193,17 @@ class OpenAICompletion:
             print(self.completion)
             print(f"----------------------------------------")
 
-        except FunctionTimedOut:
-            logger.error("generating query timed out")
-            self.err = "QUERY GENERATION TIMEOUT"
-        except Exception as e:
-            logger.error(f"Error while generating query: {type(e)}, {e})")
-            self.query = ""
-            self.reason = ""
-            if isinstance(e, KeyError):
-                self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}, Completion: {self.completion}"
-            else:
-                self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}"
+        # except FunctionTimedOut:
+        #     logger.error("generating query timed out")
+        #     self.err = "QUERY GENERATION TIMEOUT"
+        # except Exception as e:
+        #     logger.error(f"Error while generating query: {type(e)}, {e})")
+        #     self.query = ""
+        #     self.reason = ""
+        #     if isinstance(e, KeyError):
+        #         self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}, Completion: {self.completion}"
+        #     else:
+        #         self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}"
 
         return {
             "n": n,

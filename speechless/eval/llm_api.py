@@ -2,7 +2,9 @@ import time
 from typing import Dict, List, Any
 import openai, tiktoken
 from loguru import logger
+import os
 
+openai.api_key = os.environ.get("OPENAI_API_KEY", "unset_api_key")
 
 def openai_chat_completion(model_name: str, messages: List[str], sampling_params: Dict[str, Any]) -> str:
     """
@@ -46,6 +48,7 @@ def openai_nonchat_completion(model_name: str, prompt: str, sampling_params: Dic
     """
     generated_text = ""
     try:
+    # if True:
         completion = openai.Completion.create(
             model=model_name,
             prompt=prompt,
@@ -64,7 +67,7 @@ def openai_nonchat_completion(model_name: str, prompt: str, sampling_params: Dic
         )
         generated_text = completion["choices"][0]["text"]
     except Exception as e:
-        logger.error(type(e), e)
+        logger.error(f"{type(e)=}, {e=}")
     return generated_text
 
 

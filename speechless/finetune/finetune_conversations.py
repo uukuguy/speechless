@@ -1589,23 +1589,25 @@ def train():
 
     if "qwen" in args.model_name_or_path.lower():
         tokenizer.eos_token = "<|endoftext|>"
-        tokenizer.unk_token = "<|extra_3|>"
+        # tokenizer.unk_token = "<|extra_3|>"
         tokenizer.bos_token = "<|extra_2|>"
         tokenizer.pad_token = "<|extra_1|>"
     else:
-        if tokenizer.unk_token_id is None:
-            tokenizer.unk_token_id = 0
-            tokenizer.unk_token = "<unk>"
+        if tokenizer.bos_token_id is None:
+            tokenizer.bos_token = "<s>"
+            tokenizer.bos_token_id = 1
+        if tokenizer.eos_token_id is None:
+            tokenizer.eos_token = "</s>"
+            tokenizer.eos_token_id = 2
+        # if tokenizer.unk_token_id is None:
+        #     tokenizer.unk_token_id = 0
+        #     tokenizer.unk_token = "<unk>"
         if tokenizer.pad_token_id is None:
-            tokenizer.pad_token_id = 0
-            tokenizer.pad_token = "<unk>"
-        tokenizer.bos_token = "<s>"
-        tokenizer.eos_token = "</s>"
-        tokenizer.bos_token_id = 1
-        tokenizer.eos_token_id = 2
+            tokenizer.pad_token_id = tokenizer.eos_token_id
+            tokenizer.pad_token = tokenizer.eos_token
     print(f"---------- Fixed tokens ----------")
     print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
-    print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    # print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
     print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
     print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
     data_module = make_data_module(tokenizer=tokenizer, args=args)
