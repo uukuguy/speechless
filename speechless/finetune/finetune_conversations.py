@@ -841,6 +841,26 @@ def generate_round_prompt_alpaca(
 
     return source, target
 
+def generate_round_prompt_llama2(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    if idx == 0:
+        if system_prompt:
+            source = f"{bos_token}[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n{human_input}[/INST]"
+        else:
+            source = f"{bos_token}[INST]{human_input}[/INST]"
+    else:
+        source = f"[INST]{human_input}[/INST]"
+
+    target = f"{bot_response.strip()}\n{eos_token}"
+
+    return source, target
+
 def generate_round_prompt_chatlm(
     idx: int,
     human_input: str,
@@ -940,6 +960,15 @@ class DialogDataCollatorForCausalLM(object):
                     )
                 elif prompt_type == "chatlm":
                     source, target = generate_round_prompt_chatlm(
+                        idx,
+                        human_input,
+                        bot_response,
+                        bos_token=self.tokenizer.bos_token,
+                        eos_token=self.tokenizer.eos_token,
+                        system_prompt=system_prompt,
+                    )
+                elif prompt_type == "llama2":
+                    source, target = generate_round_prompt_llama2(
                         idx,
                         human_input,
                         bot_response,
