@@ -14,6 +14,10 @@ def clean_memory():
 # processed = 0
 
 def main(args):
+
+    if os.path.exists(args.output_file):
+        raise FileExistsError(f"File {args.output_file} already exists.")
+
     print(f"Loading reward model from {args.reward_model_path} ...")
     rank_model, tokenizer = AutoModelForSequenceClassification.from_pretrained(args.reward_model_path).cuda(), AutoTokenizer.from_pretrained(args.reward_model_path)
     question, answer = "Explain nuclear fusion like I am five", "Nuclear fusion is the process by which two or more protons and neutrons combine to form a single nucleus. It is a very important process in the universe, as it is the source of energy for stars and galaxies. Nuclear fusion is also a key process in the production of energy for nuclear power plants."
@@ -28,9 +32,6 @@ def main(args):
     lines = open(args.input_file).readlines()
     num_lines = len(lines)
     print(f"Total {num_lines} samples.")
-
-    if os.path.exists(args.output_file):
-        raise FileExistsError(f"File {args.output_file} already exists.")
 
     with open(args.output_file, 'w') as fd:
         for idx, line in enumerate(tqdm(lines, ncols=100)):
@@ -58,7 +59,7 @@ def main(args):
                     answer = dialog[1]['value']
 
                 inputs = tokenizer(question, answer, return_tensors='pt').to("cuda")
-                quality_score = rank_model(**inputs).logits[0].detach()
+                quality_score = float(rank_model(**inputs).logits[0].detach())
 
                 if idx % 100 == 0:
                     clean_memory()
@@ -66,9 +67,11 @@ def main(args):
             except Exception as e:
                 print(dialog)
                 print(e)
-        _out = {'category': category, 'conversations': dialog, 'quality_score': quality_score}
-        new_line = json.dumps(_out, ensure_ascii=False)
-        fd.write(new_line + '\n')
+
+            _out = {'category': category, 'conversations': dialog, 'quality_score': quality_score}
+            # print(f"{_out=}")
+            new_line = json.dumps(_out, ensure_ascii=False)
+            fd.write(new_line + '\n')
     print(f"Saved {num_lines} samples to {args.output_file}.")
 
     print(f"Sorting data ...")
@@ -76,8 +79,8 @@ def main(args):
     dataset = load_dataset('json', data_files=args.output_file, split='train')
     print(f"Total {len(dataset)} samples.")
     dataset = dataset.sort('quality_score', reverse=True)
-    dataset.to_json(args.output_file, orient="records", lines=True, index=False)
-    print(f"Saved {len(dataset)} samples to {args.output_file}.")
+    dataset.to_json(sorted_file, orient="records", lines=True, index=False)
+    print(f"Saved {len(dataset)} samples to {sorted_file}.")
 
     # def _format(example):
     #     global processed
