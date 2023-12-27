@@ -110,7 +110,9 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/uukuguy/speechless-tora-code-7b-v1.0
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-1934-steps
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-3869-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-3869-steps
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-retry-1350-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
 

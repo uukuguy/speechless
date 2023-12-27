@@ -364,17 +364,17 @@ def main():
             tokenizer.pad_token = "<|extra_1|>"
         else:
             if tokenizer.bos_token_id is None:
-                tokenizer.bos_token = "<s>"
                 tokenizer.bos_token_id = 1
+                tokenizer.bos_token = "<s>"
             if tokenizer.eos_token_id is None:
-                tokenizer.eos_token = "</s>"
                 tokenizer.eos_token_id = 2
+                tokenizer.eos_token = "</s>"
             # if tokenizer.unk_token_id is None:
             #     tokenizer.unk_token_id = 0
             #     tokenizer.unk_token = "<unk>"
             if tokenizer.pad_token_id is None:
-                tokenizer.pad_token_id = tokenizer.eos_token_id
-                tokenizer.pad_token = tokenizer.eos_token
+                tokenizer.pad_token_id = 0 # tokenizer.eos_token_id
+                tokenizer.pad_token = tokenizer._convert_id_to_token(tokenizer.pad_token_id) #tokenizer.eos_token
         print(f"---------- Fixed tokens ----------")
         print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
         # print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
