@@ -15,8 +15,12 @@ def clean_memory():
 
 def main(args):
 
-    if os.path.exists(args.output_file):
-        raise FileExistsError(f"File {args.output_file} already exists.")
+    output_file = args.output_file
+    if output_file is None:
+        output_file = args.input_file.replace(".jsonl", "") + '-scored.jsonl'
+
+    if os.path.exists(output_file):
+        raise FileExistsError(f"File {output_file} already exists.")
 
     print(f"Loading reward model from {args.reward_model_path} ...")
     rank_model, tokenizer = AutoModelForSequenceClassification.from_pretrained(args.reward_model_path).cuda(), AutoTokenizer.from_pretrained(args.reward_model_path)
@@ -33,7 +37,7 @@ def main(args):
     num_lines = len(lines)
     print(f"Total {num_lines} samples.")
 
-    with open(args.output_file, 'w') as fd:
+    with open(output_file, 'w') as fd:
         for idx, line in enumerate(tqdm(lines, ncols=100)):
             data = json.loads(line.strip())
             category = data['category']
@@ -72,15 +76,14 @@ def main(args):
             # print(f"{_out=}")
             new_line = json.dumps(_out, ensure_ascii=False)
             fd.write(new_line + '\n')
-    print(f"Saved {num_lines} samples to {args.output_file}.")
+    print(f"Saved {num_lines} samples to {output_file}.")
 
     print(f"Sorting data ...")
-    sorted_file = args.input_file.replace(".jsonl", "") + '_sorted.jsonl'
-    dataset = load_dataset('json', data_files=args.output_file, split='train')
+    dataset = load_dataset('json', data_files=output_file, split='train')
     print(f"Total {len(dataset)} samples.")
     dataset = dataset.sort('quality_score', reverse=True)
-    dataset.to_json(sorted_file, orient="records", lines=True, index=False)
-    print(f"Saved {len(dataset)} samples to {sorted_file}.")
+    dataset.to_json(output_file, orient="records", lines=True, index=False)
+    print(f"Saved {len(dataset)} samples to {output_file}.")
 
     # def _format(example):
     #     global processed
@@ -167,8 +170,8 @@ def get_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--reward_model_path", type=str, default="/opt/local/llm_models/huggingface.co/OpenAssistant/reward-model-deberta-v3-large-v2")
-    parser.add_argument("--input_file", type=str, default="/opt/local/datasets/speechless_data/speechless-coding-16k.jsonl")
-    parser.add_argument("--output_file", type=str, default="/opt/local/datasets/speechless_data/speechless-coding-16k-hqd.jsonl")
+    parser.add_argument("--input_file", type=str, default="/opt/local/datasets/speechless_data/speechless-magicoder-oss-evol-dataset.jsonl")
+    parser.add_argument("--output_file", type=str)
     args = parser.parse_args()
     return args
 
