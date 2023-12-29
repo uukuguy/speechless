@@ -48,7 +48,17 @@ model=${TASK_NAME}
 TASK_RESULTS_DIR=${PWD}/eval_results/bigcode_eval/${TASK_NAME}
 
 # tasks=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
-tasks=(humanevalfixtests-python)
+tasks=(humanevalfixtests-cpp humanevalfixtests-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-python mbpp)
+#tasks=(humanevalfixtests-go humanevalfixtests-java humanevalfixtests-rust)
+#tasks=(humanevalfixtests-python humanevalsynthesize-rust)
+# tasks=(humanevalsynthesize-java humanevalsynthesize-js)
+# tasks=(humanevalfixtests-go humanevalfixtests-go humanevalsynthesize-python humanevalsynthesize-js)
+#tasks=(humanevalfixtests-cpp humanevalfixtests-rust humanevalsynthesize-cpp mbpp)
+
+# tasks=(humanevalfixtests-python)
+# tasks=(humanevalsynthesize-rust)
+# tasks=(humanevalsynthesize-java)
+#tasks=(humanevalfixtests-java)
 
 # if you provide absolute paths remove the $(pwd) from the command below
 generations_path=${TASK_RESULTS_DIR}

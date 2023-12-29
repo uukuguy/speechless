@@ -112,7 +112,7 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-1934-steps
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-7b-3869-steps
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-retry-1350-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-retry-1350-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-34b-8k-tora-1500-steps
 
@@ -120,6 +120,11 @@ TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-re
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-codellama-34b-v2.0-w4g128-awq
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/deepseek-ai/deepseek-coder-6.7b-base
+
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-1.3b-1417-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-1.3b-2834-steps
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/deepseek-ai/deepseek-coder-1.3b-instruct
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 

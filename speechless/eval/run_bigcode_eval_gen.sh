@@ -16,9 +16,11 @@ echo "Task Name: ${TASK_NAME}"
 
 # BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-go,multiple-sh,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
-BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
+# BIGCODE_TASKS="humaneval,multiple-java,multiple-js,multiple-cpp,multiple-rs,multiple-jl,multiple-swift,multiple-php,multiple-d,multiple-lua,multiple-r,multiple-rkt"
 
-CODEQWEN_TASKS=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
+# CODEQWEN_TASKS=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
+
+CODEQWEN_TASKS="humanevalsynthesize-python,humanevalsynthesize-java,humanevalsynthesize-js,humanevalsynthesize-cpp,humanevalsynthesize-go,humanevalsynthesize-rust,humanevalfixtests-python,humanevalfixtests-java,humanevalfixtests-js,humanevalfixtests-cpp,humanevalfixtests-go,humanevalfixtests-rust,mbpp"
 
 
 # BIGCODE_TASKS="humaneval,multiple-*"
@@ -28,7 +30,8 @@ CODEQWEN_TASKS=(humanevalsynthesize-python humanevalsynthesize-java humanevalsyn
 
 TEMPERATURE=0.2
 MAX_LENGTH_GENERATION=512
-N_SAMPLES=50
+N_SAMPLES=1 
+# N_SAMPLES=50
 TOP_P=0.95
 
 BITS="--load_in_8bit"
@@ -37,7 +40,8 @@ PRECISION=bf16
 # LIMIT=100
 # --limit ${LIMIT} \
 
-BATCH_SIZE=50
+BATCH_SIZE=1
+# BATCH_SIZE=50
 
 accelerate launch \
     --num_processes=2 \
@@ -46,8 +50,10 @@ accelerate launch \
     --dynamo_backend=no \
     ${SPEECHLESS_ROOT}/speechless/eval/bigcode_eval.py \
         --model ${TEST_MODEL_PATH} \
+        --generation_only \
+        --prompt instruct \
         ${BITS} \
-        --tasks ${BIGCODE_TASKS} \
+        --tasks ${CODEQWEN_TASKS} \
         --max_length_generation ${MAX_LENGTH_GENERATION} \
         --temperature ${TEMPERATURE} \
         --top_p ${TOP_P} \
@@ -57,6 +63,5 @@ accelerate launch \
         --precision ${PRECISION}\
         --trust_remote_code \
         --eval_results_dir eval_results/bigcode_eval/${TASK_NAME} \
-        --generation_only \
         --save_generations \
         ${BIGCODE_CHECK_REFERENCES}
