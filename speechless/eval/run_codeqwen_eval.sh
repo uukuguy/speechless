@@ -48,7 +48,18 @@ model=${TASK_NAME}
 TASK_RESULTS_DIR=${PWD}/eval_results/bigcode_eval/${TASK_NAME}
 
 # tasks=(humanevalsynthesize-python humanevalsynthesize-java humanevalsynthesize-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-rust humanevalfixtests-python humanevalfixtests-java humanevalfixtests-js humanevalfixtests-cpp humanevalfixtests-go humanevalfixtests-rust mbpp)
-tasks=(humanevalfixtests-cpp humanevalfixtests-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-python mbpp)
+
+# tasks=(humanevalfixtests-cpp humanevalfixtests-js humanevalsynthesize-cpp humanevalsynthesize-go humanevalsynthesize-python mbpp)
+tasks=(humanevalsynthesize-cpp)
+# tasks=(mbpp)
+# tasks=(humanevalsynthesize-cpp humanevalsynthesize-go)
+#tasks=(humanevalsynthesize-java)
+#tasks=(humanevalfixtests-python humanevalsynthesize-js)
+#tasks=(humanevalfixtests-java humanevalfixtests-rust)
+# tasks=(humanevalfixtests-cpp humanevalfixtests-js)
+#tasks=(humanevalsynthesize-rust)
+#tasks=(humanevalfixtests-go)
+
 #tasks=(humanevalfixtests-go humanevalfixtests-java humanevalfixtests-rust)
 #tasks=(humanevalfixtests-python humanevalsynthesize-rust)
 # tasks=(humanevalsynthesize-java humanevalsynthesize-js)
