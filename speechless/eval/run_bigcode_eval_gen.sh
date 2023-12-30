@@ -46,6 +46,7 @@ BATCH_SIZE=1
 accelerate launch \
     --num_processes=2 \
     --num_machines=1 \
+    --main_process_port 29502 \
     --mixed_precision=${PRECISION} \
     --dynamo_backend=no \
     ${SPEECHLESS_ROOT}/speechless/eval/bigcode_eval.py \

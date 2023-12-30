@@ -7,6 +7,7 @@ source ${SCRIPT_PATH}/task.env
 
 PYTHONPATH=${SPEECHLESS_ROOT} \
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
+    --master_port 29501 \
     -m speechless.finetune \
     ${DEEPSPEED_STAGE2} \
     --task_name ${TASK_NAME} \

@@ -48,7 +48,7 @@ BATCH_SIZE=1
         # --allow_code_execution  \
 
 accelerate launch \
-    --main_process_port 29501 \
+    --main_process_port 29503 \
     --num_processes=2 \
     --num_machines=1 \
     --mixed_precision=${PRECISION} \

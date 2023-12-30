@@ -15,7 +15,11 @@
 
 ## What's New
 
-- [2023/11.26] Built 7 DARE models and their respective [LoRA modules](https://huggingface.co/uukuguy/speechless-multi-loras-r64).
+- [2023/12/30] Release [speechless-coder-ds-1.3b](https://huggingface.co/uukuguy/speechless-coder-ds-1.3b) that finetun based on [deepseek-coder-1.3b-base](https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-base).
+- [2023/12/30] Release [speechless-coder-ds-6.7b](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b) that finetun based on [deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base).
+- [2023/12/23] Uploaded the float16 version of [prometheus-7b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-7b-v1.0-fp16) for instruction fine-tuning data quality assessment.
+- [2023/12/23] Uploaded the float16 version of [prometheus-13b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-13b-v1.0-fp16) for instruction fine-tuning data quality assessment.
+- [2023/11/26] Built 7 DARE models and their respective [LoRA modules](https://huggingface.co/uukuguy/speechless-multi-loras-r64).
 - [2023/11/24] Start [Mixture-of-Multi-LoRAs](https://github.com/uukuguy/multi_loras#mixture-of-multi-loras) experiments. Released [speechless-mistral-7b-dare-0.85](https://huggingface.co/speechlessai/speechless-mistral-7b-dare-0.85)
 - [2023/11/21] Speechless.Tools: Released [speechless-tools-7b](https://huggingface.co/uukuguy/speechless-tools-7b) which is trained 3 epochs on the ToolEval dataset, achieving performance comparable to [ToolLlama-2-7b-v2](https://huggingface.co/ToolBench/ToolLLaMA-2-7b-v2).
 - [2023/10/16] Multi-LoRAs: Load multiple LoRA modules simultaneously and automatically switch the appropriate combination of LoRA modules to generate the best answer based on user queries. [uukuguy/multi-loras](https://github.com/uukuguy/multi_loras)
