@@ -4,7 +4,9 @@ from typing import Optional, List, Mapping, Any
 from termcolor import colored
 import json
 import random
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=self.openai_key)
 from typing import Optional
 from toolbench.model.model_adapter import get_conversation_template
 from toolbench.inference.utils import SimpleChatIO, react_parser
@@ -21,18 +23,15 @@ class Davinci:
     def prediction(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         max_try = 10
         while True:
-            openai.api_key = self.openai_key
             try:
-                response = openai.Completion.create(
-                    engine=self.model,
-                    prompt=prompt,
-                    temperature=0.5,
-                    max_tokens=512,
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    stop="End Action"
-                )
+                response = client.completions.create(engine=self.model,
+                prompt=prompt,
+                temperature=0.5,
+                max_tokens=512,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop="End Action")
                 result = response['choices'][0]['text'].strip()
                 break
             except Exception as e:

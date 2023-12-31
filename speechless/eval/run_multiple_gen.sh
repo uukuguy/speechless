@@ -34,13 +34,14 @@ MULTIPL_E_RESULTS_DIR=${OUTPUT_DIR}/${TASK_NAME}/${COMPLETION_LIMIT}-completions
 # 		--langs py java js cpp rs go sh jl \
 
 	# --langs py java js cpp rs go sh jl ts \
+	# --sampling_method normal \
+  
 
 python ${SCRIPT_PATH}/multiple_gen.py \
 	--do_generate \
 	--output_dir ${MULTIPL_E_RESULTS_DIR} \
 	-m ${TASK_NAME}  \
 	--langs py js java cpp swift php d jl lua r rkt rs go sh ts \
-	--sampling_method normal \
 	--temperature 0.2 \
 	--top_p 0.95 \
 	--parallel_threads ${PARALLEL_THREADS} \

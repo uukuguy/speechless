@@ -7,10 +7,11 @@ import os
 import time
 import concurrent.futures
 
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "sk-unknown"))
 from tqdm import tqdm
 import shortuuid
-openai.api_key = os.getenv("OPENAI_API_KEY", "sk-unknown")
 
 def get_answer(model_name, question_id: int, prompt: str, max_tokens: int):
     ans = {
@@ -19,18 +20,16 @@ def get_answer(model_name, question_id: int, prompt: str, max_tokens: int):
     }
     for _ in range(3):
         try:
-            response = openai.Completion.create(
-                model=model_name,
-                prompt=prompt,
-                # messages=[
-                #     {"role": "system", "content": "You are a helpful assistant."},
-                #     {
-                #         "role": "user",
-                #         "content": question,
-                #     },
-                # ],
-                max_tokens=max_tokens,
-            )
+            response = client.completions.create(model=model_name,
+            prompt=prompt,
+            # messages=[
+            #     {"role": "system", "content": "You are a helpful assistant."},
+            #     {
+            #         "role": "user",
+            #         "content": question,
+            #     },
+            # ],
+            max_tokens=max_tokens)
             # ans["text"] = response["choices"][0]["message"]["content"]
             ans["text"] = response["choices"][0]["text"]
             return ans

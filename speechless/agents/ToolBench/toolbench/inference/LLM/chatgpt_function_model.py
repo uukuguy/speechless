@@ -1,5 +1,7 @@
 import json
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=key)
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from termcolor import colored
 import time
@@ -30,12 +32,9 @@ def chat_completion_request(key, messages, functions=None,function_call=None,key
     
     try:
         if model == "gpt-3.5-turbo-16k-0613":
-            openai.api_key = key
         else:
             raise NotImplementedError
-        openai_response = openai.ChatCompletion.create(
-            **json_data,
-        )
+        openai_response = client.chat.completions.create(**json_data)
         json_data = json.loads(str(openai_response))
         return json_data 
 

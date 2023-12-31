@@ -3,6 +3,9 @@ import time
 from typing import Dict, List
 from func_timeout import FunctionTimedOut, func_timeout
 import openai
+from openai import OpenAI
+
+client = OpenAI()
 import tiktoken
 
 from query_generators.query_generator import QueryGenerator
@@ -46,31 +49,19 @@ class OpenAIQueryGenerator(QueryGenerator):
         """Get OpenAI chat completion for a given prompt and model"""
         generated_text = ""
         try:
-            completion = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                **sampling_params,
-                # max_tokens=max_tokens,
-                # temperature=temperature,
-                # stop=stop,
-                # logit_bias=logit_bias,
-            )
+            completion = client.chat.completions.create(model=model,
+            messages=messages,
+            **sampling_params)
             generated_text = completion["choices"][0]["message"]["content"]
             print(f"{generated_text=}")
-        except (openai.error.RateLimitError, openai.error.ServiceUnavailableError) as e:
+        except (openai.RateLimitError, openai.error.ServiceUnavailableError) as e:
             if self.verbose:
                 print("Model overloaded. Pausing for 5s before retrying...")
             time.sleep(5)
             # Retry the api call after 5s
-            completion = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                **sampling_params,
-                # max_tokens=max_tokens,
-                # temperature=temperature,
-                # stop=stop,
-                # logit_bias=logit_bias,
-            )
+            completion = client.chat.completions.create(model=model,
+            messages=messages,
+            **sampling_params)
             generated_text = completion["choices"][0]["message"]["content"]
         except Exception as e:
             if self.verbose:
@@ -90,31 +81,19 @@ class OpenAIQueryGenerator(QueryGenerator):
         """Get OpenAI nonchat completion for a given prompt and model"""
         generated_text = ""
         try:
-            completion = openai.Completion.create(
-                model=model,
-                prompt=prompt,
-                **sampling_params,
-                # max_tokens=max_tokens,
-                # temperature=temperature,
-                # stop=stop,
-                # logit_bias=logit_bias,
-            )
+            completion = client.completions.create(model=model,
+            prompt=prompt,
+            **sampling_params)
             generated_text = completion["choices"][0]["text"]
             print(f"[nonchat] {generated_text=}")
-        except (openai.error.RateLimitError, openai.error.ServiceUnavailableError) as e:
+        except (openai.RateLimitError, openai.error.ServiceUnavailableError) as e:
             if self.verbose:
                 print("Model overloaded. Pausing for 5s before retrying...")
             time.sleep(5)
             # Retry the api call after 5s
-            completion = openai.ChatCompletion.create(
-                model=model,
-                prompt=prompt,
-                **sampling_params,
-                # max_tokens=max_tokens,
-                # temperature=temperature,
-                # stop=stop,
-                # # logit_bias=logit_bias,
-            )
+            completion = client.chat.completions.create(model=model,
+            prompt=prompt,
+            **sampling_params)
             generated_text = completion["choices"][0]["text"]
         except Exception as e:
             if self.verbose:

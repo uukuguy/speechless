@@ -7,6 +7,11 @@ from typing import List
 from multipl_e.completions import partial_arg_parser, make_main
 import json
 import openai
+from openai import AzureOpenAI
+
+client = AzureOpenAI(azure_endpoint=os.getenv("OPENAI_API_BASE"),
+api_version="2022-12-01",
+api_key=os.getenv("OPENAI_API_KEY"))
 import openai.error
 import os
 import time
@@ -35,10 +40,10 @@ def completions(
 
         while True:
             try:                
-                result = openai.Completion.create(**kwargs)
+                result = client.completions.create(**kwargs)
                 result = results["choices"][0]["text"]
                 break
-            except openai.error.RateLimitError:
+            except openai.RateLimitError:
                 print("Rate limited...")
                 time.sleep(5)
         results.append(result)
@@ -64,10 +69,6 @@ def main():
     engine = args.engine
     model = args.model
     if args.azure:
-      openai.api_type = "azure"
-      openai.api_base = os.getenv("OPENAI_API_BASE")
-      openai.api_version = "2022-12-01"
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     if args.name_override:
         name = args.name_override
     else:

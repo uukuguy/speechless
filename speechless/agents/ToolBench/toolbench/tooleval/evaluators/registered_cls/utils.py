@@ -4,7 +4,9 @@ from typing import List,Dict
 import requests
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 import random
 
 __registered_evaluators__ = {}
@@ -55,7 +57,7 @@ class OpenaiPoolRequest:
         kwargs['api_key'] = item['api_key']
         if item.get('organization',None) is not None:
             kwargs['organization'] = item['organization'] 
-        return openai.ChatCompletion.create(messages=messages,**kwargs)
+        return client.chat.completions.create(messages=messages,**kwargs)
     
     def __call__(self,messages,**kwargs):
         return self.request(messages,**kwargs)

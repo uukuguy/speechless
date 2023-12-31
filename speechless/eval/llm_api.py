@@ -4,7 +4,10 @@ import openai, tiktoken
 from loguru import logger
 import os
 
-openai.api_key = os.environ.get("OPENAI_API_KEY", "unset_api_key")
+# from openai import OpenAI
+
+# client = OpenAI()
+# client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"), base_url=os.environ.get("OPENAI_API_BASE"))
 
 def openai_chat_completion(model_name: str, messages: List[str], sampling_params: Dict[str, Any]) -> str:
     """
@@ -23,7 +26,7 @@ def openai_chat_completion(model_name: str, messages: List[str], sampling_params
         )
         generated_text = completion["choices"][0]["message"]["content"]
         print(f"{generated_text=}")
-    except (openai.error.RateLimitError, openai.error.ServiceUnavailableError) as e:
+    except (openai.RateLimitError, openai.ServiceUnavailableError) as e:
         logger.warning("Model overloaded. Pausing for 5s before retrying...")
         time.sleep(5)
         # Retry the api call after 5s
@@ -48,14 +51,14 @@ def openai_nonchat_completion(model_name: str, prompt: str, sampling_params: Dic
     """
     generated_text = ""
     try:
-    # if True:
         completion = openai.Completion.create(
+        # completion = client.completions.create(
             model=model_name,
             prompt=prompt,
             **sampling_params,
         )
         generated_text = completion["choices"][0]["text"]
-        logger.info(f"[nonchat] {generated_text=}")
+        # logger.info(f"[nonchat] {generated_text=}")
     except (openai.error.RateLimitError, openai.error.ServiceUnavailableError) as e:
         logger.warning("Model overloaded. Pausing for 5s before retrying...")
         time.sleep(5)

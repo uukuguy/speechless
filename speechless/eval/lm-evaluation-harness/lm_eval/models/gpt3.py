@@ -41,12 +41,15 @@ def oa_completion(**kwargs):
     Retry with back-off until they respond
     """
     import openai
+    from openai import OpenAI
+    
+    client = OpenAI(api_key=os.environ["OPENAI_API_SECRET_KEY"])
 
     backoff_time = 3
     while True:
         try:
-            return openai.Completion.create(**kwargs)
-        except openai.error.OpenAIError:
+            return client.completions.create(**kwargs)
+        except openai.OpenAIError:
             import traceback
 
             traceback.print_exc()
@@ -68,6 +71,9 @@ class GPT3LM(BaseLM):
         super().__init__()
 
         import openai
+        from openai import OpenAI
+        
+        client = OpenAI(api_key=os.environ["OPENAI_API_SECRET_KEY"])
 
         self.engine = engine
         self.tokenizer = transformers.GPT2TokenizerFast.from_pretrained("gpt2")
@@ -83,7 +89,6 @@ class GPT3LM(BaseLM):
         )[0]
 
         # Read from environment variable OPENAI_API_SECRET_KEY
-        openai.api_key = os.environ["OPENAI_API_SECRET_KEY"]
 
     @property
     def eot_token_id(self):

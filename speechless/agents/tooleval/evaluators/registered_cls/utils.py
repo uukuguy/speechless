@@ -5,7 +5,9 @@ import requests
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from loguru import logger
 
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 import random
 
 __registered_evaluators__ = {}
@@ -65,7 +67,7 @@ class OpenaiPoolRequest:
         #         logger.warning(f"{messages_len=} > 16384! Make truncation.\n{messages=}")
         #         messages = messages[:i]
 
-        return openai.ChatCompletion.create(messages=messages,**kwargs)
+        return client.chat.completions.create(messages=messages,**kwargs)
     
     def __call__(self,messages,**kwargs):
         return self.request(messages,**kwargs)
