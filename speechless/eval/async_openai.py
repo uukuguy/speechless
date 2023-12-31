@@ -23,7 +23,7 @@ Example usage:
     sampling_params = {
         "temperature": 0.2,
         "max_tokens": 2048,
-        "sampling_method": "greedy",
+        # "sampling_method": "greedy",
         "num_beams": 1,
         "best_of": 1,
         "stop": "\n\n"
@@ -169,8 +169,8 @@ class OpenAICompletion:
             tokens_used = titoken_count_tokens(model_name=self.model_name, prompt=prompt)
 
 
-        # try:
-        if True:
+        # if True:
+        try:
             # print(f"{self.model_name=}")
             # print(f"{prompt_or_messages=}")
             # print(f"{sampling_params=}")
@@ -187,23 +187,23 @@ class OpenAICompletion:
 
             self.reason = "-"
 
-            print(f"========== prompt_or_messages ==========")
-            print(prompt_or_messages)
-            print(f"---------- completion ----------")
-            print(self.completion)
-            print(f"----------------------------------------")
+            # print(f"========== prompt_or_messages ==========")
+            # print(prompt_or_messages)
+            # print(f"---------- completion ----------")
+            # print(self.completion)
+            # print(f"----------------------------------------")
 
-        # except FunctionTimedOut:
-        #     logger.error("generating query timed out")
-        #     self.err = "QUERY GENERATION TIMEOUT"
-        # except Exception as e:
-        #     logger.error(f"Error while generating query: {type(e)}, {e})")
-        #     self.query = ""
-        #     self.reason = ""
-        #     if isinstance(e, KeyError):
-        #         self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}, Completion: {self.completion}"
-        #     else:
-        #         self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}"
+        except FunctionTimedOut:
+            logger.error("generating query timed out")
+            self.err = "QUERY GENERATION TIMEOUT"
+        except Exception as e:
+            logger.error(f"Error while generating query: {type(e)}, {e})")
+            self.query = ""
+            self.reason = ""
+            if isinstance(e, KeyError):
+                self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}, Completion: {self.completion}"
+            else:
+                self.err = f"QUERY GENERATION ERROR: {type(e)}, {e}"
 
         return {
             "n": n,
@@ -325,11 +325,11 @@ def default_argument_parser():
 
     parser.add_argument("--temperature", type=float, default=0.2, help="The temperature for the GPT-3 API")
     parser.add_argument("--max_tokens", type=int, default=2048, help="The max tokens for the GPT-3 API")
-    parser.add_argument("--sampling_method", type=str, default="greedy", choices=['greedy', 'beam_search', 'normal'], 
-                        help="The sampling method for the GPT-3 API")
+    # parser.add_argument("--sampling_method", type=str, default="greedy", choices=['greedy', 'beam_search', 'normal'], 
+                        # help="The sampling method for the GPT-3 API")
     parser.add_argument("--num_beams", type=int, default=1, help="The number of beams for the GPT-3 API")
     parser.add_argument("--top_p", type=float, default=1.0, help="The number of beams for the GPT-3 API")
-    parser.add_argument("--top_k", type=int, default=-1, help="The number of beams for the GPT-3 API")
+    # parser.add_argument("--top_k", type=int, default=-1, help="The number of beams for the GPT-3 API")
     parser.add_argument("--best_of", type=int, default=1, help="The number of beams for the GPT-3 API")
     parser.add_argument("--stop", type=str, default=None, help="The stop token for the GPT-3 API")
     parser.add_argument("--completion_limit", type=int, default=1)
@@ -341,9 +341,9 @@ def sampling_params_from_args(args):
     sampling_params={
         'temperature': args.temperature,
         'top_p': args.top_p,
-        'top_k': args.top_k,
+        # 'top_k': args.top_k,
         'max_tokens': args.max_tokens,
-        'sampling_method': args.sampling_method,
+        # 'sampling_method': args.sampling_method,
         'n': args.num_beams,
         'best_of': args.best_of,
         'stop': args.stop.split(",") if args.stop else [],

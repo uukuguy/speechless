@@ -37,6 +37,9 @@ messages=messages
 
 import os
 import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 import jsonlines
 import termcolor
 
@@ -170,13 +173,11 @@ class ChatWrapper:
         ]
         while True:
             try:
-                response = openai.ChatCompletion.create(
-                    model=self._model,
-                    messages=messages,
-                    temperature=0.2,
-                    top_p=0.95,
-                    n=n
-                )
+                response = client.chat.completions.create(model=self._model,
+                messages=messages,
+                temperature=0.2,
+                top_p=0.95,
+                n=n)
                 content_list = list()
                 for i in range(n):
                     message = response["choices"][i]["message"]
@@ -199,8 +200,8 @@ if __name__ == '__main__':
         with jsonlines.open(f"completions_{LANGUAGE}_humanevalexplaindescribe.jsonl", "r") as f:
             descriptions = [line["raw_generation"][0] for line in f]
 
-    openai.organization = os.getenv("OPENAI_ORGANIZATION")
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    # TODO: The 'openai.organization' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(organization=os.getenv("OPENAI_ORGANIZATION"))'
+    # openai.organization = os.getenv("OPENAI_ORGANIZATION")
 
     samples = [s for s in load_dataset("bigcode/humanevalpack", LANGUAGE)["test"]]
 

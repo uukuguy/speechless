@@ -256,11 +256,18 @@ multiple_gen:
 multiple_gen_50:
 	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 50 20
 
-multiple_50:
-	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 50
+multiple_gen_5:
+	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 5 8
 
 multiple:
 	bash ./speechless/eval/run_multiple.sh ${TEST_MODEL_PATH}
+
+multiple_50:
+	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 50
+
+multiple_5:
+	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 5
+
 
 
 # -------------------- speechless.api.server --------------------
