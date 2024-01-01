@@ -27,6 +27,7 @@ def main():
     snapshot_download(repo_id=args.model_name_or_path,
                       repo_type=args.repo_type,
                       revision=args.revision,
+                      local_dir_use_symlinks=False,
                       local_dir=f"{args.local_dir}/{args.model_name_or_path}",
                       resume_download=True)
 
