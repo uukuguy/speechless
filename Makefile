@@ -125,8 +125,10 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-1.3b-2834-steps
 
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/deepseek-ai/deepseek-coder-1.3b-instruct
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-6.7b
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-6.7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-ds-1.3b
+
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-1357-steps
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
