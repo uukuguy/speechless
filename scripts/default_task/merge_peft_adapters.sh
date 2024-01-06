@@ -9,5 +9,5 @@ CHECKPOINT_DIR=${TASK_CHECKPOINT_DIR}/checkpoint-2122/adapter_model
 
 python ${SCRIPT_ROOT}/merge_peft_adapters.py \
     --base_model_name_or_path ${BASE_MODEL_PATH} \
-    --peft_model_path ${CHECKPOINT_DIR} \
+    --lora_model_path ${CHECKPOINT_DIR} \
     --merged_model_name_or_path ${TEST_MODEL_PATH} \

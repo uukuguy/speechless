@@ -21,5 +21,5 @@ TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/${MODEL_BASENAME}-${CKPT_STEPS}-
 
 python merge_peft_adapters.py \
     --base_model_name_or_path ${BASE_MODEL_PATH} \
-    --peft_model_path ${CHECKPOINT_DIR} \
+    --lora_model_path ${CHECKPOINT_DIR} \
     --merged_model_name_or_path ${TEST_MODEL_PATH}
