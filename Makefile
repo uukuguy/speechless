@@ -128,7 +128,8 @@ BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-six-in-one-7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coder-ds-6.7b
 # TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-ds-1.3b
 
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-1357-steps
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-1357-steps
+TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-mistral-7b-2714-steps
 
 TASK_NAME=$(shell basename ${TEST_MODEL_PATH})
 
@@ -261,6 +262,9 @@ multiple_gen_50:
 multiple_gen_5:
 	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 5 8
 
+multiple_gen_1:
+	bash speechless/eval/run_multiple_gen.sh ${TEST_MODEL_PATH} 1 5
+
 multiple:
 	bash ./speechless/eval/run_multiple.sh ${TEST_MODEL_PATH}
 
@@ -270,6 +274,8 @@ multiple_50:
 multiple_5:
 	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 5
 
+multiple_1:
+	bash speechless/eval/run_multiple.sh ${TEST_MODEL_PATH} 1
 
 
 # -------------------- speechless.api.server --------------------

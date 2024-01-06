@@ -59,7 +59,7 @@ class Settings:
             # seed: int = 0
             # max_model_len: Optional[int] = None
             max_model_len = 8192,
-            worker_use_ray = True,
+            worker_use_ray = False,
             # pipeline_parallel_size = num_gpus,
             tensor_parallel_size = num_gpus,
 
