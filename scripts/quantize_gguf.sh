@@ -12,10 +12,10 @@ Q5_K_M_FILE=${GGUF_DIR}/${MODEL_BASE_NAME}.Q5_K_M.gguf
 Q8_0_FILE=${GGUF_DIR}/${MODEL_BASE_NAME}.Q8_0.gguf
 
 cd ${LLAMA_CPP_ROOT} && \
-python convert.py 
+python convert.py \
     ${MODEL_PATH} \
-    --output_type ${OUTPUT_TYPE} \
-    --output_file ${GGML_FILE} && \
+    --outtype ${OUTPUT_TYPE} \
+    --outfile ${GGML_FILE} && \
 mkdir -p ${GGUF_DIR} && \
 ./quantize ${GGML_FILE} ${Q4_K_M_FILE} q4_k_m && \
 ./quantize ${GGML_FILE} ${Q5_K_M_FILE} q5_k_m && \
