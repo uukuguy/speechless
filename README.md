@@ -15,6 +15,7 @@
 
 ## What's New
 
+- [2024-01-05] Release [speechless-mistral-moloras-7b](https://huggingface.co/uukuguy/speechless-mistral-moloras-7b), which is the static version of moloras ([Mixture-of-multi-LoRAs](https://github.com/uukuguy/multi_loras?tab=readme-ov-file#mixture-of-multi-loras))
 - [2023/12/30] Release [speechless-coder-ds-1.3b](https://huggingface.co/uukuguy/speechless-coder-ds-1.3b) that finetun based on [deepseek-coder-1.3b-base](https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-base).
 - [2023/12/30] Release [speechless-coder-ds-6.7b](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b) that finetun based on [deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base).
 - [2023/12/23] Uploaded the float16 version of [prometheus-7b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-7b-v1.0-fp16) for instruction fine-tuning data quality assessment.
