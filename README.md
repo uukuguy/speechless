@@ -57,9 +57,29 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 [Models Repositry](https://huggingface.co/uukuguy)
 
-⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month
+⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
+
+### Jan. 2024
+
+- ⭐ [speechless-mistral-moloras-7b](https://huggingface.co/uukuguy/speechless-mistral-moloras-7b)
+
+    [GPTQ](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-GPTQ) [AWQ](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-AWQ) [GGUF](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-GGUF) by [TheBloke](https://huggingface.co/TheBloke)
+
+### Dec. 2023
+
+- **[speechless-coder-ds-6.7b](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b)**
+
+    [4, 5 and 8-bit GGUF models for CPU+GPU inference](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b/tree/main/GGUF)
+
+- **[deepseek-coder-1.3b-base](https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-base)**
+
+- **[prometheus-13b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-13b-v1.0-fp16)**
+
+- **[prometheus-7b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-7b-v1.0-fp16)**
 
 ### Nov. 2023
+
+- ⭐ **[speechless-multi-loras-r64](https://huggingface.co/uukuguy/speechless-multi-loras-r64)**
 
 - **[zephyr-7b-alpha-dare-0.85](https://huggingface.co/uukuguy/zephyr-7b-alpha-dare-0.85) 2023.11.24**
 
