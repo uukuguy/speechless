@@ -1,4 +1,0 @@
-FROM task4_base
-COPY run.sh /home/admin/atec_project/
-COPY ptuning /home/admin/atec_project/ptuning
-COPY utils /home/admin/atec_project/utils

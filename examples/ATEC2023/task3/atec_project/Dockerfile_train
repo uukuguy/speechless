@@ -1,3 +1,0 @@
-FROM task3_base
-COPY *.py /home/admin/atec_project/
-COPY *.sh /home/admin/atec_project/
