@@ -1,0 +1,12 @@
+model_list: 
+  - model_name: gpt-3.5-turbo # user-facing model alias
+    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
+      model: openai/gpt-3.5-turbo
+      api_base: https://api.openai-proxy.org/v1
+  - model_name: mistral-7b-instruct-v0.2 
+    litellm_params:
+      model: ollama/uukuguy/mistral:7b-instruct-v0.2.Q8_0
+  - model_name: vllm-model
+    litellm_params:
+      model: openai/<your-model-name>
+      api_base: http://0.0.0.0:3000
