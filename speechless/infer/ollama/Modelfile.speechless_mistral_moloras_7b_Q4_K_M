@@ -1,0 +1,1 @@
+FROM /opt/local/llm_models/huggingface.co/uukuguy/speechless-mistral-moloras-7b.Q4_K_M.gguf
