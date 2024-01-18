@@ -1,9 +1,0 @@
-{
-    "epochs": 2,
-    "lr": 0.001,
-    "embed_size": 8,
-    "hidden_size": 16,
-    "n_layers": 2,
-    "batch_size": 64,
-    "output_data_folder": "./output/data/"
-}

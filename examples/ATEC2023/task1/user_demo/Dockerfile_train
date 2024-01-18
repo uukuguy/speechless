@@ -1,9 +1,0 @@
-#FROM centos:7
-FROM atec:base_20231120.2
-#FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
-COPY atec_project/src /home/admin/atec_project/src
-
-#RUN set -x && conda init && . ~/.bashrc && pip install -r /home/admin/atec_project/src/requirements.txt -i http://mirrors.aliyun.com/pypi/simple --trusted-host mirrors.aliyun.com 
-COPY atec_project/env /home/admin/atec_project/env
-COPY atec_project/data /home/admin/atec_project/data
-COPY atec_project/run.sh /home/admin/atec_project

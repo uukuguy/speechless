@@ -1,2 +1,0 @@
-FROM atec:base_20231120.2
-COPY env /home/admin/atec_project/env
