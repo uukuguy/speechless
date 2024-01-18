@@ -1,11 +1,23 @@
 model_list: 
-  - model_name: gpt-3.5-turbo # user-facing model alias
-    litellm_params: # all params accepted by litellm.completion() - https://docs.litellm.ai/docs/completion/input
-      model: openai/gpt-3.5-turbo
+  - model_name: gpt-3.5-turbo-1106 
+    litellm_params: 
+      model: openai/gpt-3.5-turbo-1106
       api_base: https://api.openai-proxy.org/v1
+  - model_name: speechless-llama2-super-long-name-13b
+    litellm_params:
+      model: ollama/uukuguy/speechless-llama2-super-long-name:13b.Q8_0
   - model_name: mistral-7b-instruct-v0.2 
     litellm_params:
       model: ollama/uukuguy/mistral:7b-instruct-v0.2.Q8_0
+  - model_name: speechless-mistral-moloras-7b
+    litellm_params:
+      model: ollama/uukuguy/speechless-mistral-moloras:7b.Q4_K_M
+  - model_name: speechless-code-mistral-7b-v1.0
+    litellm_params:
+      model: ollama/uukuguy/speechless-code-mistral:7b_v1.0.Q4_K_M
+  - model_name: speechless-tora-code-7b-v1.0
+    litellm_params:
+      model: ollama/uukuguy/speechless-tora-code:7b-v1.0.Q8_0
   - model_name: vllm-model
     litellm_params:
       model: openai/<your-model-name>

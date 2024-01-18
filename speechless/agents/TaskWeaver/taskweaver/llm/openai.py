@@ -30,6 +30,8 @@ class OpenAIServiceConfig(LLMServiceConfig):
             "api_key",
             shared_api_key if shared_api_key is not None else ("" if self.api_type == "azure_ad" else None),
         )
+        if not self.api_key:
+            self.api_key = os.environ.get("OPENAI_API_KEY", None)
 
         shared_model = self.llm_module_config.model
         self.model = self._get_str(
