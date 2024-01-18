@@ -1,0 +1,1 @@
+FROM /opt/local/llm_models/huggingface.co/TheBloke/mistral-7b-instruct-v0.2.Q8_0.gguf

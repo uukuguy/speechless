@@ -1,0 +1,1 @@
+FROM /opt/local/llm_models/huggingface.co/TheBloke/deepseek-coder-6.7b-instruct.Q8_0.gguf
