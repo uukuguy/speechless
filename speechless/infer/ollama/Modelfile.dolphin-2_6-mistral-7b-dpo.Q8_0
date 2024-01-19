@@ -1,0 +1,1 @@
+FROM /opt/local/llm_models/huggingface.co/TheBloke/dolphin-2_6-mistral-7b-dpo.Q8_0.gguf
