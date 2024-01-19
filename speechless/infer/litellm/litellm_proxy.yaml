@@ -3,6 +3,9 @@ model_list:
     litellm_params: 
       model: openai/gpt-3.5-turbo-1106
       api_base: https://api.openai-proxy.org/v1
+  - model_name: bagel-7b-v0.1
+    litellm_params:
+      model: ollama/uukuguy/bagel-7b-v0.1:Q4_K_M
   - model_name: dolphin-2_6-mistral-7b-dpo
     litellm_params:
       model: ollama/uukuguy/dolphin-2_6-mistral-7b-dpo:Q8_0

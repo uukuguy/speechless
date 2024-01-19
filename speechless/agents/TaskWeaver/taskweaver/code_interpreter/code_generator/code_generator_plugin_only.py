@@ -122,6 +122,7 @@ class CodeGeneratorPluginOnly(Role):
             response_format=None,
             stream=False,
         )
+        
         if llm_response["role"] == "assistant":
             post_proxy.update_message(llm_response["content"])
             return post_proxy.end()
