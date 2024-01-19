@@ -1,5 +1,5 @@
 {
-"llm.api_base": "http://localhost:8341",
+"llm.api_base": "http://localhost:18341",
 "llm.api_key": "",
-"llm.model": "speechless-llama2-super-long-name-13b"
+"llm.model": "phi-2"
 }
