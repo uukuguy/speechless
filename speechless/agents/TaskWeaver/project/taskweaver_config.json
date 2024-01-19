@@ -1,5 +1,5 @@
 {
 "llm.api_base": "http://localhost:18341",
 "llm.api_key": "",
-"llm.model": "phi-2"
+"llm.model": "dolphin-2_6-mistral-7b-dpo"
 }

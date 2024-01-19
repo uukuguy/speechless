@@ -3,6 +3,12 @@ model_list:
     litellm_params: 
       model: openai/gpt-3.5-turbo-1106
       api_base: https://api.openai-proxy.org/v1
+  - model_name: dolphin-2_6-mistral-7b-dpo
+    litellm_params:
+      model: ollama/uukuguy/dolphin-2_6-mistral-7b-dpo:Q8_0
+  - model_name: nexusraven-v2-13b
+    litellm_params:
+      model: ollama/uukuguy/nexusraven-v2-13b:Q4_K_M
   - model_name: phi-2
     litellm_params:
       model: ollama/uukuguy/phi-2.Q8_0

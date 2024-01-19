@@ -1,0 +1,1 @@
+FROM /opt/local/llm_models/huggingface.co/TheBloke/nexusraven-v2-13b.Q4_K_M.gguf
