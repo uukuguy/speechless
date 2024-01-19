@@ -1,6 +1,21 @@
 help:
 	@echo "Please use \`make <target>' where <target> is one of the following: deepseek_coder"
 
+create_dolphin-2.6-mistral-7b-dpo:
+		ollama create uukuguy/dolphin-2.6-mistral-7b-dpo:Q8_0 -f Modelfile.dolphin-2.6-mistral-7b-dpo.Q8_0.gguf
+
+create_dolphin_2_6_phi_2:
+		ollama create uukuguy/dolphin-2_6-phi-2:Q8_0 -f Modelfile.dolphin_2_6_phi_2.Q8_0
+
+run_dolphin_2_6_phi_2:
+		ollama run uukuguy/dolphin-2_6-phi-2:Q8_0 
+
+create_phi_2:
+		ollama create uukuguy/phi-2:Q8_0 -f Modelfile.phi_2_Q8_0
+
+run_phi_2:
+		ollama run uukuguy/phi-2:Q8_0 
+
 create_speechless_llama2_super_long_name:
 		ollama create uukuguy/speechless-llama2-super-long-name:13b.Q8_0 -f Modelfile.speechless_llama2_super_long_name_13b_Q8_0
 

@@ -3,6 +3,9 @@ model_list:
     litellm_params: 
       model: openai/gpt-3.5-turbo-1106
       api_base: https://api.openai-proxy.org/v1
+  - model_name: phi-2
+    litellm_params:
+      model: ollama/uukuguy/phi-2.Q8_0
   - model_name: speechless-llama2-super-long-name-13b
     litellm_params:
       model: ollama/uukuguy/speechless-llama2-super-long-name:13b.Q8_0
