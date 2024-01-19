@@ -1,5 +1,23 @@
 {
+"llm.api_base": "https://api.openai-proxy.org/v1",
+"llm.api_key": "",
+"llm.model": "gpt-3.5-turbo-1106"
+}
+
+{
 "llm.api_base": "https://api.openai.com/v1",
 "llm.api_key": "",
 "llm.model": "gpt-3.5-turbo-1106"
+}
+
+{
+"llm.api_base": "http://localhost:18341",
+"llm.api_key": "",
+"llm.model": "mistral-7b-instruct-v0.2"
+}
+
+{
+"llm.api_base": "http://localhost:18341",
+"llm.api_key": "",
+"llm.model": "nexusraven-v2-13b"
 }

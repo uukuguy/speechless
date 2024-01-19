@@ -257,6 +257,9 @@ class Planner(Role):
                     if is_first_chunk:
                         new_post.update_status("receiving LLM response")
                         is_first_chunk = False
+                    # # FIXME
+                    # self.logger.info(f"-----> LLM response: {c['content']}")
+                    
                     llm_output.append(c["content"])
                     yield c
 
@@ -272,6 +275,7 @@ class Planner(Role):
                 "".join(llm_output),
                 AttachmentType.invalid_response,
             )
+            self.logger.error(f"error .....> llm_output: {''.join(llm_output)}")
             new_post.update_message(
                 f"Failed to parse Planner output due to {str(e)}."
                 f"The output format should follow the below format:"
@@ -284,6 +288,7 @@ class Planner(Role):
                 self.ask_self_cnt = 0
                 new_post.end("Planner failed to generate response")
                 raise Exception(f"Planner failed to generate response because {str(e)}")
+        self.logger.debug(f"OK -----> llm_output: {''.join(llm_output)}")
         if prompt_log_path is not None:
             self.logger.dump_log_file(chat_history, prompt_log_path)
         return new_post.end()

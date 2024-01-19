@@ -1,6 +1,9 @@
 help:
 	@echo "Please use \`make <target>' where <target> is one of the following: deepseek_coder"
 
+create_bagel_7b_v0.1:
+		ollama create uukuguy/bagel-7b-v0.1:Q4_K_M -f Modelfile.bagel-7b-v0.1.Q4_K_M
+
 create_nexusraven_v2_13b:
 		ollama create uukuguy/nexusraven-v2-13b:Q4_K_M -f Modelfile.nexusraven-v2-13b.Q4_K_M
 
