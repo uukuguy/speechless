@@ -62,7 +62,7 @@ def user_input_message(prompt: str = "   Human  ") -> str:
             continue
 
 
-class TaskWeaverRoundUpdater(SessionEventHandlerBase):
+class RoundUpdater(SessionEventHandlerBase):
     def __init__(self):
         self.exit_event = threading.Event()
         self.update_cond = threading.Condition()
@@ -402,7 +402,7 @@ class TaskWeaverRoundUpdater(SessionEventHandlerBase):
                 self.update_cond.wait(0.2 - (cur_time - last_time))
 
 
-class TaskWeaverChatApp(SessionEventHandlerBase):
+class ChatApp(SessionEventHandlerBase):
     def __init__(self, app_dir: Optional[str] = None):
         self.app = TaskWeaverApp(app_dir=app_dir, use_local_uri=True)
         self.session = self.app.get_session()
@@ -486,7 +486,7 @@ class TaskWeaverChatApp(SessionEventHandlerBase):
         click.secho(message, fg="bright_black")
 
     def _handle_message(self, input_message: str):
-        updater = TaskWeaverRoundUpdater()
+        updater = RoundUpdater()
         result = updater.handle_message(
             self.session,
             input_message,
@@ -502,7 +502,7 @@ class TaskWeaverChatApp(SessionEventHandlerBase):
 
 
 def chat_main(app_dir: Optional[str] = None):
-    TaskWeaverChatApp(app_dir=app_dir).run()
+    ChatApp(app_dir=app_dir).run()
 
 
 if __name__ == "__main__":
