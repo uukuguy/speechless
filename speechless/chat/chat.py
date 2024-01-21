@@ -479,7 +479,7 @@ class ChatApp(SessionEventHandlerBase):
             self.session = self.app.get_session()
 
         self._assistant_message(
-            "I am TaskWeaver, an AI assistant. To get started, could you please enter your request?",
+            "I am Speechless, an AI assistant. To get started, could you please enter your request?",
         )
 
     def _system_message(self, message: str):
@@ -501,7 +501,22 @@ class ChatApp(SessionEventHandlerBase):
         click.secho(click.style(f"▶  {message}", fg="yellow"))
 
 
+def get_ascii_banner() -> str:
+    return dedent(
+        r"""
+        ===========================================================
+        ____  ____  ____  ____  ___  _  _  __    ____  ____  ____ 
+        / ___)(  _ \(  __)(  __)/ __)/ )( \(  )  (  __)/ ___)/ ___)
+        \___ \ ) __/ ) _)  ) _)( (__ ) __ (/ (_/\ ) _) \___ \\___ \
+        (____/(__)  (____)(____)\___)\_)(_/\____/(____)(____/(____/
+        ===========================================================
+        """,
+    ).strip()
+
+
 def chat_main(app_dir: Optional[str] = None):
+
+    print(get_ascii_banner())
     ChatApp(app_dir=app_dir).run()
 
 
