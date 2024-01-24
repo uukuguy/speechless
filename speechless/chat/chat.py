@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 import click
 from colorama import ansi
 
-from .app.app import TaskWeaverApp
+from .app.app import App
 from .memory.attachment import AttachmentType
 from .module.event_emitter import PostEventType, RoundEventType, SessionEventHandlerBase, SessionEventType
 from .session.session import Session
@@ -27,7 +27,7 @@ def plain_message(message: str, type: str, nl: bool = True) -> None:
     )
 
 
-def user_input_message(prompt: str = "   Human  ") -> str:
+def user_input_message(prompt: str = "  Human  ") -> str:
     import os
 
     import prompt_toolkit
@@ -362,7 +362,7 @@ class RoundUpdater(SessionEventHandlerBase):
             if self.exit_event.is_set():
                 break
 
-            cur_message_prefix: str = " TaskWeaver "
+            cur_message_prefix: str = " Speechless "
             cur_ani_frame = get_ani_frame(counter)
             cur_message_display_len = (
                 terminal_column
@@ -404,7 +404,7 @@ class RoundUpdater(SessionEventHandlerBase):
 
 class ChatApp(SessionEventHandlerBase):
     def __init__(self, app_dir: Optional[str] = None):
-        self.app = TaskWeaverApp(app_dir=app_dir, use_local_uri=True)
+        self.app = App(app_dir=app_dir, use_local_uri=True)
         self.session = self.app.get_session()
         self.pending_files: List[Dict[Literal["name", "path", "content"], Any]] = []
 
@@ -447,7 +447,7 @@ class ChatApp(SessionEventHandlerBase):
         self._system_message(
             dedent(
                 """
-                TaskWeaver Chat Console
+                Speechless Chat Console
                 -----------------------
                 /load <file>: load a file
                 /reset: reset the session
@@ -497,7 +497,7 @@ class ChatApp(SessionEventHandlerBase):
             self._assistant_message(result)
 
     def _assistant_message(self, message: str) -> None:
-        click.secho(click.style(" TaskWeaver ", fg="white", bg="yellow"), nl=False)
+        click.secho(click.style(" Assistant ", fg="black", bg="yellow"), nl=False)
         click.secho(click.style(f"▶  {message}", fg="yellow"))
 
 
