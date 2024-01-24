@@ -14,7 +14,7 @@ from ..session.session import Session
 from .session_manager import SessionManager, SessionManagerModule
 
 
-class TaskWeaverApp(object):
+class App(object):
     def __init__(
         self,
         app_dir: Optional[str] = None,
@@ -22,7 +22,7 @@ class TaskWeaverApp(object):
         config: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
-        app_dir, is_valid, _ = TaskWeaverApp.discover_app_dir(app_dir)
+        app_dir, is_valid, _ = App.discover_app_dir(app_dir)
         app_config_file = path.join(app_dir, "taskweaver_config.json") if is_valid else None
         config = {
             **(config or {}),
@@ -86,7 +86,7 @@ class TaskWeaverApp(object):
                 cur_dir = next_path
 
     def _init_app_modules(self) -> None:
-        # from taskweaver.llm import LLMApi
+        # from ..llm import LLMApi
 
         # self.app_injector.get(LLMApi)
         pass
