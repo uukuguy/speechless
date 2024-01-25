@@ -1,5 +1,5 @@
 import os
-import subprocess
+import ollama
 
 
 def ollama_create(args):
@@ -27,8 +27,9 @@ def ollama_create(args):
 
     ollama_model_name = args.ollama_model_name or os.path.basename(args.gguf_file).replace('.Q', ':Q').replace('.f16', ':f16').replace('.gguf', '')
 
-    cmd = f"ollama create {ollama_model_name} -f {modelfile_path}"
-    os.system(cmd)
+    ollama.create(model=ollama_model_name, model_file=modelfile_path)
+    # cmd = f"ollama create {ollama_model_name} -f {modelfile_path}"
+    # os.system(cmd)
 
     os.remove(modelfile_path)
 
@@ -52,20 +53,21 @@ def litellm_proxy(args):
     os.makedirs(tmp_dir, exist_ok=True)
     config_file = os.path.join(tmp_dir, "litellm_proxy.yaml")
 
-    ollama_models = []
-    ollama_models_dir = os.path.expanduser("~/.ollama/models/manifests/registry.ollama.ai")
-    for dirpath, dirnames, filenames in os.walk(ollama_models_dir):
-        if len(filenames) == 1 and len(dirnames) == 0:
-            items = dirpath.split("/")
-            repo_id = items[-2]
-            model_name = items[-1]
-            tag = filenames[0]
-            if repo_id != "library":
-                ollama_model_name = f"{model_name}:{tag}"
-            else:
-                ollama_model_name = f"{repo_id}/{model_name}:{tag}"
-            litellm_model_name = f"{model_name}:{tag}"
-            ollama_models.append((litellm_model_name, ollama_model_name))
+    # ollama_models = []
+    # ollama_models_dir = os.path.expanduser("~/.ollama/models/manifests/registry.ollama.ai")
+    # for dirpath, dirnames, filenames in os.walk(ollama_models_dir):
+    #     if len(filenames) == 1 and len(dirnames) == 0:
+    #         items = dirpath.split("/")
+    #         repo_id = items[-2]
+    #         model_name = items[-1]
+    #         tag = filenames[0]
+    #         if repo_id != "library":
+    #             ollama_model_name = f"{model_name}:{tag}"
+    #         else:
+    #             ollama_model_name = f"{repo_id}/{model_name}:{tag}"
+    #         litellm_model_name = f"{model_name}:{tag}"
+    #         ollama_models.append((litellm_model_name, ollama_model_name))
+    ollama_models = [ m['name'] for m in ollama.list()]
 
     with open (config_file, "w") as f:
         f.write("model_list:\n")
