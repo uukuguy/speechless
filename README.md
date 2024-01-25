@@ -299,6 +299,19 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 ## speechless.finetune
 
+```bash
+python -m speechless.finetune init --task_name my_task
+
+python -m speechless.finetune run --task_name my_task
+
+python -m speechless.finetune merge --task_name my_task
+
+python -m speechless.finetune backup --task_name my_task
+
+python -m speechless.finetune list
+
+```
+
 ### Install speechless
 
 ```bash
