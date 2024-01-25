@@ -428,6 +428,15 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --flash_attention True 
 ```
 
+## speechless.quant
+
+Speechless currently supports GGUF quantification, including the following types: q4_k_m, q5_k_m, q8_0.
+
+```bash
+# quant_type: q4_km/q5_km/q8_0
+python -m speechless.quant llamacpp --model_path path/to/hf/model --llamacpp_quant_type <quant_type>
+```
+
 ## speechless.api.server
 
 ```bash

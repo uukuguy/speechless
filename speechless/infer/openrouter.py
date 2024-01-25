@@ -1,12 +1,24 @@
-import os
+"""
+Usage: python -m speechless.infer.openrouter --stream --prompt "Give me quick sort python code"
+Parameters:
+    --api_url: OpenRouter API URL # default: https://openrouter.ai/api/v1
+    --api_key: OpenRouter API Key # default: $OPENROUTER_API_KEY
+    --model: Model name # default: huggingfaceh4/zephyr-7b-beta
+    --stream: Stream or not # default: False
+    --site_url: Your site URL 
+    --app_name: Your app name
+    --max_tokens: Max tokens # default: 4096
+    --temperature: Temperature # default: 0.2
+    --prompt: Prompt
+"""
+import os, sys
 from openai import OpenAI
 
 # gets API Key from environment variable OPENAI_API_KEY
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # ----- $0 -----
 # MODEL="mistralai/mistral-7b-instruct" # 8,192
-MODEL="huggingfaceh4/zephyr-7b-beta" # 4,096
+MODEL = "huggingfaceh4/zephyr-7b-beta"  # 4,096
 # MODEL="openchat/openchat-7b" # 8,192
 # MODEL="gryphe/mythomist-7b" # 32,768
 
@@ -93,7 +105,7 @@ MODEL="huggingfaceh4/zephyr-7b-beta" # 4,096
 # MODEL="neversleep/noromaid-mixtral-8x7b-instruct" # 8,000
 
 # $1.6/$5 per 1M tokens
-# MODEL="anthropic/claude-instant-v1" # 100,000
+# MODEL="anthropic/claude-instant-v1" #⭐️ 100,000
 
 # $3.75/$3.75 per 1M tokens
 # MODEL="migtissera/synthia-70b" # 8,192
@@ -121,24 +133,72 @@ MODEL="huggingfaceh4/zephyr-7b-beta" # 4,096
 # MODEL="openai/gpt-4-32k" # 32,767
 
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+def call_openrouter(args):
 
-completion = client.chat.completions.create(
-    extra_headers={
-        "HTTP-Referer": "https://github.com/uukuguy/speechless",  #$YOUR_SITE_URL, # Optional, for including your app on openrouter.ai rankings.
-        "X-Title": "Speechless.AI",  #$YOUR_APP_NAME, # Optional. Shows in rankings on openrouter.ai.
-    },
-    model=MODEL,
-    max_tokens=4096,
-    messages=[
+    client = OpenAI(
+        base_url=args.api_url or "https://openrouter.ai/api/v1",
+        api_key=args.api_key or os.getenv("OPENROUTER_API_KEY"),
+    )
+
+    stream = args.stream
+    prompt = args.prompt or "Hello, how are you?"
+    extra_headers = {
+        "HTTP-Referer": args.site_url,  #$YOUR_SITE_URL, # Optional, for including your app on openrouter.ai rankings.
+        "X-Title": args.app_name,  #$YOUR_APP_NAME, # Optional. Shows in rankings on openrouter.ai.
+    }
+
+    messages = [
         {
             "role": "user",
-            "content": "Give me quick sort python code",
+            "content": prompt,
         },
-    ],
-)
+    ]
 
-print(completion.choices[0].message.content)
+    completion_kwargs = dict(
+        extra_headers=extra_headers,
+        model=args.model,
+        max_tokens=args.max_tokens,
+        temperature=args.temperature,
+        stream=stream,
+        messages=messages,
+    )
+
+    completion = client.chat.completions.create(**completion_kwargs)
+
+    if stream:
+        full_text = ""
+        for chunk in completion:
+            if chunk.choices[0].delta:
+                chunk_content = chunk.choices[0].delta.content
+                sys.stdout.write(chunk_content)
+                sys.stdout.flush()
+    else:
+        print(completion.choices[0].message.content)
+
+
+def get_args():
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+
+    parser.add_argument("--model", type=str, default=MODEL, help="Model name")
+    parser.add_argument("--api_url", type=str, help="OpenRouter API URL")
+    parser.add_argument("--api_key", type=str, help="OpenRouter API Key")
+    parser.add_argument("--stream", action="store_true", help="Stream or not")
+    parser.add_argument("--site_url", type=str, default="https://github.com/uukuguy/speechless", help="Your site URL")
+    parser.add_argument("--app_name", type=str, default="Speechless.AI", help="Your app name")
+    parser.add_argument("--max_tokens", type=int, default=4096, help="Max tokens")
+    parser.add_argument("--temperature", type=float, default=0.2, help="Temperature")
+    parser.add_argument("--prompt", type=str, help="Prompt")
+
+    args = parser.parse_args()
+    return args
+
+
+def main():
+    args = get_args()
+    print(args)
+    call_openrouter(args)
+
+
+if __name__ == "__main__":
+    main()
