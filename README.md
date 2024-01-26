@@ -15,6 +15,7 @@
 
 ## What's New
 
+- [2024-01-23] Release [speechless-zephyr-code-functionary-7b](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b)
 - [2024-01-15] Release [speechless-nl2sql-ds-6.7b](https://huggingface.co/uukuguy/speechless-nl2sql-ds-6.7b), finetune based on [deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base).
 - [2024-01-05] Release [speechless-mistral-moloras-7b](https://huggingface.co/uukuguy/speechless-mistral-moloras-7b), which is the static version of moloras ([Mixture-of-multi-LoRAs](https://github.com/uukuguy/multi_loras?tab=readme-ov-file#mixture-of-multi-loras))
 - [2023/12/30] Release [speechless-coder-ds-1.3b](https://huggingface.co/uukuguy/speechless-coder-ds-1.3b) that finetune based on [deepseek-coder-1.3b-base](https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-base).
@@ -62,13 +63,21 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 ### Jan. 2024
 
+- ⭐ **[speechless-zephyr-code-functionary-7b](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b)**
+
+    [GGUF](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b/tree/main/GGUF)
+
+- **[speechless-nl2sql-ds-6.7b](https://huggingface.co/uukuguy/speechless-nl2sql-ds-6.7b)**
+
+    [GGUF](https://huggingface.co/uukuguy/speechless-nl2sql-ds-6.7b/tree/main/GGUF)
+
 - ⭐ [speechless-mistral-moloras-7b](https://huggingface.co/uukuguy/speechless-mistral-moloras-7b)
 
     [GPTQ](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-GPTQ) [AWQ](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-AWQ) [GGUF](https://huggingface.co/TheBloke/speechless-mistral-moloras-7B-GGUF) by [TheBloke](https://huggingface.co/TheBloke)
 
 ### Dec. 2023
 
-- **[speechless-coder-ds-6.7b](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b)**
+- ⭐ **[speechless-coder-ds-6.7b](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b)**
 
     [4, 5 and 8-bit GGUF models for CPU+GPU inference](https://huggingface.co/uukuguy/speechless-coder-ds-6.7b/tree/main/GGUF)
 
@@ -76,7 +85,7 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 - **[prometheus-13b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-13b-v1.0-fp16)**
 
-- **[prometheus-7b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-7b-v1.0-fp16)**
+- ⭐ **[prometheus-7b-v1.0-fp16](https://huggingface.co/uukuguy/prometheus-7b-v1.0-fp16)**
 
 ### Nov. 2023
 
