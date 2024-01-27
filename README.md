@@ -459,6 +459,22 @@ Speechless currently supports GGUF quantification, including the following types
 python -m speechless.quant llamacpp --model_path path/to/hf/model --llamacpp_quant_type <quant_type>
 ```
 
+## speechless.infer
+
+Ollama is used as default backend, and litellm is used as default frontend api.
+
+The unified classic application paradigm is to use the unified OpenAI API access interface, and the backend defaults to using the GGUF Q4_K_M quantization model.
+
+```bash
+python -m speechless.infer litellm_proxy --litellm_port 18342
+```
+
+### Import GGUF into ollama
+
+```bash
+python -m speechless.infer ollama_create path/to/gguf/file
+```
+
 ## speechless.api.server
 
 ```bash

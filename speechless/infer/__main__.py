@@ -68,7 +68,7 @@ def litellm_proxy(args):
     #             ollama_model_name = f"{repo_id}/{model_name}:{tag}"
     #         litellm_model_name = f"{model_name}:{tag}"
     #         ollama_models.append((litellm_model_name, ollama_model_name))
-    ollama_models = [ m['name'] for m in ollama.list()]
+    ollama_models = [ (os.path.basename(m['name']), m['name']) for m in ollama.list()['models']]
 
     with open (config_file, "w") as f:
         f.write("model_list:\n")
