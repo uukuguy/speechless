@@ -27,7 +27,8 @@ def ollama_create(args):
 
     ollama_model_name = args.ollama_model_name or os.path.basename(args.gguf_file).replace('.Q', ':Q').replace('.f16', ':f16').replace('.gguf', '')
 
-    ollama.create(model=ollama_model_name, model_file=modelfile_path)
+    modelfile=open(modelfile_path).read()
+    ollama.create(model=ollama_model_name, modelfile=modelfile)
     # cmd = f"ollama create {ollama_model_name} -f {modelfile_path}"
     # os.system(cmd)
 
