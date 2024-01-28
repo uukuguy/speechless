@@ -1,3 +1,4 @@
+import os
 import ast
 import random
 from typing import List
@@ -21,7 +22,7 @@ class ChatGPTGen(BaseGen):
             "Please generate difficult inputs to test the function.",
         ]
         self.iteration = 20
-        self.client = openai.Client()
+        self.client = openai.Client(base_url=os.getenv("OPENAI_API_BASE"))
 
     def seed_selection(self) -> List:
         # get 5 for now.
