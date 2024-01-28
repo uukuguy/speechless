@@ -372,7 +372,7 @@ class OpenaiChatCompletionsLM(LM):
         self.end_of_text_token_id = self.tokenizer.eot_token
 
         # Read from environment variable OPENAI_API_KEY
-        self.client = openai.OpenAI()  # openai.AsyncOpenAI()
+        self.client = openai.OpenAI(base_url=os.getenv("OPENAI_API_BASE"))  # openai.AsyncOpenAI()
 
     @property
     def eot_token_id(self):
