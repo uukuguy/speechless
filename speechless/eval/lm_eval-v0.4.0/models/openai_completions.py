@@ -90,7 +90,9 @@ class OpenaiCompletionsLM(LM):
     please install these via `pip install lm-eval[openai]` or `pip install -e .[openai]`",
             )
         self.engine = engine
-        self.tokenizer = tiktoken.encoding_for_model(self.engine)
+        # self.tokenizer = tiktoken.encoding_for_model(self.engine)
+        self.tokenizer = tiktoken.get_encoding("cl100k_base")
+
         self.vocab_size = self.tokenizer.n_vocab
         self.truncate = truncate
         self.end_of_text_token_id = self.tokenizer.eot_token
@@ -127,9 +129,7 @@ class OpenaiCompletionsLM(LM):
     def tok_decode(self, tokens: List[int]) -> str:
         return self.tokenizer.decode(tokens)
 
-    def _encode_pair(
-        self, context: str, continuation: str
-    ) -> Tuple[List[int], List[int]]:
+    def _encode_pair(self, context: str, continuation: str) -> Tuple[List[int], List[int]]:
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
             continuation = context[-n_spaces:] + continuation
@@ -145,9 +145,7 @@ class OpenaiCompletionsLM(LM):
         for context, continuation in [req.args for req in requests]:
             if context == "":
                 # end of text as context
-                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(
-                    continuation
-                )
+                context_enc, continuation_enc = [self.eot_token_id], self.tok_encode(continuation)
             else:
                 context_enc, continuation_enc = self._encode_pair(context, continuation)
 
@@ -155,9 +153,7 @@ class OpenaiCompletionsLM(LM):
 
         return self._loglikelihood_tokens(new_reqs)
 
-    def _loglikelihood_tokens(
-        self, requests, disable_tqdm: bool = False
-    ) -> List[Tuple[float, bool]]:
+    def _loglikelihood_tokens(self, requests, disable_tqdm: bool = False) -> List[Tuple[float, bool]]:
         res = []
 
         def _collate(x):
@@ -177,11 +173,9 @@ class OpenaiCompletionsLM(LM):
             ctxlens = []
             for cache_key, context_enc, continuation_enc in chunk:
                 # max_length+1 because the API takes up to 2049 tokens, including the first context token
-                inp = (context_enc + continuation_enc)[-(self.max_length + 1) :]
+                inp = (context_enc + continuation_enc)[-(self.max_length + 1):]
                 # TODO: the logic is much simpler if we just look at the length of continuation tokens
-                ctxlen = len(context_enc) - max(
-                    0, len(context_enc) + len(continuation_enc) - (self.max_length + 1)
-                )
+                ctxlen = len(context_enc) - max(0, len(context_enc) + len(continuation_enc) - (self.max_length + 1))
 
                 inps.append(inp)
                 ctxlens.append(ctxlen)
@@ -195,9 +189,7 @@ class OpenaiCompletionsLM(LM):
                 logprobs=10,
             )
 
-            for resp, ctxlen, (cache_key, context_enc, continuation_enc) in zip(
-                response.choices, ctxlens, chunk
-            ):
+            for resp, ctxlen, (cache_key, context_enc, continuation_enc) in zip(response.choices, ctxlens, chunk):
                 answer = get_result(resp, ctxlen)
 
                 res.append(answer)
@@ -233,13 +225,11 @@ class OpenaiCompletionsLM(LM):
                 yield ret, lastuntil
 
         # todo: more intelligent batching for heterogeneous `until`
-        for chunk, request_args in tqdm(
-            list(sameuntil_chunks(re_ord.get_reordered(), self.REQ_CHUNK_SIZE))
-        ):
+        for chunk, request_args in tqdm(list(sameuntil_chunks(re_ord.get_reordered(), self.REQ_CHUNK_SIZE))):
             inps = []
             for context, _ in chunk:
                 context_enc = self.tok_encode(context)
-                inp = context_enc[-(self.max_length - self.max_gen_toks) :]
+                inp = context_enc[-(self.max_length - self.max_gen_toks):]
                 inps.append(inp)
 
             until = request_args.get("until", ["<|endoftext|>"])
@@ -263,9 +253,9 @@ class OpenaiCompletionsLM(LM):
                         s = s.split(term)[0]
 
                 # partial caching
-                self.cache_hook.add_partial(
-                    "generate_until", (context, {"until": until_}), s
-                )
+                self.cache_hook.add_partial("generate_until", (context, {
+                    "until": until_
+                }), s)
 
                 res.append(s)
         return re_ord.get_original(res)
@@ -281,7 +271,7 @@ class OpenaiCompletionsLM(LM):
     def loglikelihood_rolling(self, requests) -> List[float]:
         loglikelihoods = []
 
-        for (string,) in tqdm([req.args for req in requests]):
+        for (string, ) in tqdm([req.args for req in requests]):
             rolling_token_windows = list(
                 map(
                     utils.make_disjoint_window,
@@ -295,7 +285,7 @@ class OpenaiCompletionsLM(LM):
             )
 
             # TODO: Right now, we pass single EOT token to the Encoder and the full context to the decoder, in seq2seq case
-            rolling_token_windows = [(None,) + x for x in rolling_token_windows]
+            rolling_token_windows = [(None, ) + x for x in rolling_token_windows]
 
             string_nll = self._loglikelihood_tokens(
                 rolling_token_windows,
@@ -341,8 +331,12 @@ please install these via `pip install lm-eval[openai]` or `pip install -e .[open
 
 @register_model("openai-chat-completions")
 class OpenaiChatCompletionsLM(LM):
+
     def __init__(
-        self, model: str = "gpt-3.5-turbo", truncate: bool = False, batch_size: int = 1
+        self,
+        model: str = "gpt-3.5-turbo",
+        truncate: bool = False,
+        batch_size: int = 1,
     ) -> None:
         """
 
@@ -366,7 +360,9 @@ class OpenaiChatCompletionsLM(LM):
         self.presence_penalty = 0
         self.temperature = 1
         self.top_p = 1
-        self.tokenizer = tiktoken.encoding_for_model(self.model)
+        # self.tokenizer = tiktoken.encoding_for_model(self.model)
+        self.tokenizer = tiktoken.get_encoding("cl100k_base")
+
         self.vocab_size = self.tokenizer.n_vocab
         self.truncate = truncate
         self.end_of_text_token_id = self.tokenizer.eot_token
@@ -403,9 +399,7 @@ class OpenaiChatCompletionsLM(LM):
     def tok_decode(self, tokens: List[int]) -> str:
         return self.tokenizer.decode(tokens)
 
-    def _encode_pair(
-        self, context: str, continuation: str
-    ) -> Tuple[List[int], List[int]]:
+    def _encode_pair(self, context: str, continuation: str) -> Tuple[List[int], List[int]]:
         n_spaces = len(context) - len(context.rstrip())
         if n_spaces > 0:
             continuation = context[-n_spaces:] + continuation
@@ -453,7 +447,10 @@ class OpenaiChatCompletionsLM(LM):
             chunks = utils.chunks(re_ord.get_reordered(), n=1)
             for chunk in chunks:
                 contexts, all_gen_kwargs = zip(*chunk)
-                inps = [{"role": "user", "content": context} for context in contexts]
+                inps = [{
+                    "role": "user",
+                    "content": context
+                } for context in contexts]
 
                 gen_kwargs = all_gen_kwargs[0]
                 until = None
@@ -468,9 +465,7 @@ class OpenaiChatCompletionsLM(LM):
                                 f"Expected `kwargs['until']` to be of type Union[str,list] but got {until}"
                             )
                 else:
-                    raise ValueError(
-                        f"Expected `kwargs` to be of type `dict` but got {kwargs}"
-                    )
+                    raise ValueError(f"Expected `kwargs` to be of type `dict` but got {kwargs}")
 
                 if "max_gen_toks" in kwargs.keys():
                     max_gen_toks = kwargs.pop("max_gen_toks")
@@ -500,9 +495,9 @@ class OpenaiChatCompletionsLM(LM):
 
                     res[key].append(s)
 
-                    self.cache_hook.add_partial(
-                        "generate_until", (context, {"until": until}), s
-                    )
+                    self.cache_hook.add_partial("generate_until", (context, {
+                        "until": until
+                    }), s)
                     pbar.update(1)
             # reorder this group of results back to original unsorted form
             res[key] = re_ord.get_original(res[key])
