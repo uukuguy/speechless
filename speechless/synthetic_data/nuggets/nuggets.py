@@ -8,12 +8,14 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from loguru import logger
+from transformers import AutoTokenizer, PreTrainedTokenizerFast, AutoModelForCausalLM
 
-# from common import AdvantageLogger 
+# from common import AdvantageLogger
 # from models import build_model_signature, build_tokenizer, build_model
 
 from .meta_optimizer import AttnOptimWrapper
 from .alpaca import AlpacaProbInference
+
 
 def init_random(seed):
     import random
@@ -29,10 +31,61 @@ def init_random(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
+
 def clean_memory():
     gc.collect()
     ctypes.CDLL("libc.so.6").malloc_trim(0)
     torch.cuda.empty_cache()
+
+
+from pathlib import Path
+
+checkpoints_root = Path("huggingface_cache")
+
+
+def build_model_signature(model_type, model_size, model_path=None):
+    if model_type == "opt":
+        # ["125m", "350m", "1.3b", "2.7b", "6.7b", "13b", "30b", "66b"]
+        return f"facebook/opt-{model_size}"
+    if model_type == "gpt2":
+        # ["sm", "medium", "large", "xl"]
+        if model_size == "sm":
+            return "gpt2"
+        return f"gpt2-{model_size}"
+    if model_type == "e-gpt":
+        # ["neo-125M", "neo-1.3B", "neo-2.7B", "j-6B", "neox-20b"]
+        return f"EleutherAI/gpt-{model_size}"
+    if model_type == "bloom":
+        # ["560m", "1b1", "1b7", "3b", "7b1"]
+        return f"bigscience/bloom-{model_size}"
+    if model_type == "local":
+        assert model_path is not None
+        return model_path
+
+
+def build_tokenizer(model_type, model_size, padding_side="left", model_path=None, use_fast=False):
+    sign = build_model_signature(model_type, model_size, model_path)
+    if not use_fast:
+        tok = AutoTokenizer.from_pretrained(sign, padding_side=padding_side, cache_dir=str(checkpoints_root))
+    else:
+        tok = PreTrainedTokenizerFast.from_pretrained(sign, padding_side=padding_side, cache_dir=str(checkpoints_root))
+    if model_type in ["gpt2", "e-gpt"]:
+        tok.pad_token_id = tok.eos_token_id
+        tok.pad_token = tok.eos_token
+    return tok
+
+
+def build_model(model_type, model_size, in_8bit, model_path=None):
+    sign = build_model_signature(model_type, model_size, model_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        sign,
+        cache_dir=str(checkpoints_root),
+        device_map="auto",
+        # load_in_8bit=in_8bit,
+    )
+    model.eval()
+    return model
+
 
 def smart_tokenizer_and_embedding_resize(
     special_tokens_dict,
@@ -55,6 +108,7 @@ def smart_tokenizer_and_embedding_resize(
 
         input_embeddings[-num_new_tokens:] = input_embeddings_avg
         output_embeddings[-num_new_tokens:] = output_embeddings_avg
+
 
 # init_random(seed=SEED)
 
@@ -163,6 +217,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
+
 def get_args():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--seed", type=int, default=42)
@@ -174,11 +229,10 @@ def get_args():
     parser.add_argument("--model_type", type=str, choices=["opt", "gpt2", "e-gpt", "bloom", "llama", "local"])
     parser.add_argument("--model_size", type=str)
     parser.add_argument("--model_path", type=str)
-    
+
     parser.add_argument("--prompt_path", type=str, default=None)
     parser.add_argument("--test_path", type=str, default=None)
     parser.add_argument("--save_path", type=str, default=None)
-
 
     parser.add_argument("--gpus", type=str, default="0")
     parser.add_argument("--batch_size", type=int, default=0)  # 0 for auto-detect, -1 for FORCE auto-detect
@@ -199,6 +253,7 @@ def get_args():
 
     args = parser.parse_args()
     return args
+
 
 if __name__ == "__main__":
     args = get_args()
