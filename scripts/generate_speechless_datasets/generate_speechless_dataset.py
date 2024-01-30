@@ -39,7 +39,8 @@ def prepare_data(model_name_or_path, model_max_len, model_min_len):
     dataset = nl2sql_spider_birdsql_dataset
 
     def _get_data_length(item):
-        prompt = f"{tokenizer.bos_token}{item['instruction']}{item['response']}{tokenizer.eos_token}"
+        # prompt = f"{tokenizer.bos_token}{item['instruction']}{item['response']}{tokenizer.eos_token}"
+        prompt = f"{tokenizer.bos_token}{item['conversions'][0]['value']}{item['conversions'][1]['value']}{tokenizer.eos_token}"
         return len(
             tokenizer(
                 prompt,
