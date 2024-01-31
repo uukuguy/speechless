@@ -213,9 +213,9 @@ class TokenizedForMCRightPad(Dataset):
         return [_get_one_item(e) for e in es]
 
 
-# if __name__ == "__main__":
-#     from anchor import hf_datasets_root
+if __name__ == "__main__":
+    from anchor import hf_datasets_root
 
-#     import datasets
+    import datasets
 
-#     csqa1 = datasets.load_dataset("commonsense_qa", cache_dir=str(hf_datasets_root), split="validation")
+    csqa1 = datasets.load_dataset("commonsense_qa", cache_dir=str(hf_datasets_root), split="validation")

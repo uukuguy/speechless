@@ -29,10 +29,9 @@ class MomentumOptim:
 
 
 class AttnOptimWrapper:
-    def __init__(self, llm, model_type, optimizer="momentum", **optimizer_args):
+    def __init__(self, llm, optimizer="momentum", **optimizer_args):
         self.model = llm
         self.kv = None
-        self.model_type = model_type
 
         if optimizer == "momentum":
             self.optim_k = MomentumOptim(**optimizer_args)

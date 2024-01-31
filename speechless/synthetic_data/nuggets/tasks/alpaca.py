@@ -1,5 +1,4 @@
 from .base import BaseProbInference
-# from anchor import hf_datasets_root
 import logging
 import json
 from .loader import TokenizedForGenRightPad
@@ -129,3 +128,4 @@ class AlpacaProbInference(BaseProbInference):
         lm_log_p_icl = np.round(lm_log_p_icl, decimals=2)
 
         return (win_rate, norm_win_rate), acc_info, np.vstack((lm_log_p_zero, lm_log_p_icl))
+
