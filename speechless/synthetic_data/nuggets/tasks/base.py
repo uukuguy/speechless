@@ -1,4 +1,4 @@
-import json
+import os, json
 import logging
 import random
 import re
@@ -7,12 +7,12 @@ from collections import defaultdict
 import numpy as np
 import datasets
 
-from anchor import hf_datasets_root
-from tasks.loader import TokenizedForMCRightPad
-from utils.rng_ctx import RandomContext, EmptyContext
+from .loader import TokenizedForMCRightPad
+from .rng_ctx import RandomContext, EmptyContext
 
 logger = logging.getLogger("task")
 
+hf_datasets_root = os.curdir
 
 class BaseProbInference:
     def __init__(self, prompt_version):
@@ -165,7 +165,7 @@ class BaseProbInference:
         logger.info(f"{f_path} not exist, download from huggingface datasets hub...")
 
         dataset_name, subset, split = self.dataset_part(part)
-        data = self.do_download(dataset_name, subset, split=split, cache_dir=str(hf_datasets_root))
+        data = self.do_download(dataset_name, subset, split=split)
         data.to_json(f_path)
         logger.info(f"... success, saved at: {f_path}")
 

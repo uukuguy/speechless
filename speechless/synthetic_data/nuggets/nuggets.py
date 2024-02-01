@@ -13,6 +13,7 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast, AutoModelForCau
 from .meta_optimizer import AttnOptimWrapper
 from .tasks.alpaca import AlpacaProbInference
 
+os.environ['TOKENIZERS_PARALLELISM']="false"
 
 def tabular_pretty_print(grid):
     lens = [max(map(len, col)) for col in zip(*grid)]
@@ -97,6 +98,7 @@ def build_model(model_path):
         model_path,
         cache_dir=str(checkpoints_root),
         device_map="auto",
+        load_in_8bit=True,
     )
     model.eval()
     return model
@@ -244,7 +246,7 @@ def get_args():
     # if `num_base_shot` is set, `num_k_shot * num_base_shot` is the number of exemplars to be sampled
     parser.add_argument("--num_k_shots", type=int, default=1)
     parser.add_argument("--start", type=int, default=0, help="start index of the exemplar set")
-    parser.add_argument("--pace", type=int, default=7000, help="start + pace is the end index of the exemplar set")
+    parser.add_argument("--pace", type=int, default=0, help="start + pace is the end index of the exemplar set")
     parser.add_argument("--num_eval", type=float, default=1)
     parser.add_argument("--num_prompt", type=float, default=1.0)
 
@@ -259,15 +261,12 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
 
-    dataset_name = args.dataset
-
     task_name = f"seed{args.seed}_main{args.kv_iter}"
     # task_name += f"_{args.prompt_version}"
     task_name += f"_{args.exemplar_method}{'' if args.exemplar_method == 'written' else args.num_k_shots}"
     task_name += f"_eps{args.step_size}_beta{args.momentum}"
 
     logger.info(f"Task Prepared: {task_name}")
-    logger.info(f"\tDataset: {dataset_name}")
 
     # 1. load model, tokenizer
     tokenizer = build_tokenizer(model_path=args.model_path, padding_side="right")
@@ -322,7 +321,10 @@ if __name__ == "__main__":
     rate_dict = {}
     score_dict = {}
     start = args.start
-    end = min(start + args.pace, len(exemplar_str))
+    if args.pace > 0:
+        end = min(start + args.pace, len(exemplar_str))
+    else:
+        end = len(exemplar_str)
     logger.info(str(start) + "----------------" + str(end))
 
     for i in tqdm(range(start, end)):
@@ -364,6 +366,7 @@ if __name__ == "__main__":
     json_data = json.dumps(rate_dict)
 
     # 将JSON字符串写入文件
+    os.makedirs(args.save_path, exist_ok=True)
     with open(f'{args.save_path}/{start}_{end}_score.json', 'w') as file:
         file.write(json_data)
 
