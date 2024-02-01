@@ -285,4 +285,20 @@ api_server:
 		--model_name_or_path ${TEST_MODEL_PATH} \
 		--model_family vllm \
 
+# -------------------- mlx-lm --------------------
+#		--model ${MLX_MODELS_DIR}/Yi-34B-Chat-hf-4bit-mlx \
+#		--model ${MLX_MODELS_DIR}/dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx \
+#		--model ${MLX_MODELS_DIR}/Mistral-7B-Instruct-v0.2-4bit-mlx \
+
+MLX_MODELS_DIR=${MODELS_ROOT_DIR}/mlx-community
+
+mlx_lm_gen:
+	python -m mlx_lm.generate \
+		--model ${MLX_MODELS_DIR}/Yi-34B-Chat-hf-4bit-mlx \
+		--seed 0 \
+		--max-tokens 4096 \
+		--temp 0.9 \
+		--eos-token "<|im_end|>" \
+		--prompt  "写一首2024年春节的七言绝句"
+
 include ../Makefile.remote
