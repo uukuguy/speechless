@@ -1059,7 +1059,7 @@ def extract_alpaca_dataset(example):
         prompt_format = ALPACA_PROMPT_DICT["prompt_no_input"]
     return {'input': prompt_format.format(**example)}
 
-def local_dataset(dataset_name):
+def local_dataset(dataset_name, test_size=0.02):
     if dataset_name.endswith(('.json', '.jsonl')):
         full_dataset = Dataset.from_json(path_or_paths=dataset_name)
     elif dataset_name.endswith('.csv'):
@@ -1071,8 +1071,8 @@ def local_dataset(dataset_name):
 
     if 'category' in full_dataset.column_names:
         full_dataset = full_dataset.class_encode_column('category')
-        return full_dataset.train_test_split(test_size=0.02, stratify_by_column='category')
-    return full_dataset.train_test_split(test_size=0.02)
+        return full_dataset.train_test_split(test_size=test_size, stratify_by_column='category')
+    return full_dataset.train_test_split(test_size=test_size)
 
 class RepeatDataset():
     def __init__(self, ds, repeat_batch_size, repeat_steps):
@@ -1168,7 +1168,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             if os.path.exists(dataset_name):
                 try:
                     args.dataset_format = args.dataset_format if args.dataset_format else "input-output"
-                    full_dataset = local_dataset(dataset_name)
+                    full_dataset = local_dataset(dataset_name, test_size=args.eval_dataset_size)
                     return full_dataset
                 except:
                     raise ValueError(f"Error loading dataset from {dataset_name}")
