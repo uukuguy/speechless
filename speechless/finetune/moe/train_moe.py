@@ -13,15 +13,11 @@
 #    limitations under the License.
 import os
 from os.path import exists, join, isdir
-import gc
-import json
+import gc, ctypes
 import math
-import random
-import copy
-from copy import deepcopy
-import logging
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Sequence, Callable, List, Tuple, Union, Any
+from typing import Optional
+from loguru import logger
 
 import torch
 from torch import nn
@@ -53,10 +49,10 @@ from speechless.finetune.moe.transformers_utils import (
 import transformers.integrations
 import transformers.modeling_utils
 
+from speechless.finetune.dataset_utils import make_data_module
+
 transformers.integrations.get_keys_to_not_convert = get_keys_to_not_convert
-transformers.modeling_utils.PreTrainedModel._load_pretrained_model = (
-    _load_pretrained_model
-)
+transformers.modeling_utils.PreTrainedModel._load_pretrained_model = (_load_pretrained_model)
 
 IGNORE_INDEX = -100
 DEFAULT_PAD_TOKEN = "[PAD]"
@@ -69,13 +65,46 @@ class ModelArguments:
 
 @dataclass
 class DataArguments:
-    data_path: str = field(
-        default=None, metadata={"help": "Path to the training data."}
+    # data_path: str = field(
+    #     default=None, metadata={"help": "Path to the training data."}
+    # )
+    force_remove_overlength_samples: bool = field(default=True, metadata={"help": "Remove overlength samples."})
+    # group_by_length: bool = field(default=True, metadata={"help": 'Group sequences into batches with same length. Saves memory and speeds up training considerably.'})
+    eval_dataset_size: float = field(default=0.02, metadata={"help": "Ratio of dataset to use for validation."})
+    max_train_samples: Optional[float] = field(
+        default=None,
+        metadata={
+            "help":
+            "For debugging purposes or quicker training, truncate the number of training examples to this "
+            "value if set. If set to a float, will truncate the number of examples to that percentage of the dataset."
+        },
+    )
+    max_eval_samples: Optional[int] = field(
+        default=None,
+        metadata={
+            "help":
+            "For debugging purposes or quicker training, truncate the number of evaluation examples to this "
+            "value if set."
+        },
+    )
+    dataset: str = field(
+        default='alpaca', metadata={"help": "Which dataset to finetune on. See datamodule for options."}
+    )
+    dataset_format: Optional[str] = field(
+        default="conversations",
+        metadata={"help": "Which dataset format is used. [alpaca|conversations|chip2|self-instruct|hh-rlhf|mistral]"}
+    )
+    prompt_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Which prompt type to use. [alpaca|chatlm|conversations|chip2|self-instruct|hh-rlhf|mistral]"
+        }
     )
 
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
+    do_train: bool = field(default=True, metadata={"help": 'To train or not to train, that is the question?'})
     report_to: str = field(default="none")
     cache_dir: Optional[str] = field(default=None)
     optim: str = field(
@@ -86,180 +115,58 @@ class TrainingArguments(transformers.TrainingArguments):
     )  # "constant", "constant_with_warmup", "cosine", "cosine_with_restarts", "linear"
     model_max_length: int = field(
         default=2048,
-        metadata={
-            "help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."
-        },
+        metadata={"help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."},
     )
 
+    flash_attention: bool = field(default=True, metadata={"help": "Use flash attention."})
 
-def _tokenize_fn(
-    strings: Sequence[str], tokenizer: transformers.PreTrainedTokenizer
-) -> Dict:
-    """Tokenize a list of strings."""
-    tokenized_list = [
-        tokenizer(
-            text,
-            return_tensors="pt",
-            padding="longest",
-            max_length=tokenizer.model_max_length,
-            truncation=True,
-        )
-        for text in strings
-    ]
-    input_ids = labels = [tokenized.input_ids[0] for tokenized in tokenized_list]
-    input_ids_lens = labels_lens = [
-        tokenized.input_ids.ne(tokenizer.pad_token_id).sum().item()
-        for tokenized in tokenized_list
-    ]
-    return dict(
-        input_ids=input_ids,
-        labels=labels,
-        input_ids_lens=input_ids_lens,
-        labels_lens=labels_lens,
-    )
+    bits: int = field(default=4, metadata={"help": "How many bits to use."})
+    lora_r: int = field(default=64, metadata={"help": "Lora R dimension."})
+    lora_alpha: float = field(default=16, metadata={"help": " Lora alpha."})
+    lora_dropout: float = field(default=0.0, metadata={"help": "Lora dropout."})
+
+    num_experts: int = field(default=8, metadata={"help": "Number of experts. 4/8/16"})
+    topk: int = field(default=2, metadata={"help": "Top k. 2/2/4"})
+    adapter_dim: int = field(default=64, metadata={"help": "Adapter dimension.64/64/512"})
 
 
-def preprocess(
-    sources: Sequence[str],
-    targets: Sequence[str],
-    tokenizer: transformers.PreTrainedTokenizer,
-) -> Dict:
-    """Preprocess the data by tokenizing."""
-    examples = [s + t for s, t in zip(sources, targets)]
-    examples_tokenized, sources_tokenized = [
-        _tokenize_fn(strings, tokenizer) for strings in (examples, sources)
-    ]
-    input_ids = examples_tokenized["input_ids"]
-    labels = copy.deepcopy(input_ids)
-    for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
-        label[:source_len] = IGNORE_INDEX
-    return dict(input_ids=input_ids, labels=labels)
+def clean_memory():
+    gc.collect()
+    ctypes.CDLL("libc.so.6").malloc_trim(0)
+    torch.cuda.empty_cache()
 
 
-class SupervisedDataset(Dataset):
-    """Dataset for supervised fine-tuning."""
+class CleanMemoryCallback(transformers.TrainerCallback):
 
-    def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer):
-        super(SupervisedDataset, self).__init__()
+    def on_step_end(self, args, state, control, **kwargs):
+        clean_memory()
 
-        logging.warning("Loading data: {}".format(data_path))
-        data_list = utils.jload(data_path)
+    def on_evaluate(self, args, state, control, **kwargs):
+        clean_memory()
 
-        # Preprocess Data
-        logging.warning("Processing data")
-        self.tokenizer = tokenizer
-        self.sources = []
-        self.targets = []
 
-        # pylint: disable-next=consider-using-enumerate
-        for idx in range(len(data_list)):
-            data = data_list[idx]
-            corpus = data["corpus"]
-            if corpus != "":
-                # pretrain mode
-                source = f"{tokenizer.bos_token}"
-                self.sources.append(source)
+from transformers import TrainerCallback
 
-                target = f"{corpus}{tokenizer.eos_token}"
-                self.targets.append(target)
+
+class LoggingCallback(TrainerCallback):
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        _ = logs.pop("total_flos", None)
+        if state.is_local_process_zero:
+            if "eval_loss" in logs:
+                logger.info(logs)
             else:
-                # instruction mode
-                instruction = data["instruction"]
-                conversation = data["conversation"]
-                source = f"{tokenizer.bos_token}### System:\n{instruction}\n"
-                if len(conversation) == 1:
-                    source += (
-                        f"### Human:\n{conversation[0]['input']}\n### Assistant:\n"
-                    )
-                    self.sources.append(source)
-
-                    target = f"{conversation[0]['output']}{tokenizer.eos_token}"
-
-                    self.targets.append(target)
-                else:
-                    # dialog mode
-                    for i, conv in enumerate(conversation):
-                        source += f"### Human:\n{conv['input']}\n### Assistant:\n"
-                        if i == len(conversation) - 1:
-                            break
-                        source += f"{conv['output']}\n"
-
-                    self.sources.append(source)
-
-                    target = f"{conversation[-1]['output']}{tokenizer.eos_token}"
-
-                    self.targets.append(target)
-
-        del data_list
-        gc.collect()
-
-        # ## Debug Mode
-        # self.sources = self.sources[:10000]
-        # self.targets = self.targets[:10000]
-
-        # logging.warning("Tokenizing inputs... This may take some time...")
-        # data_dict = preprocess(sources, targets, tokenizer)
-
-        # del sources, targets
-        # gc.collect()
-
-        # self.input_ids = data_dict["input_ids"]
-        # self.labels = data_dict["labels"]
-
-        # del data_dict
-        # gc.collect()
-
-        logging.warning("there are {} data in dataset".format(len(self.sources)))
-
-    def __len__(self):
-        return len(self.sources)
-
-    def __getitem__(self, i):
-        # return dict(input_ids=self.input_ids[i], labels=self.labels[i])
-        source = [self.sources[i]]
-        target = [self.targets[i]]
-        data_dict = preprocess(source, target, self.tokenizer)
-
-        input_ids = data_dict["input_ids"][0]
-        labels = data_dict["labels"][0]
-
-        return dict(input_ids=input_ids, labels=labels)
-
-
-@dataclass
-class DataCollatorForSupervisedDataset(object):
-    """Collate examples for supervised fine-tuning."""
-
-    tokenizer: transformers.PreTrainedTokenizer
-
-    def __call__(self, instances: Sequence[Dict]) -> Dict[str, torch.Tensor]:
-        input_ids, labels = tuple(
-            [instance[key] for instance in instances] for key in ("input_ids", "labels")
-        )
-        input_ids = torch.nn.utils.rnn.pad_sequence(
-            input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id
-        )
-        labels = torch.nn.utils.rnn.pad_sequence(
-            labels, batch_first=True, padding_value=IGNORE_INDEX
-        )
-        return dict(
-            input_ids=input_ids,
-            labels=labels,
-            attention_mask=input_ids.ne(self.tokenizer.pad_token_id),
-        )
+                logger.debug(logs)
 
 
 class SavePeftModelCallback(transformers.TrainerCallback):
+
     def save_model(self, args, state, kwargs):
-        # print('Saving PEFT checkpoint...')
+        logger.info('Saving PEFT checkpoint...')
         if state.best_model_checkpoint is not None:
-            checkpoint_folder = os.path.join(
-                state.best_model_checkpoint, "adapter_model"
-            )
+            checkpoint_folder = os.path.join(state.best_model_checkpoint, "adapter_model")
         else:
-            checkpoint_folder = os.path.join(
-                args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}"
-            )
+            checkpoint_folder = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
 
         peft_model_path = os.path.join(checkpoint_folder, "adapter_model")
         model = kwargs["model"]
@@ -275,15 +182,27 @@ class SavePeftModelCallback(transformers.TrainerCallback):
         # print(moe_state.keys())
         torch.save(moe_state, moe_model_path)
 
+        self._symlink_latest_checkpoint(checkpoint_folder)
+
         pytorch_model_path = os.path.join(checkpoint_folder, "pytorch_model.bin")
         if os.path.exists(pytorch_model_path):
             os.remove(pytorch_model_path)
+
+    def _symlink_latest_checkpoint(self, checkpoint_folder):
+        # if the latest checkpoint is a symlink, remove it
+        output_dir = os.path.dirname(checkpoint_folder)
+        latest_checkpoint = os.path.join(output_dir, "latest")
+        if os.path.islink(latest_checkpoint):
+            os.remove(latest_checkpoint)
+        # symlink the latest checkpoint to the checkpoint folder
+        os.symlink(os.path.basename(checkpoint_folder), latest_checkpoint)
 
     def on_save(self, args, state, control, **kwargs):
         self.save_model(args, state, kwargs)
         return control
 
     def on_train_end(self, args, state, control, **kwargs):
+
         def touch(fname, times=None):
             with open(fname, "a"):
                 os.utime(fname, times)
@@ -292,25 +211,8 @@ class SavePeftModelCallback(transformers.TrainerCallback):
         self.save_model(args, state, kwargs)
 
 
-def make_supervised_data_module(
-    tokenizer: transformers.PreTrainedTokenizer, data_args
-) -> Dict:
-    """Make dataset and collator for supervised fine-tuning."""
-    train_dataset = SupervisedDataset(
-        tokenizer=tokenizer, data_path=data_args.data_path
-    )
-    data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
-    return dict(
-        train_dataset=train_dataset, eval_dataset=None, data_collator=data_collator
-    )
-
-
 def find_all_linear_names(model, bits=4):
-    cls = (
-        bnb.nn.Linear4bit
-        if bits == 4
-        else (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear)
-    )
+    cls = (bnb.nn.Linear4bit if bits == 4 else (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear))
     lora_module_names = set()
     for name, module in model.named_modules():
         if isinstance(module, cls):
@@ -338,12 +240,15 @@ def print_trainable_parameters(model):
 
 
 def train():
-    parser = transformers.HfArgumentParser(
-        (ModelArguments, DataArguments, TrainingArguments)
-    )
+    parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     training_args.ddp_find_unused_parameters = False
-    set_seed(741)
+
+    import argparse
+    args = argparse.Namespace(**vars(model_args), **vars(data_args), **vars(training_args))
+    set_seed(args.seed)
+
+    print(f"{args=}")
 
     if "llama" in model_args.model_name_or_path:
         model_config = CamelidaeConfig.from_pretrained(model_args.model_name_or_path)
@@ -351,12 +256,12 @@ def train():
 
         # Camelidae Config
         model_config.moe_dtype = "bfloat16"
-        model_config.lora_r = 64
-        model_config.lora_alpha = 16
-        model_config.adapter_dim = 64
-        model_config.topk = 2
+        model_config.lora_r = args.lora_r  #64
+        model_config.lora_alpha = args.lora_alpha  #16
+        model_config.adapter_dim = args.adapter_dim # 64
+        model_config.topk = args.topk # 2
         model_config.moe_scaling = 1
-        model_config.num_experts = 8
+        model_config.num_experts = args.num_experts  # 8
         model_config.output_router_logits = False
 
         # # Seq Length Extension
@@ -371,17 +276,21 @@ def train():
 
         # Sparsetral Config
         model_config.moe_dtype = "bfloat16"
-        model_config.lora_r = 64
-        model_config.lora_alpha = 16
-        model_config.adapter_dim = 512
-        model_config.topk = 4
+        model_config.lora_r = args.lora_r  #64
+        model_config.lora_alpha = args.lora_alpha  #16
+        model_config.adapter_dim = args.adapter_dim #512
+        model_config.topk = args.topk # 4
         model_config.moe_scaling = 1
-        model_config.num_experts = 16
+        model_config.num_experts = args.num_experts #16
         model_config.output_router_logits = True
 
         model_class = MistralForCausalLM
     else:
         raise ValueError("model not supported")
+
+    model_kwargs = {}
+    if args.flash_attention:
+        model_kwargs['attn_implementation'] = "flash_attention_2"
 
     model = model_class.from_pretrained(
         model_args.model_name_or_path,
@@ -395,6 +304,7 @@ def train():
             bnb_4bit_quant_type="nf4",
         ),
         output_loading_info=False,
+        **model_kwargs,
     )
     model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
     model.gradient_checkpointing_enable()
@@ -413,7 +323,7 @@ def train():
         r=model_config.lora_r,
         lora_alpha=model_config.lora_alpha,
         target_modules=lora_modules,
-        lora_dropout=0.1,
+        lora_dropout=args.lora_dropout,  #0.1,
         bias="none",
         task_type="CAUSAL_LM",
     )
@@ -453,24 +363,72 @@ def train():
     model.config.use_cache = False
     print_trainable_parameters(model)
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-        model_max_length=training_args.model_max_length,
-        padding_side="right",
-        use_fast=False,
-        trust_remote_code=True,
-    )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token_id = (
-            0  # unk. we want this to be different from the eos token
-        )
+    # tokenizer = transformers.AutoTokenizer.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     cache_dir=training_args.cache_dir,
+    #     model_max_length=training_args.model_max_length,
+    #     padding_side="left",
+    #     use_fast=False,
+    #     trust_remote_code=True,
+    # )
+    # if tokenizer.pad_token is None:
+    #     tokenizer.pad_token_id = (
+    #         0  # unk. we want this to be different from the eos token
+    #     )
 
-    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    # Tokenizer
+    tokenizer_kwargs = {
+        "cache_dir": args.cache_dir,
+        "padding_side": "left",
+        "use_fast": False,
+        "trust_remote_code": True,
+    }
+    print(f"---------- Original tokens----------")
+    tokenizer = transformers.AutoTokenizer.from_pretrained(args.model_name_or_path, **tokenizer_kwargs)
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+    if "qwen" in args.model_name_or_path.lower():
+        tokenizer.eos_token = "<|endoftext|>"
+        # tokenizer.unk_token = "<|extra_3|>"
+        tokenizer.bos_token = "<|extra_2|>"
+        tokenizer.pad_token = "<|extra_1|>"
+    else:
+        if tokenizer.bos_token_id is None:
+            tokenizer.bos_token_id = 1
+            tokenizer.bos_token = "<s>"
+        if tokenizer.eos_token_id is None:
+            tokenizer.eos_token_id = 2
+            tokenizer.eos_token = "</s>"
+        # if tokenizer.unk_token_id is None:
+        #     tokenizer.unk_token_id = 0
+        #     tokenizer.unk_token = "<unk>"
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = 0  # tokenizer.eos_token_id
+            tokenizer.pad_token = tokenizer._convert_id_to_token(tokenizer.pad_token_id)  #tokenizer.eos_token
+    print(f"---------- Fixed tokens ----------")
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    # print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+    # data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    data_module = make_data_module(tokenizer=tokenizer, args=args)
+
     trainer = Trainer(
-        model=model, tokenizer=tokenizer, args=training_args, **data_module
+        model=model,
+        tokenizer=tokenizer,
+        args=training_args,
+        **{k: v
+           for k, v in data_module.items()
+           if k != 'predict_dataset'},
     )
     trainer.add_callback(SavePeftModelCallback)
+
+    trainer.add_callback(CleanMemoryCallback)
+    trainer.add_callback(LoggingCallback)
 
     trainer.train()
 

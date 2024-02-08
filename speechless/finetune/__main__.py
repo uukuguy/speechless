@@ -65,6 +65,18 @@ def finetune_run(args):
     run_cmd = f"cd {task_dir} && ./run_finetune.sh"
     os.system(run_cmd)
 
+def finetune_moe(args):
+    task_name = args.task_name
+    if not task_name:
+        raise Exception("task_name is required")
+    task_dir = f"{os.curdir}/{task_name}"
+
+    if not is_speechless_task_dir(task_dir):
+        raise Exception(f"{task_dir} not found or invalid")
+
+    run_cmd = f"cd {task_dir} && ./run_moe.sh"
+    os.system(run_cmd)
+
 
 def finetune_merge(args):
     task_name = args.task_name
@@ -102,6 +114,7 @@ def finetune_list(args):
 commands = {
     "init": finetune_init,
     "run": finetune_run,
+    "moe": finetune_moe,
     "merge": finetune_merge,
     "backup": finetune_backup,
     "list": finetune_list,
