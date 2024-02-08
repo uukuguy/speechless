@@ -25,7 +25,7 @@ def ollama_create(args):
     with open(modelfile_path, "w") as f:
         f.write(f"FROM {args.gguf_file}")
 
-    ollama_model_name = args.ollama_model_name or os.path.basename(args.gguf_file).replace('.Q', ':Q').replace('.f16', ':f16').replace('.gguf', '')
+    ollama_model_name = args.ollama_model_name or os.path.basename(args.gguf_file).replace('-Q', ':Q').replace('-f16', ':f16').replace('.Q', ':Q').replace('.f16', ':f16').replace('.gguf', '')
 
     modelfile=open(modelfile_path).read()
     ollama.create(model=ollama_model_name, modelfile=modelfile)
