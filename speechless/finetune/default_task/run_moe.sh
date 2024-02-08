@@ -15,15 +15,26 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --dataset ${DATASET} \
     --bf16 True \
     --model_max_length ${MODEL_MAX_LENGTH} \
+    --group_by_length ${GROUP_BY_LENGTH} \
+    --do_train \
+    --do_eval \
+    --bits ${BITS} \
+    --lora_r ${LORA_R} \
+    --lora_alpha ${LORA_ALPHA} \
+    --lora_dropout 0.05 \
+    --num_experts ${NUM_EXPERTS} \
+    --topk ${TOPK} \
+    --adapter_dim ${ADAPTER_DIM} \
     --output_dir ${OUTPUT_DIR} \
     --num_train_epochs ${NUM_TRAIN_EPOCHS} \
     --per_device_train_batch_size ${PER_DEVICE_TRAIN_BATCH_SIZE} \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEPS} \
-    --evaluation_strategy "no" \
+    --evaluation_strategy steps \
     --save_strategy ${SAVE_STRATEGY} \
     ${SAVE_TOTAL_LIMIT} \
     --logging_strategy "steps" \
+    --eval_dataset_size ${EVAL_DATASET_SIZE} \
     --eval_steps ${EVAL_STEPS} \
     --save_steps ${SAVE_STEPS} \
     --logging_steps 1 \
@@ -32,4 +43,11 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --max_grad_norm 0.3 \
     --weight_decay 0.0 \
     --warmup_steps ${WARMUP_STEPS} \
+    --max_train_samples ${MAX_TRAIN_SAMPLES} \
+    --max_eval_samples ${MAX_EVAL_SAMPLES} \
+    --report_to tensorboard \
+    --remove_unused_columns False \
+    --gradient_checkpointing True \
+    --ddp_find_unused_parameters False \
+    --force_remove_overlength_samples False \
     --tf32 True
