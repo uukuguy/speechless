@@ -39,6 +39,8 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --save_steps ${SAVE_STEPS} \
     --logging_steps 1 \
     --learning_rate ${LEARNING_RATE} \
+    --optim ${OPTIM} \
+    --lr_scheduler_type ${LR_SCHEDULER_TYPE} \
     --adam_beta2 0.999 \
     --max_grad_norm 0.3 \
     --weight_decay 0.0 \
