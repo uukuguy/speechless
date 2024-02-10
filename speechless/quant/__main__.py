@@ -19,7 +19,7 @@ def quant_by_llamacpp(args):
     os.makedirs(gguf_dir, exist_ok=True)
 
     if not os.path.exists(gguf_f16_file):
-        convert_cmd = f"python {llamacpp_convert} {model_path} --padvocab --outtype f16 --outfile {gguf_f16_file}"
+        convert_cmd = f"python {llamacpp_convert} {model_path} --pad-vocab --outtype f16 --outfile {gguf_f16_file}"
         print(convert_cmd)
         os.system(convert_cmd)
 

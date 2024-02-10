@@ -15,6 +15,7 @@
 
 ## What's New
 
+- [2024-02-06] Release [speechless-mistral-hermes-code-7b](https://huggingface.co/uukuguy/speechless-mistral-hermes-code-7b) fine-tuned by speechless-thoughts-252K dataset.
 - [2024-01-23] Release [speechless-zephyr-code-functionary-7b](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b)
 - [2024-01-15] Release [speechless-nl2sql-ds-6.7b](https://huggingface.co/uukuguy/speechless-nl2sql-ds-6.7b), finetune based on [deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base).
 - [2024-01-05] Release [speechless-mistral-moloras-7b](https://huggingface.co/uukuguy/speechless-mistral-moloras-7b), which is the static version of moloras ([Mixture-of-multi-LoRAs](https://github.com/uukuguy/multi_loras?tab=readme-ov-file#mixture-of-multi-loras))
@@ -60,6 +61,12 @@ speechless-tools-7b-dfs vs toolllama-dfs
 [Models Repositry](https://huggingface.co/uukuguy)
 
 ⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
+
+### Feb. 2024
+
+- ⭐ **[speechless-mistral-hermes-code-7b](https://huggingface.co/uukuguy/speechless-mistral-hermes-code-7b) 2024.02.06**
+
+    Using the speechless-thoughts-252K dataset, it was fine-tuned based on the Mistral-7B-v0.1 base model in preparation for comparison with [speechless-code-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-code-mistral-7b-v1.0).
 
 ### Jan. 2024
 
