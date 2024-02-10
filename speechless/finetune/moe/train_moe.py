@@ -250,7 +250,22 @@ def train():
 
     print(f"{args=}")
 
-    if "llama" in model_args.model_name_or_path:
+    if "mistral" in model_args.model_name_or_path:
+        model_config = SparsetralConfig.from_pretrained(model_args.model_name_or_path)
+
+        # Sparsetral Config
+        model_config.moe_dtype = "bfloat16"
+        model_config.lora_r = args.lora_r  #64
+        model_config.lora_alpha = args.lora_alpha  #16
+        model_config.adapter_dim = args.adapter_dim #512
+        model_config.topk = args.topk # 4
+        model_config.moe_scaling = 1
+        model_config.num_experts = args.num_experts #16
+        model_config.output_router_logits = True
+
+        model_class = MistralForCausalLM
+    # if "llama" in model_args.model_name_or_path:
+    else:
         model_config = CamelidaeConfig.from_pretrained(model_args.model_name_or_path)
         model_config.pretraining_tp = 1  ## without tensor parallelism rank
 
@@ -271,22 +286,22 @@ def train():
         # }
 
         model_class = LlamaForCausalLM
-    elif "mistral" in model_args.model_name_or_path:
-        model_config = SparsetralConfig.from_pretrained(model_args.model_name_or_path)
+    # elif "mistral" in model_args.model_name_or_path:
+    #     model_config = SparsetralConfig.from_pretrained(model_args.model_name_or_path)
 
-        # Sparsetral Config
-        model_config.moe_dtype = "bfloat16"
-        model_config.lora_r = args.lora_r  #64
-        model_config.lora_alpha = args.lora_alpha  #16
-        model_config.adapter_dim = args.adapter_dim #512
-        model_config.topk = args.topk # 4
-        model_config.moe_scaling = 1
-        model_config.num_experts = args.num_experts #16
-        model_config.output_router_logits = True
+    #     # Sparsetral Config
+    #     model_config.moe_dtype = "bfloat16"
+    #     model_config.lora_r = args.lora_r  #64
+    #     model_config.lora_alpha = args.lora_alpha  #16
+    #     model_config.adapter_dim = args.adapter_dim #512
+    #     model_config.topk = args.topk # 4
+    #     model_config.moe_scaling = 1
+    #     model_config.num_experts = args.num_experts #16
+    #     model_config.output_router_logits = True
 
-        model_class = MistralForCausalLM
-    else:
-        raise ValueError("model not supported")
+    #     model_class = MistralForCausalLM
+    # else:
+    #     raise ValueError("model not supported")
 
     model_kwargs = {}
     if args.flash_attention:
