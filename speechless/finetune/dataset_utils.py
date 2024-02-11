@@ -92,7 +92,7 @@ PROMPT_DICT = {
 
 def preprocess_toolbench_dataset(
     example,
-    model_max_len: int,
+    model_max_length: int,
     tokenizer: transformers.PreTrainedTokenizer,
     template: str = "tool-llama-single-round"
 ) -> Dict:
@@ -360,6 +360,19 @@ def generate_round_prompt_chatlm(
 
     return source, target
 
+def generate_round_prompt_minicpm(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    source = f"{bos_token}<用户>{human_input}<AI>"
+    target = f"{bot_response.strip()}{eos_token}"
+
+    return source, target
+
 
 @dataclass
 class DialogDataCollatorForCausalLM(object):
@@ -445,6 +458,15 @@ class DialogDataCollatorForCausalLM(object):
                     )
                 elif prompt_type == "llama2":
                     source, target = generate_round_prompt_llama2(
+                        idx,
+                        human_input,
+                        bot_response,
+                        bos_token=self.tokenizer.bos_token,
+                        eos_token=self.tokenizer.eos_token,
+                        system_prompt=system_prompt,
+                    )
+                elif prompt_type == "minicpm":
+                    source, target = generate_round_prompt_minicpm(
                         idx,
                         human_input,
                         bot_response,

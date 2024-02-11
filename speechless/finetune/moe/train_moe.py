@@ -97,7 +97,7 @@ class DataArguments:
     prompt_type: Optional[str] = field(
         default=None,
         metadata={
-            "help": "Which prompt type to use. [alpaca|chatlm|conversations|chip2|self-instruct|hh-rlhf|mistral]"
+            "help": "Which prompt type to use. [alpaca|chatlm|llama2|minicpm|conversations|chip2|self-instruct|hh-rlhf|mistral]"
         }
     )
 
