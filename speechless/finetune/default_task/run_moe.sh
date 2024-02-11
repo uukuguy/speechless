@@ -13,6 +13,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     -m speechless.finetune.moe \
     --model_name_or_path ${BASE_MODEL_PATH} \
     --dataset ${DATASET} \
+    --prompt_type ${PROMPT_TYPE} \
     --bf16 True \
     --model_max_length ${MODEL_MAX_LENGTH} \
     --group_by_length ${GROUP_BY_LENGTH} \

@@ -20,6 +20,7 @@
 """ PyTorch LLaMA model."""
 import math
 from typing import List, Optional, Tuple, Union
+from dataclasses import dataclass
 
 import numpy as np
 import copy
@@ -53,6 +54,7 @@ logger = logging.get_logger(__name__)
 _CONFIG_FOR_DOC = "CamelidaeConfig"
 
 
+@dataclass
 class MoEModelOutputWithPast(ModelOutput):
     last_hidden_state: torch.FloatTensor = None
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
@@ -61,6 +63,7 @@ class MoEModelOutputWithPast(ModelOutput):
     router_logits: Optional[Tuple[torch.FloatTensor]] = None
 
 
+@dataclass
 class MoECausalLMOutputWithPast(ModelOutput):
     loss: Optional[torch.FloatTensor] = None
     aux_loss: Optional[torch.FloatTensor] = None
