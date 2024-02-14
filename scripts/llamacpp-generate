@@ -1,0 +1,22 @@
+#!/bin/bash
+SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+
+source ${SCRIPT_PATH}/llamacpp-generate.env
+
+GGUF_FILE=$1
+PROMPT=$2
+
+    # -p "[INST]Write a bash script to get all the folders in the current directory.[/INST]"
+    # -p "Continue write the story: Mmmm, Your cock looks so hard and ready for my mouth! Cum in my mouth."
+    # -p "<|im_start|>user\n写一篇春节拜年的小小说\n<|im_end|>\n<|im_start|>assistant\n"
+    # -p "### Instruction:\n写一篇春节拜年的小小说\n\n### Response:"
+
+${HOME}/llama.cpp/main \
+    -m "${GGUF_FILE}" \
+    -ngl 512 \
+    -c 16384 \
+    -n 16384 \
+    ${DISABLE_LOG} \
+    ${BASE_OPTS} \
+    ${CREATIVE_OPTS} \
+    -p "${PROMPT}"
