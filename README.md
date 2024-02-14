@@ -15,6 +15,8 @@
 
 ## What's New
 
+- [2024-02-12] Release [speechless-thoughts-mistral-7b](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b)
+- [2024-02-10] Release [speechless-sparsetral-16x7b-MoE](https://huggingface.co/uukuguy/speechless-sparsetral-16x7b-MoE), the MoE upgraded version of speechless-code-mistral-7b-v1.0. The MoE fine-tuning adopts [Parameter-Efficient Sparsity Crafting (PESC)](https://arxiv.org/abs/2401.02731), which is an efficient fine-tuning architecture that uses LoRA modules as expert models, similar to the concept of [multi-loras](https://github.com/uukuguy/multi_loras).
 - [2024-02-06] Release [speechless-mistral-hermes-code-7b](https://huggingface.co/uukuguy/speechless-mistral-hermes-code-7b) fine-tuned by speechless-thoughts-252K dataset.
 - [2024-01-23] Release [speechless-zephyr-code-functionary-7b](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b)
 - [2024-01-15] Release [speechless-nl2sql-ds-6.7b](https://huggingface.co/uukuguy/speechless-nl2sql-ds-6.7b), finetune based on [deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base).
@@ -63,6 +65,20 @@ speechless-tools-7b-dfs vs toolllama-dfs
 ⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
 
 ### Feb. 2024
+
+- **[speechless-thoughts-mistral-7b](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b) 2024.02.12**
+
+    speechless-thoughts-mistral-7b is fine-tuned as a baseline of the [speechless-sparsetral-16x7b-MoE](https://huggingface.co/uukuguy/speechless-sparsetral-16x7b-MoE).
+
+    **Open LLM Language Model Evaluation Harness**
+
+    | Average | ARC    | HellaSwag | MMLU   | TruthfulQA | Winogrande | GSM8K  |
+    | ------  | ------ | ------    | ------ | ------     | -------    | ------ |
+    | 59.72   | 58.96  | 87.10    | 60.11  | 49.91      | 77.82      | 30.78  |
+
+- ⭐ **[speechless-sparsetral-16x7b-MoE](https://huggingface.co/uukuguy/speechless-sparsetral-16x7b-MoE) 2024.02.10**
+
+    The MoE upgraded version of speechless-code-mistral-7b-v1.0. The MoE fine-tuning adopts [Parameter-Efficient Sparsity Crafting (PESC)](https://arxiv.org/abs/2401.02731), which is an efficient fine-tuning architecture that uses LoRA modules as expert models, similar to the concept of [multi-loras](https://github.com/uukuguy/multi_loras).
 
 - ⭐ **[speechless-mistral-hermes-code-7b](https://huggingface.co/uukuguy/speechless-mistral-hermes-code-7b) 2024.02.06**
 
