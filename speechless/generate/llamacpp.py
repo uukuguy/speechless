@@ -12,7 +12,7 @@ def generate(args):
     GENERATE_OPTS = f"--temp {args.temperature} --top-k {args.top_k} --top-p {args.top_p} --repeat_penalty {args.repeat_penalty}"
     LLAMA_CPP_ROOT = os.getenv("LLAMACPP_ROOT") or os.path.expanduser("~/llama.cpp")
 
-    cmd = f"{LLAMA_CPP_ROOT}/main -m {args.model_path} -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p {args.prompt} "
+    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{args.prompt}' "
 
     # print("Running command: ", cmd)
 
