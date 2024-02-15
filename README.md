@@ -15,6 +15,7 @@
 
 ## What's New
 
+- [2024-02-15] Reelase [speechless-thoughts-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b-v1.0) (Change same hyperparameters)
 - [2024-02-12] Release [speechless-thoughts-mistral-7b](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b)
 - [2024-02-10] Release [speechless-sparsetral-16x7b-MoE](https://huggingface.co/uukuguy/speechless-sparsetral-16x7b-MoE), the MoE upgraded version of speechless-code-mistral-7b-v1.0. The MoE fine-tuning adopts [Parameter-Efficient Sparsity Crafting (PESC)](https://arxiv.org/abs/2401.02731), which is an efficient fine-tuning architecture that uses LoRA modules as expert models, similar to the concept of [multi-loras](https://github.com/uukuguy/multi_loras).
 - [2024-02-06] Release [speechless-mistral-hermes-code-7b](https://huggingface.co/uukuguy/speechless-mistral-hermes-code-7b) fine-tuned by speechless-thoughts-252K dataset.
@@ -65,6 +66,17 @@ speechless-tools-7b-dfs vs toolllama-dfs
 ⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
 
 ### Feb. 2024
+
+- **[speechless-thoughts-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b-v1.0) 2024.02.15**
+
+    Change some hyperparameters compared to speechless-thoughts-mistral-7b.
+
+    ```json
+    learning_rate=2e-4
+    lora_r=64
+    lora_alpha=16
+    model_max_length=8192
+    ```
 
 - **[speechless-thoughts-mistral-7b](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b) 2024.02.12**
 
