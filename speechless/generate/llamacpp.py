@@ -25,7 +25,7 @@ def generate(args):
     #         messages, tokenize=False, add_generation_prompt=True
     #     )
 
-    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
+    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.n_gpu_layers} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
 
     # print("Running command: ", cmd)
 
@@ -50,7 +50,7 @@ def get_args():
     parser.add_argument("--top_k", type=int, default=40, help="top k")
     parser.add_argument("--repeat_penalty", type=float, default=1.1, help="repeat penalty")
 
-    parser.add_argument("--ngl", type=int, default=512, help="number of layers on GPU")
+    parser.add_argument("--n_gpu_layers", type=int, default=512, help="number of layers on GPU")
 
     parser.add_argument("--verbose", action="store_true", help="verbose")
     parser.add_argument("--seed", type=int, default=0, help="seed")

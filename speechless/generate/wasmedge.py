@@ -20,10 +20,34 @@ def generate(args):
     #         messages, tokenize=False, add_generation_prompt=True
     #     )
 
-    cmd = f"wasmedge --dir .:. --nn-preload default:GGML:AUTO:{args.model_path} llama-api-server.wasm -p llama-2-chat"
+    """
+    wasmedge --dir .:. \
+        --nn-preload default:GGML:AUTO:${MODEL_PATH} \
+        ./llama-chat.wasm \
+        -p mistral-instruct \
+    """
+
+    GENERATE_OPTS = f"--temp {args.temperature} --top-p {args.top_p} --repeat-penalty {args.repeat_penalty}"
+    cmd = f"wasmedge --dir .:. --nn-preload default:GGML:AUTO:{args.model_path} llama-chat.wasm -p {args.prompt_type} -g {args.n_gpu_layers} --ctx-size {args.ctx_size} {GENERATE_OPTS}"
     # print("Running command: ", cmd)
 
     os.system(cmd)
+
+def run_api_server(args):
+    """
+    wasmedge --dir .:. \
+    --nn-preload default:GGML:AUTO:${MODEL_PATH} \
+    ./llama-api-server.wasm \
+    -p mistral-instruct \
+    --socket-addr 127.0.0.1:16384 --log-prompts --log-stat
+    """
+    GENERATE_OPTS = f"--temp {args.temperature} --top-p {args.top_p} --repeat-penalty {args.repeat_penalty}"
+    model_name = ".".join(args.model_path.split("/")[-1].split(".")[:-1])
+    cmd = f"wasmedge --dir .:. --nn-preload default:GGML:AUTO:{args.model_path} llama-api-server.wasm -p {args.prompt_type} -g {args.n_gpu_layers} --ctx-size {args.ctx_size} {GENERATE_OPTS} --socket-addr 127.0.0.1:{args.port} --log-prompts --log-stat --web-ui {args.web_ui} --model-name {model_name}"
+    # print("Running command: ", cmd)
+
+    os.system(cmd)
+    
 
 available_prompt_types = ['llama-2-chat', 'codellama-instruct', 'codellama-super-instruct', 'mistral-instruct-v0.1', 'mistral-instruct', 'mistrallite', 'openchat', 'human-assistant', 'vicuna-1.0-chat', 'vicuna-1.1-chat', 'chatml', 'baichuan-2', 'wizard-coder', 'zephyr', 'stablelm-zephyr', 'intel-neural', 'deepseek-chat', 'deepseek-coder', 'solar-instruct']
 
@@ -31,7 +55,11 @@ def get_args():
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("--trust-remote-code", action="store_true", help="Enable trusting remote code for tokenizer")
-    parser.add_argument("--prompt_type", type=str, choices=['llama-2-chat', 'chatlm'], help="prompt type")
+    parser.add_argument("--prompt_type", type=str, choices=['llama-2-chat', 'chatml', 'mistral-instruct'], help="prompt type")
+
+    parser.add_argument("--api_server", action="store_true", help="run api server")
+    parser.add_argument("--port", type=int, default=16384, help="port to run the server on")
+    parser.add_argument("--web_ui", type=str, default = "chatbot-ui", help="web ui path")
 
     parser.add_argument("--model_path", type=str, required=True, help="GGUF file")
     parser.add_argument("--adapter_file", type=str, help="adapter file path")
@@ -46,6 +74,8 @@ def get_args():
     parser.add_argument("--top_k", type=int, default=40, help="top k")
     parser.add_argument("--repeat_penalty", type=float, default=1.1, help="repeat penalty")
 
+    parser.add_argument("--n_gpu_layers", type=int, default=512, help="number of layers on GPU")
+
     parser.add_argument("--verbose", action="store_true", help="verbose")
     parser.add_argument("--seed", type=int, default=0, help="seed")
 
@@ -55,7 +85,10 @@ def get_args():
 
 def main():
     args = get_args()
-    generate(args)
+    if args.api_server:
+        run_api_server(args)
+    else:
+        generate(args)
 
 
 if __name__ == '__main__':
