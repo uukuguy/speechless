@@ -12,7 +12,12 @@ def generate(args):
     GENERATE_OPTS = f"--temp {args.temperature} --top-k {args.top_k} --top-p {args.top_p} --repeat_penalty {args.repeat_penalty}"
     LLAMA_CPP_ROOT = os.getenv("LLAMACPP_ROOT") or os.path.expanduser("~/llama.cpp")
 
-    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{args.prompt}' "
+    if args.prompt_file:
+        prompt = open(args.prompt_file).read().strip()
+    else:
+        prompt = args.prompt
+
+    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
 
     # print("Running command: ", cmd)
 
@@ -24,7 +29,8 @@ def get_args():
     parser = ArgumentParser()
 
     parser.add_argument("--model_path", type=str, required=True, help="GGUF file")
-    parser.add_argument("--prompt", type=str, required=True, help="prompt to run")
+    parser.add_argument("--prompt", type=str, help="prompt to run")
+    parser.add_argument("--prompt_file", type=str, help="prompt file")
     parser.add_argument("--max_tokens", type=int, default=16384, help="max tokens")
     parser.add_argument("--ctx_size", type=int, default=16384, help="context size")
     parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
