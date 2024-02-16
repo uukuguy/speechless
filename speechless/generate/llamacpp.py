@@ -16,6 +16,14 @@ def generate(args):
         prompt = open(args.prompt_file).read().strip()
     else:
         prompt = args.prompt
+    # if not args.ignore_chat_template and (
+    #     hasattr(tokenizer, "apply_chat_template")
+    #     and tokenizer.chat_template is not None
+    # ):
+    #     messages = [{"role": "user", "content": prompt}]
+    #     prompt = tokenizer.apply_chat_template(
+    #         messages, tokenize=False, add_generation_prompt=True
+    #     )
 
     cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.ngl} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
 
@@ -27,18 +35,25 @@ def generate(args):
 def get_args():
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument("--trust-remote-code", action="store_true", help="Enable trusting remote code for tokenizer")
 
     parser.add_argument("--model_path", type=str, required=True, help="GGUF file")
+    parser.add_argument("--adapter_file", type=str, help="adapter file path")
     parser.add_argument("--prompt", type=str, help="prompt to run")
     parser.add_argument("--prompt_file", type=str, help="prompt file")
+
+    parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
     parser.add_argument("--max_tokens", type=int, default=16384, help="max tokens")
     parser.add_argument("--ctx_size", type=int, default=16384, help="context size")
-    parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
+
     parser.add_argument("--top_p", type=float, default=0.9, help="top p")
     parser.add_argument("--top_k", type=int, default=40, help="top k")
     parser.add_argument("--repeat_penalty", type=float, default=1.1, help="repeat penalty")
-    parser.add_argument("--verbose", action="store_true", help="verbose")
+
     parser.add_argument("--ngl", type=int, default=512, help="number of layers on GPU")
+
+    parser.add_argument("--verbose", action="store_true", help="verbose")
+    parser.add_argument("--seed", type=int, default=0, help="seed")
 
     args = parser.parse_args()
     return args
