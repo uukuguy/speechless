@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+python -m speechless.generate.mlx --model_path dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx  --verbose --colorize --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
+"""
 import os, json
 import mlx_lm
 import mlx.core as mx
