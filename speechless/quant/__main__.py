@@ -19,7 +19,11 @@ def quant_by_llamacpp(args):
     os.makedirs(gguf_dir, exist_ok=True)
 
     if not os.path.exists(gguf_f16_file):
-        convert_cmd = f"python {llamacpp_convert} {model_path} --pad-vocab --outtype f16 --outfile {gguf_f16_file}"
+        if args.skip_unknown:
+            SKIP_UNKNOWN = "--skip-unknown"
+        else:
+            SKIP_UNKNOWN = ""
+        convert_cmd = f"python {llamacpp_convert} {model_path} {SKIP_UNKNOWN} --pad-vocab --outtype f16 --outfile {gguf_f16_file}"
         print(convert_cmd)
         os.system(convert_cmd)
 
@@ -49,6 +53,7 @@ def get_args():
     parser.add_argument("--gguf_f16_file", type=str)
     parser.add_argument("--llamacpp_quant_type", type=str, choices=llamacpp_quant_types)
     parser.add_argument("--llamacpp_root", type=str)
+    parser.add_argument("--skip-unknown", action="store_true", help="Skip unknown tokens")
 
     parser.add_argument("--litellm_port", type=int, default=18341)
 
