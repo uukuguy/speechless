@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-python -m speechless.generate.mlx --model_path dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx  --verbose --colorize --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
+python -m speechless.generate.mlx --model_path dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx  --verbose --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
 """
 import os, json
 import mlx_lm
@@ -57,16 +57,20 @@ def generate(args):
             messages, tokenize=False, add_generation_prompt=True
         )
 
-    formatter = colorprint_by_t0 if args.colorize else None
+    formatter = colorprint_by_t0 if args.verbose else None
+
+    gen_kwargs = {
+        'temp': args.temperature,
+        'max_tokens': args.max_tokens,
+    }
 
     response = mlx_lm.generate(
         model=model,
         tokenizer=tokenizer,
         prompt=prompt,
-        temp=args.temperature,
-        max_tokens=args.max_tokens,
         verbose=args.verbose,
         formatter=formatter,
+        **gen_kwargs,
     )
     print(response)
 
@@ -78,7 +82,7 @@ def get_args():
     parser.add_argument("--trust-remote-code", action="store_true", help="Enable trusting remote code for tokenizer")
     parser.add_argument("--eos-token", type=str, default=None, help="End of sequence token for tokenizer")
     parser.add_argument("--ignore-chat-template", action="store_true", help="Use the raw prompt without the tokenizer's chat template.")
-    parser.add_argument("--colorize", action="store_true", help="Colorize output based on T[0] probability")
+    # parser.add_argument("--colorize", action="store_true", help="Colorize output based on T[0] probability")
 
     parser.add_argument("--model_path", type=str, required=True, help="HF model path")
     parser.add_argument("--adapter_file", type=str, help="adapter file path")
