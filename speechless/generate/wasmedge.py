@@ -67,8 +67,8 @@ def get_args():
     parser.add_argument("--prompt_file", type=str, help="prompt file")
 
     parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
-    parser.add_argument("--max_tokens", type=int, default=16384, help="max tokens")
-    parser.add_argument("--ctx_size", type=int, default=16384, help="context size")
+    parser.add_argument("--max_tokens", type=int, default=512, help="max tokens")
+    parser.add_argument("--ctx_size", type=int, default=512, help="context size")
 
     parser.add_argument("--top_p", type=float, default=0.9, help="top p")
     parser.add_argument("--top_k", type=int, default=40, help="top k")

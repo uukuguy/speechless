@@ -250,6 +250,7 @@ def train():
 
     print(f"{args=}")
 
+    model_kwargs = {}
     if "mistral" in model_args.model_name_or_path:
         model_config = SparsetralConfig.from_pretrained(model_args.model_name_or_path)
 
@@ -264,6 +265,10 @@ def train():
         model_config.output_router_logits = True
 
         model_class = MistralForCausalLM
+
+        if args.flash_attention:
+            model_kwargs['attn_implementation'] = "flash_attention_2"
+
     # if "llama" in model_args.model_name_or_path:
     else:
         model_config = CamelidaeConfig.from_pretrained(model_args.model_name_or_path)
@@ -286,26 +291,11 @@ def train():
         # }
 
         model_class = LlamaForCausalLM
-    # elif "mistral" in model_args.model_name_or_path:
-    #     model_config = SparsetralConfig.from_pretrained(model_args.model_name_or_path)
 
-    #     # Sparsetral Config
-    #     model_config.moe_dtype = "bfloat16"
-    #     model_config.lora_r = args.lora_r  #64
-    #     model_config.lora_alpha = args.lora_alpha  #16
-    #     model_config.adapter_dim = args.adapter_dim #512
-    #     model_config.topk = args.topk # 4
-    #     model_config.moe_scaling = 1
-    #     model_config.num_experts = args.num_experts #16
-    #     model_config.output_router_logits = True
+        if args.flash_attention:
+            from speechless.patches.flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+            replace_llama_attn_with_flash_attn()
 
-    #     model_class = MistralForCausalLM
-    # else:
-    #     raise ValueError("model not supported")
-
-    model_kwargs = {}
-    if args.flash_attention:
-        model_kwargs['attn_implementation'] = "flash_attention_2"
 
     model = model_class.from_pretrained(
         model_args.model_name_or_path,

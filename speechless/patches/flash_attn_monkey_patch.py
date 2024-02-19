@@ -22,6 +22,7 @@ try:
         flash_attn_varlen_kvpacked_func,
         flash_attn_varlen_qkvpacked_func,
     )
+    print(f"Imported flash_attn.flash_attn_interface")
 except ImportError:
     from flash_attn.flash_attn_interface import (
         flash_attn_unpadded_kvpacked_func as flash_attn_varlen_kvpacked_func,
