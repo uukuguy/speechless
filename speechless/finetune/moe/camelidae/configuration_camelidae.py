@@ -123,6 +123,11 @@ class CamelidaeConfig(PretrainedConfig):
         pretraining_tp=1,
         tie_word_embeddings=False,
         rope_scaling=None,
+
+        rope_theta=10000.0,
+        attention_bias=False,
+        attention_dropout=0.0,
+
         moe_dtype="bfloat16",
         moe_scaling=0.25,
         num_experts=8,
@@ -149,7 +154,11 @@ class CamelidaeConfig(PretrainedConfig):
         self.pretraining_tp = pretraining_tp
         self.use_cache = use_cache
         self.rope_scaling = rope_scaling
+        self.rope_theta = rope_theta
         self._rope_scaling_validation()
+
+        self.attention_bias = attention_bias
+        self.attention_dropout = attention_dropout
 
         self.moe_dtype = moe_dtype
         self.moe_scaling = moe_scaling
