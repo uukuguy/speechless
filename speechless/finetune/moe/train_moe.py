@@ -293,10 +293,10 @@ def train():
         model_class = LlamaForCausalLM
 
         if args.flash_attention:
-            from speechless.finetune.moe.camelidae.camelidae_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
-            print(f"Call camelidae Llama replace_llama_attn_with_flash_attn()")
-            replace_llama_attn_with_flash_attn()
-            # model_kwargs['attn_implementation'] = "flash_attention_2"
+            # from speechless.finetune.moe.camelidae.camelidae_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+            # print(f"Call camelidae Llama replace_llama_attn_with_flash_attn()")
+            # replace_llama_attn_with_flash_attn()
+            model_kwargs['attn_implementation'] = "flash_attention_2"
 
 
     model = model_class.from_pretrained(
