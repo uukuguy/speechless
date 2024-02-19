@@ -6,14 +6,17 @@ from functools import partial
 from typing import List, Optional, Tuple, Union
 import torch
 import torch.nn.functional as F
-import transformers
+# import transformers
 from einops import rearrange
 from flash_attn.bert_padding import pad_input, unpad_input
 from transformers.modeling_outputs import BaseModelOutputWithPast
-from transformers.models.llama.modeling_llama import (
+
+# from transformers.models.llama.modeling_llama import (
+from .modeling_camelidae import (
     LlamaDecoderLayer as OriginalLlamaDecoderLayer,
 )
-from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv
+# from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv
+from .modeling_camelidae import apply_rotary_pos_emb, repeat_kv
 from loguru import logger
 
 try:
@@ -131,14 +134,19 @@ def get_cu_seqlens_from_pos_ids(position_ids):
     return torch.stack(results).to(dtype=torch.int32), torch.stack(max_seq_lens)
 
 
+from . import modeling_camelidae
 def replace_llama_attn_with_flash_attn(packed: Optional[bool] = False):
-    transformers.models.llama.modeling_llama.LlamaModel._prepare_decoder_attention_mask = (  # pylint: disable=protected-access
+    # transformers.models.llama.modeling_llama.LlamaModel._prepare_decoder_attention_mask = (  # pylint: disable=protected-access
+    modeling_camelidae._prepare_decoder_attention_mask = (  # pylint: disable=protected-access
         _prepare_decoder_attention_mask
     )
-    transformers.models.llama.modeling_llama.LlamaAttention.forward = flashattn_forward
+    # transformers.models.llama.modeling_llama.LlamaAttention.forward = flashattn_forward
+    modeling_camelidae.LlamaAttention.forward = flashattn_forward
     if packed:
-        transformers.models.llama.modeling_llama.LlamaDecoderLayer = LlamaDecoderLayer
-        transformers.models.llama.modeling_llama.LlamaModel.forward = (
+        # transformers.models.llama.modeling_llama.LlamaDecoderLayer = LlamaDecoderLayer
+        modeling_camelidae.LlamaDecoderLayer = LlamaDecoderLayer
+        # transformers.models.llama.modeling_llama.LlamaModel.forward = (
+        modeling_camelidae.LlamaModel.forward = (
             llama_model_forward
         )
 
@@ -146,7 +154,8 @@ def replace_llama_attn_with_flash_attn(packed: Optional[bool] = False):
         from flash_attn.losses.cross_entropy import CrossEntropyLoss
 
         logger.info("patching with flash_attn.losses.cross_entropy")
-        transformers.models.llama.modeling_llama.CrossEntropyLoss = partial(
+        # transformers.models.llama.modeling_llama.CrossEntropyLoss = partial(
+        modeling_camelidae.CrossEntropyLoss = partial(
             CrossEntropyLoss, inplace_backward=True
         )
     except ImportError:
@@ -164,7 +173,8 @@ def replace_llama_attn_with_flash_attn(packed: Optional[bool] = False):
                 super().__init__(hidden_size, eps=eps)
 
         logger.info("patching with flash_attn.ops.rms_norm")
-        transformers.models.llama.modeling_llama.LlamaRMSNorm = LlamaRMSNorm
+        # transformers.models.llama.modeling_llama.LlamaRMSNorm = LlamaRMSNorm
+        modeling_camelidae.LlamaRMSNorm = LlamaRMSNorm
     except ImportError:
         logger.info(
             "optimized flash-attention RMSNorm not found (run `pip install 'git+https://github.com/Dao-AILab/flash-attention.git#egg=dropout_layer_norm&subdirectory=csrc/layer_norm'`)"
@@ -199,7 +209,7 @@ def flashattn_forward(
 
     attention_mask: [bsz, q_len]
     """
-    print(f"flashattn_forward() in flash_attn_monkey_patch.py")
+    # print(f"flashattn_forward() in flash_attn_monkey_patch.py")
 
     # pylint: disable=duplicate-code
     bsz, q_len, _ = hidden_states.size()
