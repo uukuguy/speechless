@@ -419,8 +419,8 @@ def get_accelerate_model(args, checkpoint_dir):
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
     model_kwargs = {
         "cache_dir": args.cache_dir,
-        "load_in_4bit": args.bits == 4,
-        "load_in_8bit": args.bits == 8,
+        # "load_in_4bit": args.bits == 4,
+        # "load_in_8bit": args.bits == 8,
         "device_map": device_map if not args.deepspeed else None,
         "max_memory": max_memory if not args.deepspeed else None,
         "quantization_config": BitsAndBytesConfig(
@@ -437,6 +437,12 @@ def get_accelerate_model(args, checkpoint_dir):
         "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
     }
+    # transformers-4.39.0.dev0
+    # ValueError: You can't pass `load_in_4bit`or `load_in_8bit` as a kwarg when passing `quantization_config` argument at the same time.
+    if args.bits == 4:
+        model_kwargs["load_in_4bit"] = True
+    if args.bits == 8:
+        model_kwargs["load_in_8bit"] = True
 
     # if args.mpt:
     #     model_kwargs["attn_config"] = {"attn_impl": "triton"}
