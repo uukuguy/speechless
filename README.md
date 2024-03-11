@@ -66,6 +66,10 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 ⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
 
+### Mar. 2024
+
+- **[speechless-starcoder2-7b](https://huggingface.co/uukuguy/speechless-starcoder2-7b) 2024.03.10**
+
 ### Feb. 2024
 
 - **[speechless-thoughts-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b-v1.0) 2024.02.15**
