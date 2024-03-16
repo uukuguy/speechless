@@ -1,12 +1,24 @@
 #!/usr/bin/env python
 """
+Provide the generate_llm_prompt function to facilitate generating final prompts for LLM based on different standard prompt templates.
+
 Dependency:
 
-$ pip install fastcat
+$ pip install fastchat
 
 Usage: 
 
-$ python -m speechless.utils.prompt_utils --prompt_template general-llama-2 --instruction "What is the capital of France?" 
+$ python -m prompt_utils --prompt_template alpaca --instruction "What is the capital of France?" 
+
+```
+Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction: What is the capital of France?
+
+### Response:
+```
+
+$ python -m prompt_utils --prompt_template general-llama-2 --instruction "What is the capital of France?" 
 
 ```
 [INST] <<SYS>>
@@ -16,7 +28,7 @@ You are a helpful assistant.
 What is the capital of France? [/INST]
 ```
 
-$ python -m speechless.utils.prompt_utils --prompt_template general-chatml --instruction "What is the capital of France?" 
+$ python -m prompt_utils --prompt_template general-chatml --instruction "What is the capital of France?" 
 
 ```
 <|im_start|>system
@@ -24,16 +36,6 @@ You are a helpful, respectful, and honest assistant. Write out your reasoning st
 <|im_start|>user
 What is the capital of France?<|im_end|>
 <|im_start|>assistant
-```
-
-$ python -m speechless.utils.prompt_utils --prompt_template alpaca --instruction "What is the capital of France?" 
-
-```
-Below is an instruction that describes a task. Write a response that appropriately completes the request.
-
-### Instruction: What is the capital of France?
-
-### Response:
 ```
 
 Useful prompt templates:
@@ -117,12 +119,6 @@ def generate_llm_prompt(prompt_template, instruction, system_message=None, histo
 def get_args():
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    # general-llama-2, general-mistral, general-chatml
-    # vicuna_v1.1, alpaca, chatglm3, deepseek-coder, stablelm
-    # chatgpt, claude, metamath, bard, gemini
-    # falcon, internlm-chat, starchat, baichuan2-chat, mistral, llama-2, open-orca, mistral-7b-openorca
-    # dolphin-2.2.1-mistral-7b, OpenHermes-2.5-Mistral-7B, Nous-Hermes-2-Mixtral-8x7B-DPO
-    # qwen-7b-chat, Yi-34b-chat, phind, zephyr, TinyLlama, orca-2, deepseek-chat, solar, llava-chatml, gemma
     parser.add_argument("--prompt_template", type=str, choices=available_templates, help="Prompt template")
     parser.add_argument("--instruction", required=True, type=str, help="Instruction")
     parser.add_argument("--system_message", type=str, help="System message")
