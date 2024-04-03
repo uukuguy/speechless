@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 """
-Usage:  python -m speechless.generate.openai --model gpt-3.5-turbo-1106 --verbose --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
+Usage:  python -m speechless.generate.groq -model mixtral-8x7b-32768 --verbose --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
 """
 
 import os
-import openai
-# https://api.openai.com/v1/chat/completions
-
-# openai.base_url=os.getenv("OPENAI_API_BASE")
-# openai.api_key=os.getenv("OPENAI_API_KEY")
-# print(f"{openai.api_base=}")
+import groq
 
 def generate(args):
     if args.prompt_file:
@@ -17,7 +12,8 @@ def generate(args):
     else:
         prompt = args.prompt
 
-    client = openai.OpenAI(base_url=os.getenv("OPENAI_API_BASE"))
+    # https://api.groq.com/openai/v1
+    client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     generate_kwargs = {
         "temperature": args.temperature,
@@ -50,8 +46,7 @@ def generate(args):
 def get_args():
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    # gpt-3.5-turbo-1106, gpt-4-0613
-    parser.add_argument("--model", type=str, default="gpt-3.5-turbo-1106", help="Model name")
+    parser.add_argument("--model", type=str, default="mixtral-8x7b-32768", help="Model name")
     parser.add_argument("--prompt", type=str, help="prompt to run")
     parser.add_argument("--prompt_file", type=str, help="prompt file")
     parser.add_argument("--system_message", type=str, default="You are a helpful assistant.", help="system message")
