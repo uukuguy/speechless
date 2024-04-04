@@ -43,14 +43,41 @@ def get_args():
         default="/opt/local/datasets/speechless_data/speechless-thoughts-252k.jsonl",
         help="speechless data file"
     )
+    parser.add_argument("--prompt_file", type=str, help="prompt file")
 
     args = parser.parse_args()
     return args
 
 
-def main():
-    args = get_args()
-    lines = open(args.speechless_data_file).readlines()
+def count_tokens_prompt_file(prompt_file):
+    lines = open(prompt_file).readlines()
+
+    num_tokens = 0
+    from tqdm import tqdm
+    pbar = tqdm(lines, ncols=100)
+    for idx, line in enumerate(pbar):
+        prompt = line.strip()
+        num_tokens += titoken_count_tokens(prompt=prompt)
+        tokens_per_line = num_tokens / (idx+1)
+        pbar.set_postfix({
+            "tokens": f"{num_tokens:.2e}",
+            "tokens/line": f"{tokens_per_line:.2f}"
+        })
+
+    print(f"Total tokens: {num_tokens:.2e}, tokens per line: {tokens_per_line:.2f}")
+    # pretraining_data_1024.txt 
+    # 17.7K lines, 111MB
+    # Total tokens: 5.42e+07, tokens per line: 3066.39
+    # pretraining_data.txt
+    # 8.7K lines, 111MB
+    # Total tokens: 5.41e+07, tokens per line: 6214.97 
+    # pretraining_data_256.txt
+    # 39.8K lines, 112MB
+    # Total tokens: 5.43e+07, tokens per line: 1365.09
+    
+
+def count_tokens_speechless_data_file(speechless_data_file):
+    lines = open(speechless_data_file).readlines()
 
     num_tokens = 0
     from tqdm import tqdm
@@ -74,6 +101,14 @@ def main():
     # 98.6K lines, 1.7GB
     # Total tokens: 3.98e+08, tokens per line: 403.94
 
+def main():
+    args = get_args()
+    if args.prompt_file:
+        count_tokens_prompt_file(args.prompt_file)
+    elif args.speechless_data_file:
+        count_tokens_speechless_data_file(args.speechless_data_file)
+    else:
+        raise ValueError("prompt_file or speechless_data_file must be provided")
 
 if __name__ == '__main__':
     main()
