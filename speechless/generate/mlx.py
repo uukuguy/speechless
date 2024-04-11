@@ -41,7 +41,7 @@ def generate(args):
     if args.eos_token is not None:
         tokenizer_config["eos_token"] = args.eos_token
 
-    model, tokenizer = mlx_lm.load(args.model_path, adapter_file=args.adapter_file)
+    model, tokenizer = mlx_lm.load(args.model_path, adapter_path=args.adapter_file, tokenizer_config=tokenizer_config)
 
     if args.prompt_file:
         prompt = open(args.prompt_file).read().strip()
