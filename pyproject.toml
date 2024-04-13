@@ -16,6 +16,7 @@ tokenizers = "^0.14.0"
 datasets = "^2.14.4"
 accelerate = "^0.23.0"
 #flash-attn = "2.23.0"
+instructor = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 fschat = "^0.2.28"
