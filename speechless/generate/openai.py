@@ -44,7 +44,7 @@ def generate(args):
         for chunk in response:
             print(chunk.choices[0].delta.content, end="")
     else:
-        print(f"{response=}")
+        # print(f"{response=}")
         print(response.choices[0].message.content)
 
 def get_args():
