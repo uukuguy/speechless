@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 # Inspired by: https://github.com/virattt/financial-datasets
-import time
+import os, json, time
+import random
 from io import BytesIO
-from typing import List
+from typing import List, Tuple
 
 import requests
 from PyPDF2 import PdfReader
+import instructor
 from instructor import patch
 from langchain_text_splitters import TokenTextSplitter
 from openai import OpenAI
+from litellm import completion
 from tqdm import tqdm
 
 
@@ -26,9 +29,8 @@ class QADataset(BaseModel):
 
 
 default_prompt = """
-You are an expert at understanding and analyzing financial documents. 
-Your role is to generate question and ground truth answer pairs based on the provided financial text. 
-The types of texts you will be working with include 10-Ks, 10-Qs, earnings call transcripts, PDFs, and other financial documents.
+You are an expert at understanding and analyzing power grid documents. 
+Your role is to generate question and ground truth answer pairs based on the provided power grid knowledge text. The generated question and answer must be using Chinese and must be relevant to the power grid context.
 
 When generating questions and answers, adhere to the following guidelines:
 1. Your ground truth answers must be directly derived from the content within the provided text. Do not make up, hallucinate, or generate answers that are not explicitly supported by the given text.
@@ -39,26 +41,28 @@ When generating questions and answers, adhere to the following guidelines:
    Question: [Generated question]
    Answer: [Ground truth answer]
    Context: [Relevant paragraph from the text that supports the answer]
-6. Answer using the language of the question.
 
 Remember, your primary objective is to create accurate, grounded, and contextually relevant question-answer pairs while strictly avoiding any fabrication or speculation.
 """
 
 class QAGenerator:
-    def __init__(self, model: str, api_key: str):
-        # Ensure model begins with gpt-
-        if not model.startswith('gpt-'):
-            raise NotImplementedError(f'Model {model} is not supported yet.')
-
-        if not api_key:
-            raise ValueError("API key is required.")
-
+    def __init__(self, model: str):
         self._model = model
-        self._client = patch(OpenAI(api_key=api_key))
+        if "gpt-" in model:
+            self._client = patch(OpenAI())
+        elif "claude-" in model:
+            # claude-3-opus-20240229
+            from anthropic import Anthropic
+            self._client = instructor.from_anthropic(Anthropic())
+        elif "command-r-" in model:
+            import cohere
+            self._client = instructor.from_cohere(cohere.Client())
+        else:
+            self._client = instructor.from_litellm(completion)
 
     def generate_from_texts(
         self,
-        texts: List[str],
+        texts: List[Tuple[int, str]],
         max_questions=10,
     ) -> QADataset:
         """
@@ -69,13 +73,15 @@ class QAGenerator:
         :return: Dataset containing the generated questions.
         """
         items: List[QADatasetItem] = []
+        ref_ids: List[int] = []
         num_texts = len(texts)
         questions_per_text = max_questions // num_texts
         remaining_questions = max_questions % num_texts
 
         progress_bar = tqdm(total=max_questions, desc="Generating questions", colour='green')
 
-        for index, text in enumerate(texts):
+        for index, (ref_id, text) in enumerate(texts):
+            # print(f"{len(text)=}, {text=}")
             try:
                 # Determine the number of questions to generate for the current text
                 current_max_questions = questions_per_text
@@ -91,15 +97,17 @@ class QAGenerator:
                         {"role": "user", "content": f"Generate {current_max_questions} questions for the following block of text: {text}"}
                     ],
                 )
+                print(f"{len(items)=}, {response=}")
 
                 # Add the generated items to our total list of questions
                 items.extend(response.items)
+                ref_ids.extend([ref_id] * len(response.items))
 
                 # Update the progress bar by the number of questions generated
                 progress_bar.update(len(response.items))
 
                 # Stop generating questions if we have reached the maximum number of questions
-                if len(items) == max_questions:
+                if len(items) >= max_questions:
                     break
 
             except Exception as e:
@@ -107,14 +115,14 @@ class QAGenerator:
                 continue
 
             # Sleep for 1 second to avoid overloading the LLM
-            time.sleep(1)
+            # time.sleep(1)
 
         # Ensure the progress bar is closed
         progress_bar.close()
 
         return QADataset(
             items=items,
-        )
+        ), ref_ids
 
     def generate_from_pdf(
         self,
@@ -157,3 +165,42 @@ class QAGenerator:
         texts = token_splitter.split_text(text)
 
         return self.generate_from_texts(texts=texts, max_questions=max_questions)
+
+def get_gdc_data_texts(gdc_data_file):
+    lines = open(gdc_data_file).readlines()
+    texts = [(idx, json.loads(line)['prompt']) for idx, line in enumerate(tqdm(lines, ncols=100, desc="Loading"))]
+    return texts
+    
+def do_generate_qa_pairs(args):
+    texts = get_gdc_data_texts(args.gdc_data_file)
+    texts = [t for t in texts if len(t[1]) > 256]
+    texts = random.sample(texts, min(args.max_questions * 10, len(texts)))
+
+    qa_generator = QAGenerator(model=args.model)
+
+    qa_dataset, ref_ids = qa_generator.generate_from_texts(texts=texts, max_questions=args.max_questions)
+
+    json_data = json.loads(qa_dataset.model_dump_json())['items']
+    assert len(json_data) == len(ref_ids)
+    with open(args.output_file, 'w') as fd:
+        for item, ref_id in zip(json_data, ref_ids):
+            item['ref_id'] = ref_id
+            fd.write(f"{json.dumps(item, ensure_ascii=False)}\n")
+    print(f"Saved QA pairs to {args.output_file}")
+
+
+def get_args():
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("--model", type=str, default="gpt-3.5-turbo-1106", help="Model name")
+    parser.add_argument("--max_questions", type=int, default=10, help="Maximum number of questions to generate")
+    parser.add_argument("--gdc_data_file", type=str, default="/opt/local/datasets/speechless_data/sggdc_data_pt.jsonl", help="Path to the GDC data file")
+    parser.add_argument("--output_file", type=str, default="output.jsonl", help="Path to the output file")
+    args = parser.parse_args()
+    return args
+def main():
+    args = get_args()
+    do_generate_qa_pairs(args)
+
+if __name__ == '__main__':
+    main()

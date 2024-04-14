@@ -17,7 +17,7 @@ def generate(args):
     else:
         prompt = args.prompt
 
-    client = openai.OpenAI(base_url=os.getenv("OPENAI_API_BASE"))
+    client = openai.OpenAI()#base_url=os.getenv("OPENAI_API_BASE"))
 
     generate_kwargs = {
         "temperature": args.temperature,

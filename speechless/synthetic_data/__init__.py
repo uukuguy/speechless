@@ -1,1 +1,0 @@
-from .qa_generator import QAGenerator
