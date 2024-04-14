@@ -39,6 +39,7 @@ When generating questions and answers, adhere to the following guidelines:
    Question: [Generated question]
    Answer: [Ground truth answer]
    Context: [Relevant paragraph from the text that supports the answer]
+6. Answer using the language of the question.
 
 Remember, your primary objective is to create accurate, grounded, and contextually relevant question-answer pairs while strictly avoiding any fabrication or speculation.
 """
