@@ -89,6 +89,11 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
         **init_kwargs,
     )
     patch_tokenizer(tokenizer)
+
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token_id = 0 # tokenizer.eos_token_id
+        tokenizer.pad_token = tokenizer._convert_id_to_token(tokenizer.pad_token_id) #tokenizer.eos_token
+
     return tokenizer
 
 

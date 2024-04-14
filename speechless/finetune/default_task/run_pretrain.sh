@@ -56,5 +56,6 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --max_samples ${MAX_TRAIN_SAMPLES} \
     --val_size ${EVAL_DATASET_SIZE} \
     --ddp_timeout 180000000 \
+    --flash_attn \
     --bf16 \
     ${DEEPSEED} \
