@@ -17,6 +17,9 @@ datasets = "^2.14.4"
 accelerate = "^0.23.0"
 #flash-attn = "2.23.0"
 instructor = "^1.1.0"
+anthropic = "^0.25.1"
+litellm = "^1.35.5"
+ollama = "^0.1.6"
 
 [tool.poetry.group.dev.dependencies]
 fschat = "^0.2.28"
