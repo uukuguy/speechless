@@ -535,24 +535,6 @@ class DialogDataCollatorForCausalLM(object):
         return data_dict
 
 
-def extract_unnatural_instructions_data(examples, extract_reformulations=False):
-    out = {
-        'input': [],
-        'output': [],
-    }
-    for example_instances in examples['instances']:
-        for instance in example_instances:
-            out['input'].append(instance['instruction_with_input'])
-            out['output'].append(instance['output'])
-    if extract_reformulations:
-        for example_reformulations in examples['reformulations']:
-            if example_reformulations is not None:
-                for instance in example_reformulations:
-                    out['input'].append(instance['instruction_with_input'])
-                    out['output'].append(instance['output'])
-    return out
-
-
 def extract_alpaca_dataset(example):
     if example.get("input", "") != "":
         prompt_format = ALPACA_PROMPT_DICT["prompt_input"]
@@ -577,56 +559,6 @@ def local_dataset(dataset_name, test_size=0.02):
         full_dataset = full_dataset.class_encode_column('category')
         return full_dataset.train_test_split(test_size=test_size, stratify_by_column='category')
     return full_dataset.train_test_split(test_size=test_size)
-
-
-class RepeatDataset():
-
-    def __init__(self, ds, repeat_batch_size, repeat_steps):
-        self.ds = ds
-        self.batch_size = repeat_batch_size * repeat_steps
-        self.in_cache = []
-        self.out_cache = []
-        self.first_count = 0
-
-    def __len__(self):
-        return len(self.ds) * 2
-
-    def __getitem__(self, idx):
-        # new_idx = self.get_new_idx(idx)
-        new_idx = idx % self.batch_size
-        self.in_cache.append(new_idx)
-
-        if self.first_count < self.batch_size:
-            self.first_count += 1
-            ret_idx = self.in_cache.pop(0)
-            self.out_cache.append(ret_idx)
-        elif self.first_count < self.batch_size * 2:
-            self.first_count += 1
-            ret_idx = self.out_cache.pop(0)
-        else:
-            self.first_count = 0
-            ret_idx = self.in_cache.pop(0)
-            self.out_cache.append(ret_idx)
-
-        return self.ds[ret_idx]
-
-    def get_new_idx(self, idx):
-        n = idx // (self.batch_size * 2)
-        d = idx % (self.batch_size * 2)
-        if n < len(self.ds) // self.batch_size:
-            new_idx = self.batch_size * n + d % self.batch_size
-        else:
-            d0 = len(self.ds) % self.batch_size
-            if d0 > 0:
-                new_idx = self.batch_size * n + d % d0
-            else:
-                new_idx = self.batch_size * n + d % self.batch_size
-        assert new_idx < len(self.ds), f"{idx=}, {new_idx=}, {len(self.ds)=}, {self.batch_size=}, {n=}, {d=}"
-        return new_idx
-
-    # def __getitem__(self, idx):
-    #     new_idx = self.get_new_idx(idx)
-    #     return self.ds[new_idx]
 
 
 def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
@@ -939,11 +871,6 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         model_max_length=args.model_max_length,
         prompt_type=args.prompt_type,
     )
-
-    # # FIXME
-    # if args.repeat_steps > 0:
-    #     one_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps * torch.cuda.device_count()
-    #     train_dataset = RepeatDataset(train_dataset, repeat_batch_size=one_batch_size, repeat_steps=args.repeat_steps)
 
     return dict(
         train_dataset=train_dataset if args.do_train else None,
