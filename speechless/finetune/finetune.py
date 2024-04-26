@@ -289,7 +289,7 @@ class GenerationArguments:
     )
 
     # Generation strategy
-    do_sample: Optional[bool] = field(default=False)
+    do_sample: Optional[bool] = field(default=True)
     num_beams: Optional[int] = field(default=1)
     num_beam_groups: Optional[int] = field(default=1)
     penalty_alpha: Optional[float] = field(default=None)
@@ -434,9 +434,12 @@ def get_accelerate_model(args, checkpoint_dir):
         ) if args.bits in (4, 8) else None,
         "torch_dtype": (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
         "trust_remote_code": args.trust_remote_code,
-        "use_flash_attention_2": args.flash_attention,
+        # "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
     }
+
+    if args.flash_attention:
+        model_kwargs["attn_implementation"] = "flash_attention_2"
 
     # if args.mpt:
     #     model_kwargs["attn_config"] = {"attn_impl": "triton"}

@@ -55,8 +55,8 @@ def local_dataset(dataset_name, test_size=0.02):
 
     if 'category' in full_dataset.column_names:
         full_dataset = full_dataset.class_encode_column('category')
-        return full_dataset.train_test_split(test_size=test_size, stratify_by_column='category')
-    return full_dataset.train_test_split(test_size=test_size)
+        return full_dataset.train_test_split(test_size=int(test_size), stratify_by_column='category')
+    return full_dataset.train_test_split(test_size=int(test_size))
 
 
 def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
@@ -227,8 +227,20 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             pass
 
             def _format_input_output(instruction):
+                # return {
+                #     'conversations': [(instruction['instruction'], instruction['response'])]
+                # }
                 return {
-                    'conversations': [(instruction['instruction'], instruction['response'])]
+                    'conversations': [
+                        {
+                            "from": "human", 
+                            "value": instruction['instruction'] 
+                        },
+                        {
+                            "from": "assistant", 
+                            "value": instruction['response'] 
+                        },
+                        ]
                 }
 
             dataset = dataset.map(_format_input_output)
@@ -300,6 +312,8 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
 
         if args.group_by_length:
             train_dataset = train_dataset.map(lambda x: {'length': len(x['input']) + len(x['output'])})
+
+    print(f"{len(train_dataset)} training samples, {len(eval_dataset)} evaluation samples.")
 
     # # Remove any training data that exceeds the max length.
     # def _get_data_length(item):

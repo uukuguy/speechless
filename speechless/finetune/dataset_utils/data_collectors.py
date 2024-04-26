@@ -205,6 +205,18 @@ def generate_round_prompt_toolllama(
 
     return source, target
 
+def generate_round_prompt_raw(
+    idx: int,
+    human_input: str,
+    bot_response: str,
+    bos_token: str,
+    eos_token: str,
+    system_prompt: str = None,
+):
+    source = f"{bos_token}{human_input}"
+    target = f"{bot_response.strip()}\n{eos_token}"
+
+    return source, target
 
 def generate_round_prompt_alpaca(
     idx: int,
@@ -399,89 +411,101 @@ class DialogDataCollatorForCausalLM(object):
             example_input_ids = None
             example_output_ids = None
 
-            # human_bot_dialog = example['dialog']
-            human_bot_dialog = []
-            dialog = example['conversations']
-            for _i in range(len(dialog) // 2):
-                human_input = dialog[2 * _i]['value']
-                bot_output = dialog[2 * _i + 1]['value']
-                human_bot_dialog.append((human_input, bot_output))
-            if len(human_bot_dialog) < 1:
-                continue
-            for idx, round in enumerate(human_bot_dialog):
-                human_input, bot_response = round
-                if prompt_type == 'toolllama':
-                    source, target = generate_round_prompt_toolllama(
-                        idx,
-                        human_input,
-                        bot_response,
-                        bos_token=self.tokenizer.bos_token,
-                        eos_token=self.tokenizer.eos_token,
-                        system_prompt=system_prompt,
-                    )
-                elif prompt_type == "chatlm":
-                    source, target = generate_round_prompt_chatlm(
-                        idx,
-                        human_input,
-                        bot_response,
-                        bos_token=self.tokenizer.bos_token,
-                        eos_token=self.tokenizer.eos_token,
-                        system_prompt=system_prompt,
-                    )
-                elif prompt_type == "llama2":
-                    source, target = generate_round_prompt_llama2(
-                        idx,
-                        human_input,
-                        bot_response,
-                        bos_token=self.tokenizer.bos_token,
-                        eos_token=self.tokenizer.eos_token,
-                        system_prompt=system_prompt,
-                    )
-                elif prompt_type == "minicpm":
-                    source, target = generate_round_prompt_minicpm(
-                        idx,
-                        human_input,
-                        bot_response,
-                        bos_token=self.tokenizer.bos_token,
-                        eos_token=self.tokenizer.eos_token,
-                        system_prompt=system_prompt,
-                    )
-                else:  # default alpaca
-                    source, target = generate_round_prompt_alpaca(
-                        idx,
-                        human_input,
-                        bot_response,
-                        bos_token=self.tokenizer.bos_token,
-                        eos_token=self.tokenizer.eos_token,
-                        system_prompt=system_prompt,
-                    )
+            if prompt_type == "llama3":
+                pass
+            else:
+                # human_bot_dialog = example['dialog']
+                human_bot_dialog = []
+                dialog = example['conversations']
+                for _i in range(len(dialog) // 2):
+                    human_input = dialog[2 * _i]['value']
+                    bot_output = dialog[2 * _i + 1]['value']
+                    human_bot_dialog.append((human_input, bot_output))
+                if len(human_bot_dialog) < 1:
+                    continue
+                for idx, round in enumerate(human_bot_dialog):
+                    human_input, bot_response = round
+                    if prompt_type == 'toolllama':
+                        source, target = generate_round_prompt_toolllama(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
+                    elif prompt_type == "chatlm":
+                        source, target = generate_round_prompt_chatlm(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
+                    elif prompt_type == "llama2":
+                        source, target = generate_round_prompt_llama2(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
+                    elif prompt_type == "minicpm":
+                        source, target = generate_round_prompt_minicpm(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
+                    elif prompt_type == "raw":
+                        source, target = generate_round_prompt_raw(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
+                    else:  # default alpaca
+                        source, target = generate_round_prompt_alpaca(
+                            idx,
+                            human_input,
+                            bot_response,
+                            bos_token=self.tokenizer.bos_token,
+                            eos_token=self.tokenizer.eos_token,
+                            system_prompt=system_prompt,
+                        )
 
-                tokenized_source = self.tokenizer(
-                    source,
-                    max_length=self.model_max_length,
-                    truncation=True,
-                    add_special_tokens=False,
-                )
-                tokenized_target = self.tokenizer(
-                    target,
-                    max_length=self.model_max_length,
-                    truncation=True,
-                    add_special_tokens=False,
-                )
-                tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
-                tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] +
-                                                copy.deepcopy(tokenized_target['input_ids']))
+                    tokenized_source = self.tokenizer(
+                        source,
+                        max_length=self.model_max_length,
+                        truncation=True,
+                        add_special_tokens=False,
+                    )
+                    tokenized_target = self.tokenizer(
+                        target,
+                        max_length=self.model_max_length,
+                        truncation=True,
+                        add_special_tokens=False,
+                    )
+                    tokenized_input = torch.tensor(tokenized_source['input_ids'] + tokenized_target['input_ids'])
+                    tokenized_output = torch.tensor([IGNORE_INDEX for _ in range(len(tokenized_source['input_ids']))] +
+                                                    copy.deepcopy(tokenized_target['input_ids']))
 
-                # print(f"{source=}")
-                # print(f"{tokenized_input=}")
-                # print(f"{target=}")
-                # print(f"{tokenized_target=}")
-                if idx == 0:
-                    example_input_ids = tokenized_input
-                    example_output_ids = tokenized_output
-                else:
-                    example_input_ids = torch.concatenate((example_input_ids, tokenized_input), dim=0)
-                    example_output_ids = torch.concatenate((example_output_ids, tokenized_output), dim=0)
+                    # print(f"{source=}")
+                    # print(f"{tokenized_input=}")
+                    # print(f"{target=}")
+                    # print(f"{tokenized_target=}")
+                    if idx == 0:
+                        example_input_ids = tokenized_input
+                        example_output_ids = tokenized_output
+                    else:
+                        example_input_ids = torch.concatenate((example_input_ids, tokenized_input), dim=0)
+                        example_output_ids = torch.concatenate((example_output_ids, tokenized_output), dim=0)
 
             input_ids.append(example_input_ids)
             labels.append(example_output_ids)
