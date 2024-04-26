@@ -22,6 +22,7 @@ def merge_peft_adapters(base_model_name_or_path, peft_model_path, merged_model_n
     model = PeftModel.from_pretrained(base_model, peft_model_path)
     print(f"Merging ...")
     model = model.merge_and_unload()
+    model.generation_config.do_sample = True
 
     tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path, trust_remote_code=True)
 
