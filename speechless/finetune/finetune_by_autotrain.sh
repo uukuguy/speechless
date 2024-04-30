@@ -40,13 +40,16 @@ autotrain llm \
     --lora_r 32 \
     --lora_alpha 64 \
     --quantization int4 \
-    --lr 2e-5 \
+    --lr 2e-4 \
     --optimizer adamw_torch \
     --scheduler cosine \
-    --batch-size 2 \
-    --epochs 3 \
-    --gradient-accumulation 4 \
+    --warmup_ratio 0.03 \
     --block-size 1024 \
+    --batch-size 2 \
+    --gradient-accumulation 4 \
+    --epochs 3 \
     --model-max-length 2048 \
+    --logging_steps 1 \
     --padding right \
     --project-name speechless-Mistral-7B-Instruct-v02 \
+    --seed 18341
