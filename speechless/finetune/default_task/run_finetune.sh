@@ -15,6 +15,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --model_name_or_path ${BASE_MODEL_PATH} \
     --output_dir ${OUTPUT_DIR} \
     --num_train_epochs ${NUM_TRAIN_EPOCHS} \
+    --num_early_stopping_train_epochs ${NUM_EARLY_STOPPING_TRAIN_EPOCHS} \
     --data_seed 10042 \
     --save_strategy ${SAVE_STRATEGY} \
     ${SAVE_TOTAL_LIMIT} \

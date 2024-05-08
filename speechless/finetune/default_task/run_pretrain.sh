@@ -53,6 +53,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --evaluation_strategy steps \
     --learning_rate ${LEARNING_RATE} \
     --num_train_epochs ${NUM_TRAIN_EPOCHS} \
+    --num_early_stopping_train_epochs ${NUM_EARLY_STOPPING_TRAIN_EPOCHS} \
     --max_samples ${MAX_TRAIN_SAMPLES} \
     --val_size ${EVAL_DATASET_SIZE} \
     --ddp_timeout 180000000 \
