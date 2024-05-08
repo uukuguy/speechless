@@ -8,7 +8,7 @@ from typing import Generator
 
 import mlx.core as mx
 import mlx.nn as nn
-import models
+from .models import ModelArgs, Model
 import transformers
 from huggingface_hub import snapshot_download
 
@@ -147,8 +147,8 @@ def load(path_or_hf_repo: str):
     for wf in weight_files:
         weights.update(mx.load(wf).items())
 
-    model_args = models.ModelArgs.from_dict(config)
-    model = models.Model(model_args)
+    model_args = ModelArgs.from_dict(config)
+    model = Model(model_args)
     if quantization is not None:
         class_predicate = (
             lambda p, m: isinstance(m, (nn.Linear, nn.Embedding))

@@ -6,12 +6,12 @@ MODEL_PATH=${MODELS_DIR}/mlx-community/Meta-Llama-3-8B-4bit
 ADAPTER_DIR=${MODEL_PATH}-adapter
 ADAPTER_FILE=${ADAPTER_DIR}/adapter.npz
 
-    # --data /opt/local/datasets/alpaca_gpt4/alpaca_gpt4_mlx_data \
 
 mkdir -p ${ADAPTER_DIR}
-python lora.py \
+python -m speechless.finetune.mlx.lora \
     --train \
     --model /opt/local/llm_models/huggingface.co/mlx-community/Meta-Llama-3-8B-4bit \
+    --data /opt/local/datasets/alpaca_gpt4/alpaca_gpt4_mlx_data \
     --adapter-file ${ADAPTER_FILE} \
     --batch-size 16 \
     --lora-layers 16 \

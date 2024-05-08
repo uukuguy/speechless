@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mlx.core as mx
 import mlx.nn as nn
-import utils
+import speechless.finetune.mlx.lora.utils as lora_utils
 from mlx.utils import tree_flatten, tree_unflatten
 from models import LoRALinear
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     print("Loading pretrained model")
     args = parser.parse_args()
 
-    model, tokenizer, config = utils.load(args.model)
+    model, tokenizer, config = lora_utils.load(args.model)
 
     # Load adapters and get number of LoRA layers
     adapters = list(mx.load(args.adapter_file).items())
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     weights = dict(tree_flatten(model.parameters()))
     if args.de_quantize:
         config.pop("quantization", None)
-    utils.save_model(args.save_path, weights, tokenizer, config)
+    lora_utils.save_model(args.save_path, weights, tokenizer, config)
 
     if args.upload_name is not None:
         hf_path = args.hf_path
@@ -111,4 +111,4 @@ if __name__ == "__main__":
             raise ValueError(
                 "Must provide original Hugging Face repo to upload local model."
             )
-        utils.upload_to_hub(args.save_path, args.upload_name, hf_path)
+        lora_utils.upload_to_hub(args.save_path, args.upload_name, hf_path)
