@@ -5,6 +5,7 @@ import json
 import math
 import time
 from pathlib import Path
+from tqdm import trange
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -187,7 +188,7 @@ def iterate_batches(dset, tokenizer, batch_size, train=False):
             indices = np.random.permutation(indices)
 
         # Collect batches from dataset
-        for i in range(0, len(indices) - batch_size + 1, batch_size):
+        for i in trange(0, len(indices) - batch_size + 1, batch_size, ncols=50):
             # Encode batch
             batch = [tokenizer.encode(dset[indices[i + j]]) for j in range(batch_size)]
             lengths = [len(x) for x in batch]

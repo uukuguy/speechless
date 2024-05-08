@@ -6,7 +6,7 @@ import copy
 import mlx.core as mx
 import mlx.nn as nn
 import models
-import utils
+import speechless.finetune.mlx.lora.utils as lora_utils
 from mlx.utils import tree_flatten
 
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("[INFO] Loading")
-    weights, config, tokenizer = utils.fetch_from_hub(args.hf_path)
+    weights, config, tokenizer = lora_utils.fetch_from_hub(args.hf_path)
 
     dtype = mx.float16 if args.quantize else getattr(mx, args.dtype)
     weights = {k: v.astype(dtype) for k, v in weights.items()}
@@ -92,6 +92,6 @@ if __name__ == "__main__":
         print("[INFO] Quantizing")
         weights, config = quantize(weights, config, args)
 
-    utils.save_model(args.mlx_path, weights, tokenizer, config)
+    lora_utils.save_model(args.mlx_path, weights, tokenizer, config)
     if args.upload_name is not None:
-        utils.upload_to_hub(args.mlx_path, args.upload_name, args.hf_path)
+        lora_utils.upload_to_hub(args.mlx_path, args.upload_name, args.hf_path)
