@@ -12,7 +12,7 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
 LOG_FILE_NAME = "trainer_log.jsonl"
 
 if TYPE_CHECKING:
-    from transformers import TrainerControl, TrainerState, TrainingArguments
+    from transformers import TrainerControl, TrainerState, TrainingArguments, ExportableState
 
 
 # from .logging import get_logger
@@ -180,3 +180,22 @@ class CleanMemoryCallback(TrainerCallback):
 
     def on_evaluate(self, args, state, control, **kwargs):
         clean_memory()
+
+class EarlyStoppingCallback(TrainerCallback, ExportableState):
+
+    def __init__(self, early_stopping_train_epochs: int = 0):
+        self.early_stopping_train_epochs = early_stopping_train_epochs
+
+    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.early_stopping_train_epochs > 0:
+            if state.epoch >= self.early_stopping_train_epochs:
+                control.should_training_stop = True
+
+    def state(self) -> dict:
+        return {
+            "args": {
+                "early_stopping_train_epochs": self.early_stopping_train_epochs,
+            },
+            "attributes": {
+            }
+        }

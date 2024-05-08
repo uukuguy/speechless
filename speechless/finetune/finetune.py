@@ -52,6 +52,7 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from speechless.finetune.dataset_utils import IGNORE_INDEX
 from speechless.finetune.dataset_utils import make_data_module
 
+from speechless.finetune.callbacks import EarlyStoppingCallback
 
 def qwen_prepare_model_for_kbit_training(model, use_gradient_checkpointing=True):
     """
@@ -257,6 +258,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     per_device_train_batch_size: int = field(default=1, metadata={"help": 'The training batch size per GPU. Increase for better speed.'})
     gradient_accumulation_steps: int = field(default=16, metadata={"help": 'How many gradients to accumulate before to perform an optimizer step'})
     num_train_epochs: int = field(default=3, metadata={"help": 'Number of training epochs.'})
+    num_early_stopping_train_epochs: int = field(default=0, metadata={"help": 'Number of training epochs before early stopping.'})
     weight_decay: float = field(default=0.0, metadata={"help": 'The L2 weight decay rate of AdamW'}) # use lora dropout instead for regularization if needed
     learning_rate: float = field(default=0.0002, metadata={"help": 'The learning rate'})
     remove_unused_columns: bool = field(default=False, metadata={"help": 'Removed unused columns. Needed to make this codebase work.'})
@@ -272,6 +274,10 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     save_total_limit: int = field(default=1, metadata={"help": 'How many checkpoints to save before the oldest is overwritten'})
     deepspeed: str = field(default=None, metadata={"help": "deepspeed configuration path"})
     max_shard_size: str = field(default="5GB", metadata={"help": "Max shard size when saving model after full finetune."})
+
+    def __post_init__(self):
+        if self.num_early_stop_train_epochs <= 0:
+            self.num_early_stop_train_epochs = self.num_train_epochs
 
 @dataclass
 class GenerationArguments:
@@ -767,6 +773,8 @@ def train():
     trainer.add_callback(CleanMemoryCallback)
     trainer.add_callback(LoggingCallback)
 
+    if training_args.num_early_stopping_train_epochs > 0:
+        trainer.add_callback(EarlyStoppingCallback(early_stopping_train_epochs=training_args.num_early_stopping_train_epochs))
 
     # Verifying the datatypes.
     if not args.full_finetune:
