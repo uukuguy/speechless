@@ -52,7 +52,8 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from speechless.finetune.dataset_utils import IGNORE_INDEX
 from speechless.finetune.dataset_utils import make_data_module
 
-from speechless.finetune.callbacks import EarlyStoppingCallback
+#from speechless.finetune.callbacks import EarlyStoppingCallback
+from .callbacks import LoggingCallback, CleanMemoryCallback, EarlyStoppingCallback
 
 def qwen_prepare_model_for_kbit_training(model, use_gradient_checkpointing=True):
     """
@@ -96,10 +97,10 @@ def qwen_prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
 
 torch.backends.cuda.matmul.allow_tf32 = True
 
-def clean_memory():
-    gc.collect()
-    ctypes.CDLL("libc.so.6").malloc_trim(0)
-    torch.cuda.empty_cache()
+# def clean_memory():
+#     gc.collect()
+#     ctypes.CDLL("libc.so.6").malloc_trim(0)
+#     torch.cuda.empty_cache()
 
 @dataclass
 class ModelArguments:
@@ -324,22 +325,22 @@ def find_all_linear_names(args, model):
         lora_module_names.remove('lm_head')
     return list(lora_module_names)
 
-class CleanMemoryCallback(transformers.TrainerCallback):
-    def on_step_end(self, args, state, control, **kwargs):
-        clean_memory()
+# class CleanMemoryCallback(transformers.TrainerCallback):
+#     def on_step_end(self, args, state, control, **kwargs):
+#         clean_memory()
 
-    def on_evaluate(self, args, state, control, **kwargs):
-        clean_memory()
+#     def on_evaluate(self, args, state, control, **kwargs):
+#         clean_memory()
 
 from transformers import TrainerCallback
-class LoggingCallback(TrainerCallback):
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        _ = logs.pop("total_flos", None)
-        if state.is_local_process_zero:
-            if "eval_loss" in logs:
-                logger.info(logs)
-            else:
-                logger.debug(logs)
+# class LoggingCallback(TrainerCallback):
+#     def on_log(self, args, state, control, logs=None, **kwargs):
+#         _ = logs.pop("total_flos", None)
+#         if state.is_local_process_zero:
+#             if "eval_loss" in logs:
+#                 logger.info(logs)
+#             else:
+#                 logger.debug(logs)
 
 class SavePeftModelCallback(TrainerCallback):
     def save_model(self, args, state, kwargs):

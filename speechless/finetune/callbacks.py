@@ -34,7 +34,7 @@ from loguru import logger
 #             )
 
 
-class LogCallback(TrainerCallback):
+class LoggingCallback(TrainerCallback):
     def __init__(self, runner=None):
         self.runner = runner
         self.in_training = False
