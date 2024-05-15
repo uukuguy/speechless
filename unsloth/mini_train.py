@@ -6,6 +6,7 @@ from transformers import TrainingArguments
 from datasets import load_dataset
 import datasets
 
+model_root_dir = "/opt/local/llm_models/huggingface.co"
 seed = 18341
 max_seq_length = 2048  # Supports RoPE Scaling interally, so choose any!
 eval_size = 1000
@@ -14,7 +15,6 @@ eval_size = 1000
 # url = "https://huggingface.co/datasets/laion/OIG/resolve/main/unified_chip2.jsonl"
 # dataset = load_dataset("json", data_files = {"train" : url}, split = "train")
 
-model_root_dir = "/opt/local/llm_models/huggingface.co"
 train_file = "/opt/local/datasets/alpaca_gpt4/alpaca_gpt4_data.json"
 full_dataset = load_dataset("json", data_files=train_file, split="train")
 
@@ -77,6 +77,33 @@ model = FastLanguageModel.get_peft_model(
     loftq_config=None,  # And LoftQ
 )
 
+alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+### Instruction:
+{}
+
+### Input:
+{}
+
+### Response:
+{}"""
+
+
+EOS_TOKEN = tokenizer.eos_token # Must add EOS_TOKEN
+def formatting_prompts_func(examples):
+    instructions = examples["instruction"]
+    inputs       = examples["input"]
+    outputs      = examples["output"]
+    texts = []
+    for instruction, input, output in zip(instructions, inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
+        texts.append(text)
+    return { "text" : texts, }
+
+train_dataset = train_dataset.map(formatting_prompts_func, batched = True,)
+eval_dataset = eval_dataset.map(formatting_prompts_func, batched = True,)
+
 trainer = SFTTrainer(
     model=model,
     train_dataset=train_dataset,
@@ -102,7 +129,31 @@ trainer = SFTTrainer(
         seed=3407,
     ),
 )
-trainer.train()
+
+def show_gpu_stats():
+    gpu_stats = torch.cuda.get_device_properties(0)
+    start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+    max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
+    print(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
+    print(f"{start_gpu_memory} GB of memory reserved.")
+    return start_gpu_memory, max_memory
+
+def show_trainer_stats(trainer_stats):
+    used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+    used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
+    used_percentage = round(used_memory         /max_memory*100, 3)
+    lora_percentage = round(used_memory_for_lora/max_memory*100, 3)
+    print(f"{trainer_stats.metrics['train_runtime']} seconds used for training.")
+    print(f"{round(trainer_stats.metrics['train_runtime']/60, 2)} minutes used for training.")
+    print(f"Peak reserved memory = {used_memory} GB.")
+    print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
+    print(f"Peak reserved memory % of max memory = {used_percentage} %.")
+    print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
+
+start_gpu_memory, max_memory = show_gpu_stats()
+trainer_stats = trainer.train()
+show_trainer_stats(trainer_stats)
+
 
 # Go to https://github.com/unslothai/unsloth/wiki for advanced tips like
 # (1) Saving to GGUF / merging to 16bit for vLLM
