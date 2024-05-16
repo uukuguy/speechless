@@ -138,14 +138,19 @@ def init_adapter(
                 "r": finetuning_args.lora_rank,
                 "target_modules": target_modules,
                 "lora_alpha": finetuning_args.lora_alpha,
-                "lora_dropout": finetuning_args.lora_dropout,
+                "lora_dropout": 0.0 if model_args.use_unsloth else finetuning_args.lora_dropout,
                 "use_rslora": finetuning_args.use_rslora,
             }
 
             if model_args.use_unsloth:
                 from unsloth import FastLanguageModel  # type: ignore
 
-                unsloth_peft_kwargs = {"model": model, "max_seq_length": model_args.model_max_length}
+                unsloth_peft_kwargs = {
+                    "model": model, 
+                    "max_seq_length": model_args.model_max_length,
+                    "bias": "none",
+                    "use_gradient_checkpointing": "unsloth",
+                    }
                 model = FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
             else:
                 lora_config = LoraConfig(
