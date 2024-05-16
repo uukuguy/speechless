@@ -19,7 +19,9 @@ source ${SCRIPT_PATH}/task.env
     # --eval_dataset_size ${EVAL_DATASET_SIZE} \
     # --overwrite_cache \
     # --overwrite_output_dir \
+    # --use_unsloth \
     # --quantization_bit 4 \
+    # --upcast_layernorm \
 
 PYTHONPATH=${SPEECHLESS_ROOT} \
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
