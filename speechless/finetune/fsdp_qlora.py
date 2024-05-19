@@ -110,9 +110,9 @@ def training_function(script_args, training_args):
 
     # LoRA config based on QLoRA paper & Sebastian Raschka experiment
     peft_config = LoraConfig(
-        lora_alpha=8,
-        lora_dropout=0.05,
         r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
         bias="none",
         target_modules="all-linear",
         task_type="CAUSAL_LM",
