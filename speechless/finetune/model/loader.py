@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 import torch
 
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from .adapter import init_adapter
 from .patcher import patch_config, patch_model, patch_tokenizer #, patch_valuehead_model
@@ -135,7 +135,21 @@ def load_model(
             logger.warning("Unsloth does not support loading adapters.")
 
     if model is None:
-        model = AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, config=config, **init_kwargs)
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            load_in_8bit=False,
+            llm_int8_threshold=6.0,
+            llm_int8_has_fp16_weight=False,
+            bnb_4bit_compute_dtype=model_args.compute_dtype,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        ) 
+
+        model = AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path, 
+            config=config, 
+            quantization_config=quantization_config,
+            **init_kwargs)
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)

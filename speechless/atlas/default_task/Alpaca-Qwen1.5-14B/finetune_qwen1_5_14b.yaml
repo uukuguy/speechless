@@ -102,11 +102,11 @@ parallel:
 
 # default parallel of device num = 32 910B
 parallel_config:
-  data_parallel: 1
-  model_parallel: 4
-  pipeline_stage: 2 
+  data_parallel: 8
+  model_parallel: 1
+  pipeline_stage: 1
   use_seq_parallel: True
-  micro_batch_num: 2 
+  micro_batch_num: 1
   vocab_emb_dp: True
   gradient_aggregation_group: 4
 # when model parallel is greater than 1, we can set micro_batch_interleave_num=2, that may accelerate the train process.
