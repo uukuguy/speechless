@@ -74,7 +74,7 @@ def openai_nonchat_completion(model_name: str, prompt: str, sampling_params: Dic
     return generated_text
 
 
-def titoken_count_tokens(model_name: str = "gpt-3.5-turbo-0613", messages: List[Dict[str, str]] = [], prompt: str = "") -> int:
+def tiktoken_count_tokens(model_name: str = "gpt-3.5-turbo-0613", messages: List[Dict[str, str]] = [], prompt: str = "") -> int:
     """
     This function counts the number of tokens used in a prompt.
     model_name: the model used to generate the prompt. can be one of the following: gpt-3.5-turbo-0613, gpt-4-0613, text-davinci-003
