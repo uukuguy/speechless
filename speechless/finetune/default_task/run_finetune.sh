@@ -32,6 +32,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --report_to tensorboard \
     --remove_unused_columns False \
     --do_train \
+    --do_eval \
     --max_memory_MB ${MAX_MEMORY_MB} \
     --bits ${BITS} \
     --lora_r ${LORA_R} \

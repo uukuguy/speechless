@@ -277,6 +277,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
     max_shard_size: str = field(default="5GB", metadata={"help": "Max shard size when saving model after full finetune."})
 
     def __post_init__(self):
+        super().__post_init__()
         if self.num_early_stopping_train_epochs <= 0:
             self.num_early_stopping_train_epochs = self.num_train_epochs
 
