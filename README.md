@@ -64,7 +64,7 @@ speechless-tools-7b-dfs vs toolllama-dfs
 
 ## Models
 
-[Models Repositry](https://huggingface.co/uukuguy)
+[Models Repository](https://huggingface.co/uukuguy)
 
 ⭐️ My Focus 🔥🔥🔥 DL > 10k/month 🔥🔥 DL > 7K/month 🔥 DL > 3K/month
 
