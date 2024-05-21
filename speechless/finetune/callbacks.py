@@ -2,7 +2,6 @@ import json
 import os
 import time
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
 from transformers import TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
@@ -11,8 +10,7 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
 
 LOG_FILE_NAME = "trainer_log.jsonl"
 
-if TYPE_CHECKING:
-    from transformers import TrainerControl, TrainerState, TrainingArguments, ExportableState
+from transformers import TrainerControl, TrainerState, TrainingArguments
 
 
 # from .logging import get_logger
@@ -181,7 +179,8 @@ class CleanMemoryCallback(TrainerCallback):
     def on_evaluate(self, args, state, control, **kwargs):
         clean_memory()
 
-class EarlyStoppingCallback(TrainerCallback, ExportableState):
+# from transformers.trainer import ExportableState
+class EarlyStoppingCallback(TrainerCallback):#, ExportableState):
 
     def __init__(self, early_stopping_train_epochs: int = 0):
         self.early_stopping_train_epochs = early_stopping_train_epochs
@@ -191,11 +190,11 @@ class EarlyStoppingCallback(TrainerCallback, ExportableState):
             if state.epoch >= self.early_stopping_train_epochs:
                 control.should_training_stop = True
 
-    def state(self) -> dict:
-        return {
-            "args": {
-                "early_stopping_train_epochs": self.early_stopping_train_epochs,
-            },
-            "attributes": {
-            }
-        }
+    # def state(self) -> dict:
+    #     return {
+    #         "args": {
+    #             "early_stopping_train_epochs": self.early_stopping_train_epochs,
+    #         },
+    #         "attributes": {
+    #         }
+    #     }

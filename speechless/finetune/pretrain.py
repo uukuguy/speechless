@@ -12,7 +12,7 @@ from transformers import DataCollatorForLanguageModeling
 
 from speechless.finetune.model import load_model, load_tokenizer
 from loguru import logger
-from .callbacks import LogCallback, CleanMemoryCallback, EarlyStoppingCallback
+from .callbacks import LoggingCallback, CleanMemoryCallback, EarlyStoppingCallback
 
 from .hparams import get_train_args
 
@@ -307,7 +307,7 @@ def run_pt(
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
-    callbacks = [CleanMemoryCallback(), LogCallback()] if callbacks is None else callbacks
+    callbacks = [CleanMemoryCallback(), LoggingCallback()] if callbacks is None else callbacks
 
     if training_args.num_early_stopping_train_epochs > 0:
         callbacks.append(EarlyStoppingCallback(early_stopping_train_epochs=training_args.num_early_stopping_train_epochs))

@@ -15,6 +15,7 @@ from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
+from .training_args import TrainingArguments
 
 
 import importlib.util
@@ -32,8 +33,8 @@ from loguru import logger
 # check_dependencies()
 
 
-_TRAIN_ARGS = [ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = Tuple[ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_CLS = Tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = Tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
