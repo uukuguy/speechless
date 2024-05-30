@@ -736,7 +736,8 @@ def train():
     print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
     print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
 
-    if "qwen" in args.model_name_or_path.lower():
+    # if "qwen" in args.model_name_or_path.lower():
+    if False:
         tokenizer.eos_token = "<|endoftext|>"
         # tokenizer.unk_token = "<|extra_3|>"
         tokenizer.bos_token = "<|extra_2|>"
@@ -748,9 +749,9 @@ def train():
         if tokenizer.eos_token_id is None:
             tokenizer.eos_token_id = 2
             tokenizer.eos_token = "</s>"
-        # if tokenizer.unk_token_id is None:
-        #     tokenizer.unk_token_id = 0
-        #     tokenizer.unk_token = "<unk>"
+        if tokenizer.unk_token_id is None:
+            tokenizer.unk_token_id = 0
+            tokenizer.unk_token = "<unk>"
         if tokenizer.pad_token_id is None:
             tokenizer.pad_token_id = 0 # tokenizer.eos_token_id
             tokenizer.pad_token = tokenizer._convert_id_to_token(tokenizer.pad_token_id) #tokenizer.eos_token
