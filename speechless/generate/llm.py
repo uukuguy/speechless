@@ -41,9 +41,10 @@ class BaseLLM(ABC):
         pass
 
 class VllmAIModel(BaseLLM):
-    def __init__(self, model_path=None, *args, **kwargs):
+    def __init__(self, model_path=None, max_tokens=2048, *args, **kwargs):
         assert model_path is not None, "模型路径不能为空"
         self.model_path = model_path
+        self.max_tokens = max_tokens
         self.chat_model = self.load_model()
 
 
@@ -58,7 +59,7 @@ class VllmAIModel(BaseLLM):
         from vllm import SamplingParams
 
 
-        sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+        sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
         outputs = self.chat_model.generate(prompt, sampling_params)
         generated_text = ''
         for output in outputs:

@@ -742,6 +742,9 @@ def train():
         # tokenizer.unk_token = "<|extra_3|>"
         tokenizer.bos_token = "<|extra_2|>"
         tokenizer.pad_token = "<|extra_1|>"
+    elif "qwen" in args.model_name_or_path.lower():
+        tokenizer.eos_token = "<sop>"
+        tokenizer.unk_token = "<sop>"
     else:
         if tokenizer.bos_token_id is None:
             tokenizer.bos_token_id = 1
