@@ -16,6 +16,7 @@
 ## What's New
 
 
+- [2024-05-20] Release [speechless-instruct-mistral-7b-v0.2](https://huggingface.co/uukuguy/speechless-instruct-mistral-7b-v0.2)
 - [2024-03-13] Release [speechless-starcoder2-15b](https://huggingface.co/uukuguy/speechless-starcoder2-15b)
 - [2024-03-10] Release [speechless-starcoder2-7b](https://huggingface.co/uukuguy/speechless-starcoder2-7b)
 - [2024-02-15] Reelase [speechless-thoughts-mistral-7b-v1.0](https://huggingface.co/uukuguy/speechless-thoughts-mistral-7b-v1.0) (Change same hyperparameters)
