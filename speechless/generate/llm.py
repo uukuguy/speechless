@@ -55,11 +55,11 @@ class VllmAIModel(BaseLLM):
         return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
 
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
         from vllm import SamplingParams
 
 
-        sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=self.max_tokens)
+        sampling_params = SamplingParams(temperature=template, top_p=top_p, max_tokens=self.max_tokens)
         outputs = self.chat_model.generate(prompt, sampling_params)
         generated_text = ''
         for output in outputs:
