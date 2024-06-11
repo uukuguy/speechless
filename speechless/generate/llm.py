@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Union, Generator
 import torch
+from tqdm import tqdm
 
 
 class BaseLLM(ABC):
@@ -54,17 +55,66 @@ class VllmAIModel(BaseLLM):
 
         return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
 
-
-    def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
+    def generate_batch(self, prompts: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[List[str]]: 
         from vllm import SamplingParams
 
+        sampling_params = SamplingParams(**kw_sampling_params)
+        cached_examples = []
+        s = 0
+        for i, prompt in enumerate(tqdm(prompts, ncols=100)):
+            e = i
+            if len(cached_examples) < batch_size:
+                cached_examples.append(prompt)
+                if i < len(prompts) - 1:
+                    continue 
+                e = i + 1
+            generated_texts = self.generate(prompts, **sampling_params)
+            # assert e - i0 == len(generated_texts)
+            yield s, e, generated_texts
+            s = e
 
-        sampling_params = SamplingParams(temperature=template, top_p=top_p, max_tokens=self.max_tokens)
-        outputs = self.chat_model.generate(prompt, sampling_params)
-        generated_text = ''
-        for output in outputs:
-            generated_text += output.outputs[0].text
-        return generated_text
+    # def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
+    def generate(self, prompts: Optional[Union[str, List[str]]] = None, **kw_sampling_params) -> Union[str, List[str]]:  
+        """
+        SamplingParams:
+                n: int = 1,
+                best_of: Optional[int] = None,
+                presence_penalty: float = 0.0,
+                frequency_penalty: float = 0.0,
+                repetition_penalty: float = 1.0,
+                temperature: float = 1.0,
+                top_p: float = 1.0,
+                top_k: int = -1,
+                min_p: float = 0.0,
+                seed: Optional[int] = None,
+                use_beam_search: bool = False,
+                length_penalty: float = 1.0,
+                early_stopping: Union[bool, str] = False,
+                stop: Optional[Union[str, List[str]]] = None,
+                stop_token_ids: Optional[List[int]] = None,
+                include_stop_str_in_output: bool = False,
+                ignore_eos: bool = False,
+                max_tokens: Optional[int] = 16,
+                logprobs: Optional[int] = None,
+                prompt_logprobs: Optional[int] = None,
+                skip_special_tokens: bool = True,
+                spaces_between_special_tokens: bool = True,
+                logits_processors: Optional[List[LogitsProcessor]] = None,
+        """
+        from vllm import SamplingParams
+
+        # sampling_params = SamplingParams(temperature=template, top_p=top_p, max_tokens=self.max_tokens)
+        sampling_params = SamplingParams(**kw_sampling_params)
+        outputs = self.chat_model.generate(prompts, sampling_params, use_tqdm=False)
+
+        if isinstance(prompts, str):
+            generated_texts = [ output.outputs[0].text for output in outputs]
+            return generated_texts
+        else:
+            generated_text = ''
+            for output in outputs:
+                generated_text += output.outputs[0].text
+            return generated_text
 
 
     async def a_generate(self, prompt: str) -> str:
