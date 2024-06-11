@@ -106,7 +106,7 @@ class VllmAIModel(BaseLLM):
         sampling_params = SamplingParams(**kw_sampling_params)
         outputs = self.chat_model.generate(prompts, sampling_params, use_tqdm=False)
 
-        if isinstance(prompts, str):
+        if isinstance(prompts, list):
             generated_texts = [ output.outputs[0].text for output in outputs]
             return generated_texts
         else:
