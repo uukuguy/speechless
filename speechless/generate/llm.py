@@ -71,6 +71,7 @@ class VllmAIModel(BaseLLM):
             # assert e - i0 == len(generated_texts)
             yield s, e, generated_texts
             s = e
+            cached_examples = []
 
     # def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
     def generate(self, prompts: Optional[Union[str, List[str]]] = None, **kw_sampling_params) -> Union[str, List[str]]:  
