@@ -58,7 +58,6 @@ class VllmAIModel(BaseLLM):
     def generate_batch(self, prompts: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[Any, Any, Any]: 
         from vllm import SamplingParams
 
-        sampling_params = SamplingParams(**kw_sampling_params)
         cached_examples = []
         s = 0
         for i, prompt in enumerate(tqdm(prompts, ncols=100)):
@@ -68,7 +67,7 @@ class VllmAIModel(BaseLLM):
                 if i < len(prompts) - 1:
                     continue 
                 e = i + 1
-            generated_texts = self.generate(prompts, **sampling_params)
+            generated_texts = self.generate(prompts, **kw_sampling_params)
             # assert e - i0 == len(generated_texts)
             yield s, e, generated_texts
             s = e
