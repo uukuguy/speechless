@@ -55,7 +55,7 @@ class VllmAIModel(BaseLLM):
 
         return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
 
-    def generate_batch(self, prompts: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[List[str]]: 
+    def generate_batch(self, prompts: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[Any, Any, Any]: 
         from vllm import SamplingParams
 
         sampling_params = SamplingParams(**kw_sampling_params)
