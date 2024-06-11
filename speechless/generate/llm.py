@@ -67,7 +67,7 @@ class VllmAIModel(BaseLLM):
                 if i < len(prompts) - 1:
                     continue 
                 e = i + 1
-            generated_texts = self.generate(prompts, **kw_sampling_params)
+            generated_texts = self.generate(cached_examples, **kw_sampling_params)
             # assert e - i0 == len(generated_texts)
             yield s, e, generated_texts
             s = e
