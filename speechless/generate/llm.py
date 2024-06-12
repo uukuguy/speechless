@@ -60,18 +60,21 @@ class VllmAIModel(BaseLLM):
 
         cached_examples = []
         s = 0
+        e = 0
+        nn = 0
         for i, prompt in enumerate(tqdm(prompts, ncols=100)):
-            e = i
             if len(cached_examples) < batch_size:
                 cached_examples.append(prompt)
                 if i < len(prompts) - 1:
+                    nn += 1
                     continue 
-                e = i + 1
+                nn = len(prompts) 
+            e = nn
             generated_texts = self.generate(cached_examples, **kw_sampling_params)
-            # assert e - i0 == len(generated_texts)
+            cached_examples = [prompt]
+            nn += 1
             yield s, e, generated_texts
             s = e
-            cached_examples = []
 
     # def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
     def generate(self, prompts: Optional[Union[str, List[str]]] = None, **kw_sampling_params) -> Union[str, List[str]]:  
