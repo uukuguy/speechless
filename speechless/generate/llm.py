@@ -55,24 +55,15 @@ class VllmAIModel(BaseLLM):
 
         return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
 
-    def generate_batch(self, prompts: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[Any, Any, Any]: 
-        from vllm import SamplingParams
-
-        cached_examples = []
+    def generate_batch(self, instructions: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[Any, Any, Any]: 
+        cached_instructions = []
         s = 0
-        e = 0
-        nn = 0
-        for i, prompt in enumerate(tqdm(prompts, ncols=100)):
-            if len(cached_examples) < batch_size:
-                cached_examples.append(prompt)
-                if i < len(prompts) - 1:
-                    nn += 1
-                    continue 
-                nn = len(prompts) 
-            e = nn
-            generated_texts = self.generate(cached_examples, **kw_sampling_params)
-            cached_examples = [prompt]
-            nn += 1
+        for i, prompt in enumerate(tqdm(instructions, ncols=100)):
+            cached_instructions.append(prompt)
+            if i < len(instructions) - 1 and len(cached_instructions) < batch_size:
+                continue
+            generated_texts = self.generate(cached_instructions, **kw_sampling_params)
+            e = i + 1
             yield s, e, generated_texts
             s = e
 
