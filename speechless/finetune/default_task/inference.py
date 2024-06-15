@@ -38,7 +38,7 @@ sampling_params = {
 }
 with open(output_file, 'w') as fd:
     for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples, **sampling_params):
-        assert e - s == len(batch_responses)
+        assert e - s == len(batch_responses), f"{s=}, {e=}, {len(batch_responses)=}"
         for response, instruction, raw_data in zip(batch_responses, prompts[s:e], raw_datas[s:e]):
             raw_data = deepcopy(raw_data)
             raw_data['answer'] = response[:1] if 'A' in raw_data else response
