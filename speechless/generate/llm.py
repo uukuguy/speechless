@@ -60,11 +60,12 @@ class VllmAIModel(BaseLLM):
         s = 0
         for i, prompt in enumerate(tqdm(instructions, ncols=100)):
             cached_instructions.append(prompt)
+            e = i + 1
             if i < len(instructions) - 1 and len(cached_instructions) < batch_size:
                 continue
             generated_texts = self.generate(cached_instructions, **kw_sampling_params)
-            e = i + 1
             yield s, e, generated_texts
+            cached_instructions = []
             s = e
 
     # def generate(self, prompt: str, template=0.8, top_p=0.95) -> str:
