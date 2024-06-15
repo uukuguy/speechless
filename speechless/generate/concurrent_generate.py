@@ -88,25 +88,26 @@ class OpenAIModel(AIModel):
         return generated_text
 
 
-class VllmModel(AIModel):
-    def __init__(self, model_name_or_path=None, max_tokens=2048):
-        super().__init__(model_name_or_path, max_tokens)
+from .llm import VllmAIModel as VllmModel
+# class VllmModel(AIModel):
+#     def __init__(self, model_name_or_path=None, max_tokens=2048):
+#         super().__init__(model_name_or_path, max_tokens)
 
-    def load_model(self):
-        from vllm import LLM
+#     def load_model(self):
+#         from vllm import LLM
 
-        return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
+#         return LLM(model=self.model_path, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
 
-    def generate(self, prompt: str) -> str:
-        from vllm import SamplingParams
+#     def generate(self, prompt: str) -> str:
+#         from vllm import SamplingParams
 
-        sampling_params = SamplingParams(**self.gen_args)
-        outputs = self.model.generate(prompt, sampling_params)
-        generated_text = ''
-        for output in outputs:
-            generated_text += output.outputs[0].text
+#         sampling_params = SamplingParams(**self.gen_args)
+#         outputs = self.model.generate(prompt, sampling_params)
+#         generated_text = ''
+#         for output in outputs:
+#             generated_text += output.outputs[0].text
 
-        return generated_text
+#         return generated_text
 
 class LlamaCppModel(AIModel):
     def __init__(self, model_path=None, n_gpu_layers=32, n_ctx=2048, max_tokens=500, *args, **kwargs):
