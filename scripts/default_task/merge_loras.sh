@@ -10,14 +10,19 @@ source ${SCRIPT_PATH}/task.env
 # MODEL_BASENAME=$(basename ${PWD})
 #CKPT_STEPS=2871
 #CKPT_STEPS=5742
-CKPT_STEPS=latest
+# CKPT_STEPS=latest
+CKPT_STEPS=594
 
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/llm_agents/tora-code-7b-v1.0
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/mistralai/Mistral-7B-v0.1
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/speechless-coding-7b-16k-tora-2714-steps
 # BASE_MODEL_PATH=${MODELS_ROOT_DIR}/spechlessai/speechless-mistral-six-in-one-7b
-CHECKPOINT_DIR=${PWD}/outputs/checkpoint-${CKPT_STEPS}/adapter_model
-TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/${MODEL_BASENAME}-${CKPT_STEPS}-steps
+
+CHECKPOINT_DIR=${PWD}/outputs/checkpoint-${CKPT_STEPS}
+# CHECKPOINT_DIR=${PWD}/outputs/checkpoint-${CKPT_STEPS}/adapter_model
+# TEST_MODEL_PATH=${MODELS_ROOT_DIR}/speechlessai/${MODEL_BASENAME}-${CKPT_STEPS}-steps
+
+TEST_MODEL_PATH=${TEST_MODEL_PATH}-${CKPT_STEPS}steps
 
 python merge_peft_adapters.py \
     --base_model_name_or_path ${BASE_MODEL_PATH} \
