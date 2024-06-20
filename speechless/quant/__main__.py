@@ -11,7 +11,7 @@ def quant_by_llamacpp(args):
     gguf_dir = args.gguf_dir or model_path + "-GGUF"
     gguf_f16_file = args.gguf_f16_file or os.path.join(gguf_dir, f"{os.path.basename(model_path)}.f16.gguf")
 
-    llamacpp_convert = f"{llamacpp_root}/convert.py"
+    llamacpp_convert = f"{llamacpp_root}/convert-hf-to-gguf.py"
     llamacpp_quantize = f"{llamacpp_root}/quantize"
     if not os.path.isdir(llamacpp_root) or not os.path.exists(llamacpp_convert) or not os.path.exists(llamacpp_quantize):
         raise Exception(f"llamacpp_root {llamacpp_root} not found or invalid")
@@ -23,7 +23,8 @@ def quant_by_llamacpp(args):
             SKIP_UNKNOWN = "--skip-unknown"
         else:
             SKIP_UNKNOWN = ""
-        convert_cmd = f"python {llamacpp_convert} {model_path} {SKIP_UNKNOWN} --pad-vocab --outtype f16 --outfile {gguf_f16_file}"
+        # convert_cmd = f"python {llamacpp_convert} {model_path} {SKIP_UNKNOWN} --pad-vocab --outtype f16 --outfile {gguf_f16_file}"
+        convert_cmd = f"python {llamacpp_convert} {model_path} --outtype f16 --outfile {gguf_f16_file}"
         print(convert_cmd)
         os.system(convert_cmd)
 
