@@ -19,14 +19,16 @@ test_file = "/opt/local/datasets/competitions/CCKS2024/digital_finance_test_prom
 
 test_data = [json.loads(line.strip()) for line in open(test_file).readlines()]
 raw_datas = [ json.loads(line.strip()) for line in open("/opt/local/datasets/competitions/CCKS2024/digital_finance_test_data.jsonl").readlines()]
-model = VllmAIModel(model_path=model_path, max_tokens=512)
+
+max_tokens = 512
+model = VllmAIModel(model_path=model_path, max_tokens=max_tokens)
 
 max_examples = torch.cuda.device_count() * 4 
 
 prompts = [data['instruction'] for data in test_data]
 sampling_params = {
     'temperature': 0.1,
-    'max_tokens': 512,
+    'max_tokens': max_tokens,
     # 'use_beam_search': False,
     # 'repetition_penalty': 1.0,
     # 'length_penalty': 1.0,
