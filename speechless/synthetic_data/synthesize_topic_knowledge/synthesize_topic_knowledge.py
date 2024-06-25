@@ -249,18 +249,18 @@ def do_answer_questions(args):
 
             for j, question in enumerate(questions):
                 print(f"----- {i}. {main_topic} / {sub_topic}: {j}. {question} -----")
-                    instruction = prompt_template.format(sub_topic, question=question)
+                instruction = prompt_template.format(sub_topic, question=question)
 
-                    generated_text = llm_api.generate(instruction, 
-                                                    generate_args=generate_args, 
-                                                    system_prompt=system_prompt, 
-                                                    verbose=args.verbose)
-                    # print(generated_text)
-                    q['answer'] = generated_text
+                generated_text = llm_api.generate(instruction, 
+                                                generate_args=generate_args, 
+                                                system_prompt=system_prompt, 
+                                                verbose=args.verbose)
+                # print(generated_text)
+                q['answer'] = generated_text
 
-                line = json.dumps({"main_topic": main_topic, "sub_topic": sub_topic, "questions": questions}, ensure_ascii=False)
-                fd.write(line + "\n")
-                fd.flush()
+            line = json.dumps({"main_topic": main_topic, "sub_topic": sub_topic, "questions": questions}, ensure_ascii=False)
+            fd.write(line + "\n")
+            fd.flush()
 
             
 def get_args():
