@@ -36,22 +36,22 @@ do_answer_questions:
 		--do_answer_questions \
 		--key_id ${KEY_ID} \
 		--start_idx ${START_IDX} \
-		--end_idx ${END_IDX}
+		--end_idx ${END_IDX} \
 		--max_tokens 2048 \
 		--input_file ${TOPIC_QUESTIONS_FILE} \
 		--output_file gdc-topic-answers_${KEY_ID}_${START_IDX}_${END_IDX}.jsonl
 
 answer_questions_w1:
-	make do_answer_questions KEY_ID=1 START_IDX=0 END_IDX=500
+	make do_answer_questions KEY_ID=w1 START_IDX=0 END_IDX=500
 
 answer_questions_w2:
-	make do_answer_questions KEY_ID=1 START_IDX=500 END_IDX=1000
+	make do_answer_questions KEY_ID=w2 START_IDX=500 END_IDX=1000
 
 answer_questions_w3:
-	make do_answer_questions KEY_ID=1 START_IDX=1000 END_IDX=1500
+	make do_answer_questions KEY_ID=w3 START_IDX=1000 END_IDX=1500
 
 answer_questions_w4:
-	make do_answer_questions KEY_ID=1 START_IDX=1000 END_IDX=2000
+	make do_answer_questions KEY_ID=w4 START_IDX=1000 END_IDX=2000
 
 answer_questions_w5:
-	make do_answer_questions KEY_ID=1 START_IDX=2000 END_IDX=2500
+	make do_answer_questions KEY_ID=w5 START_IDX=2000 END_IDX=2500
