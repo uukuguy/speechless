@@ -19,7 +19,7 @@ api_keys = {
 
 def prepare_api_key(args):
     assert args.key_id in api_keys, f"Invalid key_id: {args.key_id}"
-    os.setenv("ZHIPUAI_API_KEY", api_keys[args.key_id])
+    os.environ["ZHIPUAI_API_KEY"] = api_keys[args.key_id]
     
 def do_sub_topics(args):
     main_topics = [ json.loads(line.strip())['topic'] for line in open(args.main_topics_file, "r").readlines()]
@@ -249,14 +249,14 @@ def do_answer_questions(args):
 
             for j, question in enumerate(questions):
                 print(f"----- {i}. {main_topic} / {sub_topic}: {j}. {question} -----")
-                instruction = prompt_template.format(sub_topic, question=question)
+                instruction = prompt_template.format(sub_topic=sub_topic, question=question)
 
                 generated_text = llm_api.generate(instruction, 
                                                 generate_args=generate_args, 
                                                 system_prompt=system_prompt, 
                                                 verbose=args.verbose)
                 # print(generated_text)
-                q['answer'] = generated_text
+                question['answer'] = generated_text
 
             line = json.dumps({"main_topic": main_topic, "sub_topic": sub_topic, "questions": questions}, ensure_ascii=False)
             fd.write(line + "\n")
