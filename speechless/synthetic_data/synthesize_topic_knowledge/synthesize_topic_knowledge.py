@@ -290,8 +290,6 @@ def get_args():
 
             
 def main(args):
-    llm_api = get_llm_api(args.llm_api, args.model)
-
     if args.do_sub_topics:
         do_sub_topics(args)        
     elif args.do_clean_sub_topics:
