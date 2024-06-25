@@ -7,6 +7,20 @@ if SPEECHLESS_ROOT is not None:
 from speechless.generate.llm_api import get_llm_api
 
 system_prompt = "你是一名电网调度控制领域的专家，你需要用你的专业知识回答用户的问题。要求回答专业，准确，条理清楚。"
+
+api_keys = {
+    'w1': "3a4b3b8f9e2c548710adfcfc472d4602.d2xaIekJuPs6Yzmz",
+    'w2': "624e9ce65bdb2f447c0b5e8af7783e9a.C4ZQX44QViOFdNSN",
+    'w3': "a2d3af415bda175906422c10c195348e.1Jc0EIKefwEZbnlQ",
+    'w4': "75263bb470384e13a1ffa46705aaeeb4.L1C0skaLuZGpA12C",
+    'w5': "d5909b06d181bb1939efaf89a5f4285b.sjZR1Qw6RoMk8BN6",
+    'w6': "ea2d92d1e3ccb2ebf99850e59d41e5ae.ePgTUaSQfIA5IpVG",
+}
+
+def prepare_api_key(args):
+    assert args.key_id in api_keys, f"Invalid key_id: {args.key_id}"
+    os.setenv("ZHIPUAI_API_KEY", api_keys[args.key_id])
+    
 def do_sub_topics(args):
     main_topics = [ json.loads(line.strip())['topic'] for line in open(args.main_topics_file, "r").readlines()]
 
@@ -107,7 +121,45 @@ def do_topic_questions(args):
                 fd.write(line + "\n")
                 fd.flush()
 
-def do_answer_questions(args):
+def do_clean_topic_questions(args):
+    cleaned_topic_questions_list = []
+    lines = open(args.input_file, "r").readlines()
+    for line in tqdm(lines, ncols=100):
+        data = json.loads(line.strip())
+        main_topic = data['main_topic']
+        sub_topic = data['sub_topic']
+        
+        topic_questions_str = data['questions']
+        topic_questions_str = topic_questions_str.replace("```json\n", "").replace("```", "")
+
+        new_topic_questions = []
+
+        candidate_keys = ['question', 'request']
+        topic_questions_lines = topic_questions_str.split("\n")
+        for s_line in topic_questions_lines:
+            s_line = s_line.strip()
+            key = None
+            for ck in candidate_keys:
+                if f"\"{ck}\": " in s_line:
+                    key = ck
+                    break
+            if key:
+                question = s_line.split(f"\"{key}\": ")[-1]
+                question_list = re.findall(r'\"(.*?)\"', question)
+                if len(question_list) > 0:
+                    question = question_list[0]
+                    question = re.sub(r'^\d+\. ', "", question)
+                    new_topic_questions.append({ck: question})
+
+        cleaned_topic_questions_list.append({'main_topic': main_topic, 'sub_topic': sub_topic, 'questions': new_topic_questions})
+
+    with open(args.output_file, "w") as fd:
+        for cleaned_topic_questions in cleaned_topic_questions_list:
+            line = json.dumps(cleaned_topic_questions, ensure_ascii=False)
+            fd.write(line + "\n")
+            fd.flush()                
+
+def do_revise_questions(args):
 
     llm_api = get_llm_api(args.llm_api, args.model)
 
@@ -143,7 +195,7 @@ def do_answer_questions(args):
                 sub_topic = s_topic['sub_topic']
                 print(f"----- {i}. {main_topic} / {j}. {sub_topic} -----")
                 questions = s_topic['questions']
-                for k, q enumerate(questions):
+                for k, q in enumerate(questions):
                     question = q['question']
                     print(f"{question}")
                     instruction = prompt_template.format(sub_topic=sub_topic, question=question, n_questions=n_questions)
@@ -159,6 +211,57 @@ def do_answer_questions(args):
                 fd.write(line + "\n")
                 fd.flush()
 
+def do_answer_questions(args):
+    prepare_api_key(args)
+    llm_api = get_llm_api(args.llm_api, args.model)
+
+    generate_args = {
+        "max_tokens": args.max_tokens,
+        "temperature": args.temperature,
+        "top_p": args.top_p,
+        # "stop": ["\n"],
+    }
+
+    prompt_template = """用户的问题属于{sub_topic}主题下的问题，请给出分章节的教科书级别的回答。
+
+- 提供正确回答问题所必需的专业背景知识。
+- 分步骤解释回答的逻辑推理过程。
+- 用专业术语和术语解释回答。
+- 需要计算的问题，请给出详细的计算公式解释和计算过程。
+- 可能的情况下，举例说明回答的适用性和实际应用。
+- 问题业务领域相关的其他高度相关的信息。
+- 回答长度控制在500至2000字。
+
+问题：{question}\n回答："""
+
+    sub_topics_list = [ json.loads(line.strip()) for line in open(args.input_file).readlines()]
+    with open(args.output_file, "w") as fd:
+        print(f"Answer questions from {args.start_idx} to {args.end_idx}")
+        for x, d in enumerate(tqdm(sub_topics_list[args.start_idx:args.end_idx], ncols=100)):
+            i = x + args.start_idx
+            if i < args.start_idx:
+                continue
+            if i >= args.end_idx:
+                break
+            main_topic = d['main_topic']
+            sub_topic = d['sub_topic']
+            questions = d['questions']
+
+            for j, question in enumerate(questions):
+                print(f"----- {i}. {main_topic} / {sub_topic}: {j}. {question} -----")
+                    instruction = prompt_template.format(sub_topic, question=question)
+
+                    generated_text = llm_api.generate(instruction, 
+                                                    generate_args=generate_args, 
+                                                    system_prompt=system_prompt, 
+                                                    verbose=args.verbose)
+                    # print(generated_text)
+                    q['answer'] = generated_text
+
+                line = json.dumps({"main_topic": main_topic, "sub_topic": sub_topic, "questions": questions}, ensure_ascii=False)
+                fd.write(line + "\n")
+                fd.flush()
+
             
 def get_args():
     import argparse
@@ -166,9 +269,15 @@ def get_args():
     parser.add_argument("--do_sub_topics", action="store_true", help="Do sub topics")
     parser.add_argument("--do_clean_sub_topics", action="store_true", help="Do clean sub topics")
     parser.add_argument("--do_topic_questions", action="store_true", help="Do topic questions" )
+    parser.add_argument("--do_clean_topic_questions", action="store_true", help="Do clean topic questions" )
+    parser.add_argument("--do_revise_questions", action="store_true", help="Do revise questions" )
+    parser.add_argument("--do_answer_questions", action="store_true", help="Do answer questions" )
+    parser.add_argument("--start_idx", type=int, default=0, help="Start index")
+    parser.add_argument("--end_idx", type=int, default=500, help="End index")
     parser.add_argument("--main_topics_file", type=str, default="gdc-most-common-topics.jsonl", help="Main topics file")
     parser.add_argument("--input_file", type=str, help="Input file")
     parser.add_argument("--output_file", type=str, help="Output file")
+    parser.add_argument("--key_id", type=str)
 
     parser.add_argument("--question", type=str, help="Question")
     parser.add_argument("--llm_api", type=str, default="ZhipuAI", choices=['ZhipuAI', 'OpenAI', 'DashScope'], help="LLM API")
@@ -179,6 +288,7 @@ def get_args():
     parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
     return parser.parse_args()
 
+            
 def main(args):
     llm_api = get_llm_api(args.llm_api, args.model)
 
@@ -188,6 +298,12 @@ def main(args):
         do_clean_sub_topics(args)
     elif args.do_topic_questions:
         do_topic_questions(args)
+    elif args.do_clean_topic_questions:
+        do_clean_topic_questions(args)
+    elif args.do_revise_questions:
+        do_revise_questions(args)
+    elif args.do_answer_questions:
+        do_answer_questions(args)
 
 
 if __name__ == "__main__":
