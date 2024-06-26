@@ -25,15 +25,19 @@ class LLM_API(ABC):
         if not isinstance(generate_args, dict):
             generate_args = {}
 
-        response = self.client.chat.completions.create(
-            model=self.model, # 填写需要调用的模型名称
-            messages=messages,
-            **generate_args,
-        )
-        if verbose:
-            print(response)
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model, # 填写需要调用的模型名称
+                messages=messages,
+                **generate_args,
+            )
+            if verbose:
+                print(response)
+            generated_text = response.choices[0].message.content
+        except Exception as e:
+            print(e)
+            generated_text = f"Error: {e}"
 
-        generated_text = response.choices[0].message.content
         return generated_text
 
 class ZhipuAI_API(LLM_API):
