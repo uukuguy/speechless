@@ -21,6 +21,8 @@ class LLM_API(ABC):
             },
         ]
         messages = direct_messages
+        if verbose:
+            print(f"{messages=}")
 
         if not isinstance(generate_args, dict):
             generate_args = {}
