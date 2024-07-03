@@ -15,6 +15,7 @@ api_keys = {
     'w4': "75263bb470384e13a1ffa46705aaeeb4.L1C0skaLuZGpA12C",
     'w5': "d5909b06d181bb1939efaf89a5f4285b.sjZR1Qw6RoMk8BN6",
     'w6': "ea2d92d1e3ccb2ebf99850e59d41e5ae.ePgTUaSQfIA5IpVG",
+    'uu': "618aa51377dab3e5435bf27793197955.r4dzbXJ6kaOZ8rA0",
 }
 
 def prepare_api_key(args):

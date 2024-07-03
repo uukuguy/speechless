@@ -43,12 +43,12 @@ class LLM_API(ABC):
         return generated_text
 
 class ZhipuAI_API(LLM_API):
-    def __init__(self, model=None):
-        ZHIPUAI_API_KEY=os.getenv("ZHIPUAI_API_KEY")
-        print(ZHIPUAI_API_KEY)
+    def __init__(self, api_key=None, model=None):
+        if api_key is None:
+            api_key = os.getenv("ZHIPUAI_API_KEY")
 
         from zhipuai import ZhipuAI
-        self.client = ZhipuAI(api_key=ZHIPUAI_API_KEY) # 请填写您自己的APIKey
+        self.client = ZhipuAI(api_key=api_key) # 请填写您自己的APIKey
 
         if model is None:
             model = "glm-4"
