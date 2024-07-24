@@ -38,7 +38,7 @@ sampling_params = {
     # 'stop': = None,
     # 'skip_special_tokens': True,
 }
-with open(output_file, 'w') as fd:
+with open(output_file, 'w', encoding='utf-8') as fd:
     for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples, **sampling_params):
         assert e - s == len(batch_responses), f"{s=}, {e=}, {len(batch_responses)=}"
         for response, instruction, raw_data in zip(batch_responses, prompts[s:e], raw_datas[s:e]):
