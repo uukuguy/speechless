@@ -25,7 +25,7 @@ def generate(args):
     #         messages, tokenize=False, add_generation_prompt=True
     #     )
 
-    cmd = f"{LLAMA_CPP_ROOT}/main -m '{args.model_path}' -ngl {args.n_gpu_layers} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
+    cmd = f"{LLAMA_CPP_ROOT}/llama-cli -m '{args.model_path}' -ngl {args.n_gpu_layers} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
 
     # print("Running command: ", cmd)
 
