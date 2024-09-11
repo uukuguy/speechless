@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Usage:  python -m speechless.generate.llamacpp --model_path sus-chat-34b.Q8_0.gguf --verbose --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
+Usage:  python -m speechless.generate.llamacpp --model_path sus-chat-34b.Q8_0.gguf --verbose --max_new_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
 """
 
 import os
@@ -25,7 +25,7 @@ def generate(args):
     #         messages, tokenize=False, add_generation_prompt=True
     #     )
 
-    cmd = f"{LLAMA_CPP_ROOT}/llama-cli -m '{args.model_path}' -ngl {args.n_gpu_layers} -c {args.ctx_size} -n {args.max_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
+    cmd = f"{LLAMA_CPP_ROOT}/llama-cli -m '{args.model_path}' -ngl {args.n_gpu_layers} -c {args.ctx_size} -n {args.max_new_tokens} {'' if args.verbose else DISABLE_LOG} {BASE_OPTS} {GENERATE_OPTS} -p '{prompt}' "
 
     # print("Running command: ", cmd)
 
@@ -43,7 +43,7 @@ def get_args():
     parser.add_argument("--prompt_file", type=str, help="prompt file")
 
     parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
-    parser.add_argument("--max_tokens", type=int, default=16384, help="max tokens")
+    parser.add_argument("--max_new_tokens", type=int, default=16384, help="max tokens")
     parser.add_argument("--ctx_size", type=int, default=16384, help="context size")
 
     parser.add_argument("--top_p", type=float, default=0.9, help="top p")

@@ -16,11 +16,11 @@ REQUIRED = [
     "loguru",
     "rich",
     "torch >= 2.0.1",
-    "transformers >=4.34.0",
+    "transformers >=4.43.0",
     "tokenizers >= 0.14.0",
     "datasets >= 2.14.0",
-    "flash-attn >= 2.3.1",
-    "bitsandbytes >= 0.41.1",
+    #  "flash-attn >= 2.3.1",
+    #  "bitsandbytes >= 0.41.1",
     "fastapi",
 ]
 
