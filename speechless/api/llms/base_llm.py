@@ -9,6 +9,10 @@ class BaseLLM(ABC):
     A base class for LLMs
     """
 
+    @property
+    def model_name(self):
+        return os.path.basename(self.model_path)
+
     def get_model_dir(self, models_dir, model_family, model_name):
         """
         create a base working dir for a certain model

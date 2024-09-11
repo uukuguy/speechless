@@ -1,8 +1,9 @@
 import os
 from copy import deepcopy
-from typing import Dict, List, AsyncIterator
+from typing import Dict, List, AsyncIterator, Union
 import mlx_lm
 from .base_llm import BaseLLM
+from loguru import logger
 
 class MlxLLM(BaseLLM):
     def __init__(self, model_path: str, eos_token: str = None, ignore_chat_template: bool = False):
@@ -10,31 +11,31 @@ class MlxLLM(BaseLLM):
         self.ignore_chat_template = ignore_chat_template
         self.tokenizer_config = {"trust_remote_code": True}
         super().__init__()
-        self._load_model()
+        self.model, self.tokenizer = self._load_model()
 
         if eos_token:
             self.tokenizer_config["eos_token"] = eos_token
         else:
             self.tokenizer_config["eos_token"] = self.tokenizer.eos_token
     
-    @property
-    def model_name(self):
-        return os.path.basename(self.model_path)
-
     def _load_model(self):
-        self.model, self.tokenizer = mlx_lm.load(
+        model, tokenizer = mlx_lm.load(
             self.model_path, 
             adapter_path=None, 
             tokenizer_config=self.tokenizer_config)
+        return model, tokenizer
 
     # -------------------- generate() --------------------
-    def generate(self, prompt, temperature: float = 0.7, max_new_tokens: int = 1024, verbose=False):
+    def generate(self, prompt_or_messages: Union[str, List[Dict[str, str]]], temperature: float = 0.7, max_new_tokens: int = 1024, top_p=1.0, min_p=0.0, verbose=False):
         orig_prompt = deepcopy(prompt)
         if not self.ignore_chat_template and (
             hasattr(self.tokenizer, "apply_chat_template")
             and self.tokenizer.chat_template is not None
         ):
-            messages = [{"role": "user", "content": prompt}]
+            if isinstance(prompt_or_messages, str): # legacy
+                messages = [{"role": "user", "content": prompt_or_messages}]
+            else:
+                messages = prompt_or_messages
             prompt = self.tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
@@ -54,7 +55,10 @@ class MlxLLM(BaseLLM):
 
         # generated_text = generated_text[len(orig_prompt):]
 
-        return generated_text
+        return {
+            'text': generated_text
+        }
+
 
     # -------------------- agenerate() --------------------
     async def agenerate(
