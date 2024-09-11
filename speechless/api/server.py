@@ -1,60 +1,72 @@
 """
 Main entry point for LLM-api
 https://github.com/1b5d/llm-api/blob/main/app/main.py
+
+Usage: 
+
+export MODEL_PATH=/opt/local/llm_models/huggingface.co/mlx-community/Mistral-7B-v0.3-4bit && \
+python -m speechless.api.server --port 10051 \
+    --model_name_or_path ${MODEL_PATH} 
+
 """
-import os, json, time
+from fastapi import BackgroundTasks, FastAPI, Request
+from .openai_api_protocol import (
+    ChatCompletionRequest,
+    ChatCompletionResponse,
+    ChatCompletionResponseChoice,
+    ChatMessage,
+    ChoiceLogprobs,
+    UsageInfo,
+)
+from speechless.api.protocol.openai import CompletionResponse
+from speechless.api.llms import HuggingFaceLLM #, VllmLLM #, ExllamaV2LLM
+from .settings import Settings
+import uvicorn
+from sse_starlette.sse import EventSourceResponse
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, Response, StreamingResponse
+import os
+import json
+import time
 from typing import Any, Dict, Optional, AsyncGenerator
 from loguru import logger
 import uuid
+
+
 def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
-from fastapi import BackgroundTasks, FastAPI, Request
-from fastapi.responses import JSONResponse, Response, StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
-from sse_starlette.sse import EventSourceResponse
-import uvicorn
 
 def get_args():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to listen on")
-    parser.add_argument("--port", type=int, default=5001, help="Port to listen on")
-    parser.add_argument("--log_level", type=str, default="info", help="Log level")  
+    parser.add_argument("--host", type=str,
+                        default="0.0.0.0", help="Host to listen on")
+    parser.add_argument("--port", type=int, default=5001,
+                        help="Port to listen on")
+    parser.add_argument("--log_level", type=str,
+                        default="info", help="Log level")
     parser.add_argument("--stream", action="store_true", help="Stream output")
-    parser.add_argument("--model_family", type=str, default="vllm", help="Model family")
+    parser.add_argument("--model_family", type=str,
+                        default="vllm", help="Model family")
 
-    parser.add_argument("--model_name_or_path", type=str, default=None, help="Model name or path")
+    parser.add_argument("--model_name_or_path", type=str,
+                        default=None, help="Model name or path")
 
     args = parser.parse_args()
     return args
 
+
 args = get_args()
 
-from .settings import Settings
-settings = Settings(model_name_or_path=args.model_name_or_path, 
-                    model_family=args.model_family, 
-                    stream=args.stream, 
-                    host=args.host, 
-                    port=args.port, 
+settings = Settings(model_name_or_path=args.model_name_or_path,
+                    model_family=args.model_family,
+                    stream=args.stream,
+                    host=args.host,
+                    port=args.port,
                     log_level=args.log_level,
                     )
-
-# -------------------- logging --------------------
-log_config = uvicorn.config.LOGGING_CONFIG
-log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(message)s"
-log_config["formatters"]["default"][
-    "fmt"
-] = "%(asctime)s - %(levelname)s - %(module)s - %(message)s"
-log_config["loggers"]["llm-api"] = {
-    "handlers": ["default"],
-    "level": uvicorn.config.LOG_LEVELS[settings.log_level],
-}
-
-from logging.config import dictConfig
-dictConfig(log_config)
-
 
 # -------------------- FastAPI --------------------
 app = FastAPI(title="llm-api", version="0.0.1")
@@ -66,6 +78,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class GenerateRequest(BaseModel):  # pylint: disable=too-few-public-methods
     """
@@ -85,27 +98,29 @@ class EmbeddingsRequest(BaseModel):  # pylint: disable=too-few-public-methods
 
 
 # -------------------- get_llm() --------------------
-from speechless.api.llms import HuggingFaceLLM, VllmLLM, ExllamaV2LLM
 
-available_models = {
-    'huggingface': HuggingFaceLLM,
-    'vllm': VllmLLM,
-    'exllamav2': ExllamaV2LLM,
-}
-assert settings.model_family in available_models, f"Model family {settings.model_family} not supported. Available models: {available_models.keys()}"
+# available_models = {
+#     'huggingface': HuggingFaceLLM,
+#     'vllm': VllmLLM,
+#     'exllamav2': ExllamaV2LLM,
+# }
+# assert settings.model_family in available_models, f"Model family {
+#     settings.model_family} not supported. Available models: {available_models.keys()}"
 
-def get_llm():
-    ModelClass = available_models[settings.model_family]
-    llm = ModelClass(settings)
 
-    return llm
+# def get_llm():
+#     ModelClass = available_models[settings.model_family]
+#     llm = ModelClass(settings)
 
-llm = None
+#     return llm
 
-llm = get_llm()
+
+# llm = None
+
+# llm = get_llm()
 
 # -------------------- API /v1/completions --------------------
-from speechless.api.protocol.openai import CompletionResponse
+
 
 @app.post("/v1/completions")
 async def comletions(request: Request):
@@ -156,7 +171,7 @@ async def comletions(request: Request):
             'object': 'text_completion',
             'created': round(time.time()),
             'model': model,
-            'choices':[
+            'choices': [
                 {
                     'text': generated_text,
                     'index': 0,
@@ -244,6 +259,8 @@ async def comletions(request: Request):
 #     #     return JSONResponse(completion_response.__dict__)
 
 # -------------------- API /generate --------------------
+
+
 @app.post("/generate")
 def generate(payload: GenerateRequest):
     """
@@ -291,6 +308,8 @@ def embeddings(payload: EmbeddingsRequest):
     return llm.embeddings(payload.text)
 
 # -------------------- API /models --------------------
+
+
 @app.post("/models")
 def models(payload: EmbeddingsRequest):
     """
@@ -306,6 +325,7 @@ def check():
     Status check
     """
     return "Ok"
+
 
 # -------------------- API /v1/chat/completions --------------------
 """
@@ -362,14 +382,7 @@ request_dict={
     'stream': True
 }
 """
-from .openai_api_protocol import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    ChatCompletionResponseChoice,
-    ChatMessage,
-    ChoiceLogprobs,
-    UsageInfo,
-)
+
 
 def format_finish_reason(finish_reason) -> Optional[str]:
     if finish_reason.startswith("None"):
@@ -382,6 +395,7 @@ def format_finish_reason(finish_reason) -> Optional[str]:
         return "abort"
     else:
         return "unknown"
+
 
 def v1_chat_generate_response(request, ret):
     choices = []
@@ -402,7 +416,8 @@ def v1_chat_generate_response(request, ret):
     prompt_tokens = sum(
         ret[i]["meta_info"]["prompt_tokens"] for i in range(0, len(ret), request.n)
     )
-    completion_tokens = sum(item["meta_info"]["completion_tokens"] for item in ret)
+    completion_tokens = sum(
+        item["meta_info"]["completion_tokens"] for item in ret)
     response = CompletionResponse(
         id=ret[0]["meta_info"]["id"],
         model=request.model,
@@ -416,17 +431,66 @@ def v1_chat_generate_response(request, ret):
 
     return response
 
-async def v1_chat_completions(raw_request: Request):
-    tokenizer_manager = None
-    request_json = await raw_request.json()
-    request = ChatCompletionRequest(**request_json)
-    all_requests = [request]
 
-    ret = []
-    # ret = await tokenizer_manager.generate_request(all_requests, raw_request).__anext__()
-    response = v1_chat_generate_response(request, ret)
+import uuid
+def random_uuid() -> str:
+    return str(uuid.uuid4().hex)
+
+async def v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionResponse:
+    request_id = random_uuid()
+
+    logger.debug(f"{request_id=}: {request=}")
+    logger.debug(f"{llm=}")
+
+    # ---------- prompt ----------
+    messages = request.messages
+    prompt = ""
+    for m in messages:
+        prompt += f"### {m.role.upper()}\n{m.content}\n\n"
+
+    # ---------- generated_text ----------
+    generated_text = llm.generate(prompt)
+    prompt_tokens = 0
+    completion_tokens = 0
+
+    # ---------- choices ----------
+    choices = []
+
+    idx = 0
+    choice_logprobs = None
+    choice_data = ChatCompletionResponseChoice(
+        index=idx,
+        message=ChatMessage(role="assistant", content=generated_text),
+        logprobs=choice_logprobs,
+        finish_reason="stop",
+    )
+
+    choices.append(choice_data)
+
+    # ---------- response ----------
+    response = ChatCompletionResponse(
+        id=request_id,
+        model=llm.model_name,
+        choices=choices,
+        usage=UsageInfo(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=prompt_tokens + completion_tokens,
+        ),
+    )
 
     return response
+
+    # tokenizer_manager = None
+    # request_json = await raw_request.json()
+    # request = ChatCompletionRequest(**request_json)
+    # all_requests = [request]
+
+    # ret = []
+    # # ret = await tokenizer_manager.generate_request(all_requests, raw_request).__anext__()
+    # response = v1_chat_generate_response(request, ret)
+
+    # return response
     # from sglang.srt.openai_api.adapter import v1_chat_generate_request, v1_chat_generate_response
     # adapted_request, request = v1_chat_generate_request(all_requests, tokenizer_manager)
     # if adapted_request.stream:
@@ -445,21 +509,92 @@ async def v1_chat_completions(raw_request: Request):
     #     response = v1_chat_generate_response(request, ret)
 
     #     return response
-        
+
 
 @app.post("/v1/chat/completions")
-async def openai_v1_chat_completions(raw_request: Request):
-    return await v1_chat_completions(raw_request)
+async def openai_v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionResponse:
+    return await v1_chat_completions(request)
+
+from .llms.base_llm import BaseLLM
+
+def load_mlx_model(model_path, eos_token=None) -> BaseLLM:
+    from .llms.mlx import MlxLLM
+    llm = MlxLLM(model_path, eos_token=eos_token)
+    return llm
+
+def load_gguf_model(model_path) -> BaseLLM:
+    # from .llms.exllama import ExllamaV2LLM
+    # llm = ExllamaV2LLM(model_path)
+    # return llm
+    raise NotImplementedError("GGUF is not supported yet")
+
+def load_transformers_model(model_path) -> BaseLLM:
+    from .llms.huggingface import HuggingFaceLLM
+    llm = HuggingFaceLLM(settings)
+    return llm
+
+def load_model(args):
+    if args.model_name_or_path is None:
+        raise ValueError("model_name_or_path is required")
+    model_path = os.path.join(args.model_root_dir, args.model_name_or_path)
+    if not os.path.exists(model_path):
+        raise ValueError(f"model_path {model_path} does not exist")
+
+    # /opt/local/llm_models/huggingface.co/mlx-community/Mistral-Large-Instruct-2407-4bit
+    if "mlx-community" in args.model_name_or_path:
+        llm = load_mlx_model(args.model_name_or_path, args.eos_token)
+    elif args.model_name_or_path.lower().endswith("gguf"): 
+        llm = load_gguf_model(args.model_name_or_path)
+    elif os.path.isdir(args.model_name_or_path):
+        llm = load_transformers_model(args.model_name_or_path)
+    else:
+        raise ValueError(f"model_name_or_path {args.model_name_or_path} is not supported")
+
+    return llm
+    
+
+def get_args():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_name_or_path", type=str, default=None, help="Model name or path")
+    parser.add_argument("--model_root_dir", type=str, default="/opt/local/llm_models", help="Model root dir")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to listen on")
+    parser.add_argument("--port", type=int, default=15001, help="Port to listen on")
+    parser.add_argument("--log_level", type=str, default="info", help="Log level")
+    parser.add_argument("--stream", action="store_true", help="Stream output")
+    parser.add_argument("--eos_token", type=str, default=None, help="End of sentence token")
+
+    args = parser.parse_args()
+    return args
 
 
 # -------------------- Main --------------------
 if __name__ == "__main__":
+    args = get_args()
+
+    logger.debug(f"{args=}")
+    logger.info(f"Loading model {args.model_name_or_path}")
+    llm = load_model(args)
+    logger.info(f"Model {args.model_name_or_path} loaded")
+
+    # -------------------- uvicorn logging --------------------
+    log_config = uvicorn.config.LOGGING_CONFIG
+    log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(message)s"
+    log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelname)s - %(module)s - %(message)s"
+    log_config["loggers"]["llm-api"] = {
+        "handlers": ["default"],
+        "level": uvicorn.config.LOG_LEVELS[args.log_level],
+    }
+
+    from logging.config import dictConfig
+    dictConfig(log_config)
+
     uvicorn.run(
         app,
-        host=settings.host,
-        port=settings.port,
+        host=args.host,
+        port=args.port,
         log_config=log_config,
-        log_level=settings.log_level,
+        log_level=args.log_level,
         timeout_keep_alive=5,
         loop="uvloop",
     )

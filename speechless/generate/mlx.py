@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-python -m speechless.generate.mlx --model_path dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx  --verbose --max_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
+python -m speechless.generate.mlx --model_path dolphin-2.6-mistral-7b-dpo-laser-4bit-mlx  --verbose --max_new_tokens 512 --prompt_file $SPEECHLESS_ROOT/speechless/generate/prompts/hello_llm_en.txt
 """
 import os, json
 import mlx_lm
@@ -61,7 +61,7 @@ def generate(args):
 
     gen_kwargs = {
         'temp': args.temperature,
-        'max_tokens': args.max_tokens,
+        'max_tokens': args.max_new_tokens,
     }
 
     response = mlx_lm.generate(
@@ -90,7 +90,7 @@ def get_args():
     parser.add_argument("--prompt_file", type=str, help="prompt file")
 
     parser.add_argument("--temperature", type=float, default=0.7, help="temperature")
-    parser.add_argument("--max_tokens", type=int, default=256, help="max tokens")
+    parser.add_argument("--max_new_tokens", type=int, default=256, help="max new tokens")
     parser.add_argument("--ctx_size", type=int, default=16384, help="context size")
 
     parser.add_argument("--top_p", type=float, default=0.9, help="top p")
