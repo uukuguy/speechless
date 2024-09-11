@@ -38,35 +38,35 @@ def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
 
-def get_args():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str,
-                        default="0.0.0.0", help="Host to listen on")
-    parser.add_argument("--port", type=int, default=5001,
-                        help="Port to listen on")
-    parser.add_argument("--log_level", type=str,
-                        default="info", help="Log level")
-    parser.add_argument("--stream", action="store_true", help="Stream output")
-    parser.add_argument("--model_family", type=str,
-                        default="vllm", help="Model family")
+# def get_args():
+#     import argparse
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--host", type=str,
+#                         default="0.0.0.0", help="Host to listen on")
+#     parser.add_argument("--port", type=int, default=5001,
+#                         help="Port to listen on")
+#     parser.add_argument("--log_level", type=str,
+#                         default="info", help="Log level")
+#     parser.add_argument("--stream", action="store_true", help="Stream output")
+#     parser.add_argument("--model_family", type=str,
+#                         default="vllm", help="Model family")
 
-    parser.add_argument("--model_name_or_path", type=str,
-                        default=None, help="Model name or path")
+#     parser.add_argument("--model_name_or_path", type=str,
+#                         default=None, help="Model name or path")
 
-    args = parser.parse_args()
-    return args
+#     args = parser.parse_args()
+#     return args
 
 
-args = get_args()
+# args = get_args()
 
-settings = Settings(model_name_or_path=args.model_name_or_path,
-                    model_family=args.model_family,
-                    stream=args.stream,
-                    host=args.host,
-                    port=args.port,
-                    log_level=args.log_level,
-                    )
+# settings = Settings(model_name_or_path=args.model_name_or_path,
+#                     model_family=args.model_family,
+#                     stream=args.stream,
+#                     host=args.host,
+#                     port=args.port,
+#                     log_level=args.log_level,
+#                     )
 
 # -------------------- FastAPI --------------------
 app = FastAPI(title="llm-api", version="0.0.1")
@@ -436,20 +436,23 @@ import uuid
 def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
-async def v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionResponse:
+async def v1_chat_completions(request: ChatCompletionRequest, verbose: bool = False) -> ChatCompletionResponse:
     request_id = random_uuid()
 
     logger.debug(f"{request_id=}: {request=}")
     logger.debug(f"{llm=}")
 
     # ---------- prompt ----------
-    messages = request.messages
-    prompt = ""
-    for m in messages:
-        prompt += f"### {m.role.upper()}\n{m.content}\n\n"
+    # prompt = ""
+    # for m in request.messages:
+    #     prompt += f"### {m.role.upper()}\n{m.content}\n\n"
+    # prompt += "### ASSISTANT\n"
+    messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
     # ---------- generated_text ----------
-    generated_text = llm.generate(prompt)
+    # response = llm.generate(prompt)
+    response = llm.generate(messages, verbose=verbose)
+    generated_text = response['text']
     prompt_tokens = 0
     completion_tokens = 0
 
@@ -513,7 +516,7 @@ async def v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionR
 
 @app.post("/v1/chat/completions")
 async def openai_v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionResponse:
-    return await v1_chat_completions(request)
+    return await v1_chat_completions(request, verbose=args.verbose)
 
 from .llms.base_llm import BaseLLM
 
@@ -528,9 +531,9 @@ def load_gguf_model(model_path) -> BaseLLM:
     # return llm
     raise NotImplementedError("GGUF is not supported yet")
 
-def load_transformers_model(model_path) -> BaseLLM:
-    from .llms.huggingface import HuggingFaceLLM
-    llm = HuggingFaceLLM(settings)
+def load_hf_model(model_path) -> BaseLLM:
+    from .llms.hf import HFLLM
+    llm = HFLLM(model_path)
     return llm
 
 def load_model(args):
@@ -546,7 +549,7 @@ def load_model(args):
     elif args.model_name_or_path.lower().endswith("gguf"): 
         llm = load_gguf_model(args.model_name_or_path)
     elif os.path.isdir(args.model_name_or_path):
-        llm = load_transformers_model(args.model_name_or_path)
+        llm = load_hf_model(args.model_name_or_path)
     else:
         raise ValueError(f"model_name_or_path {args.model_name_or_path} is not supported")
 
@@ -563,6 +566,7 @@ def get_args():
     parser.add_argument("--log_level", type=str, default="info", help="Log level")
     parser.add_argument("--stream", action="store_true", help="Stream output")
     parser.add_argument("--eos_token", type=str, default=None, help="End of sentence token")
+    parser.add_argument("--verbose", action="store_true", help="Verbose")
 
     args = parser.parse_args()
     return args
@@ -571,7 +575,6 @@ def get_args():
 # -------------------- Main --------------------
 if __name__ == "__main__":
     args = get_args()
-
     logger.debug(f"{args=}")
     logger.info(f"Loading model {args.model_name_or_path}")
     llm = load_model(args)
