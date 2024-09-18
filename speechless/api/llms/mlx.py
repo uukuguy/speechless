@@ -27,7 +27,6 @@ class MlxLLM(BaseLLM):
 
     # -------------------- generate() --------------------
     def generate(self, prompt_or_messages: Union[str, List[Dict[str, str]]], temperature: float = 0.7, max_new_tokens: int = 1024, top_p=1.0, min_p=0.0, verbose=False):
-        orig_prompt = deepcopy(prompt)
         if not self.ignore_chat_template and (
             hasattr(self.tokenizer, "apply_chat_template")
             and self.tokenizer.chat_template is not None

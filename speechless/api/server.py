@@ -19,7 +19,6 @@ from .openai_api_protocol import (
     UsageInfo,
 )
 from speechless.api.protocol.openai import CompletionResponse
-from speechless.api.llms import HuggingFaceLLM #, VllmLLM #, ExllamaV2LLM
 from .settings import Settings
 import uvicorn
 from sse_starlette.sse import EventSourceResponse
@@ -36,37 +35,6 @@ import uuid
 
 def random_uuid() -> str:
     return str(uuid.uuid4().hex)
-
-
-# def get_args():
-#     import argparse
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--host", type=str,
-#                         default="0.0.0.0", help="Host to listen on")
-#     parser.add_argument("--port", type=int, default=5001,
-#                         help="Port to listen on")
-#     parser.add_argument("--log_level", type=str,
-#                         default="info", help="Log level")
-#     parser.add_argument("--stream", action="store_true", help="Stream output")
-#     parser.add_argument("--model_family", type=str,
-#                         default="vllm", help="Model family")
-
-#     parser.add_argument("--model_name_or_path", type=str,
-#                         default=None, help="Model name or path")
-
-#     args = parser.parse_args()
-#     return args
-
-
-# args = get_args()
-
-# settings = Settings(model_name_or_path=args.model_name_or_path,
-#                     model_family=args.model_family,
-#                     stream=args.stream,
-#                     host=args.host,
-#                     port=args.port,
-#                     log_level=args.log_level,
-#                     )
 
 # -------------------- FastAPI --------------------
 app = FastAPI(title="llm-api", version="0.0.1")
@@ -96,171 +64,7 @@ class EmbeddingsRequest(BaseModel):  # pylint: disable=too-few-public-methods
 
     text: str
 
-
-# -------------------- get_llm() --------------------
-
-# available_models = {
-#     'huggingface': HuggingFaceLLM,
-#     'vllm': VllmLLM,
-#     'exllamav2': ExllamaV2LLM,
-# }
-# assert settings.model_family in available_models, f"Model family {
-#     settings.model_family} not supported. Available models: {available_models.keys()}"
-
-
-# def get_llm():
-#     ModelClass = available_models[settings.model_family]
-#     llm = ModelClass(settings)
-
-#     return llm
-
-
-# llm = None
-
-# llm = get_llm()
-
-# -------------------- API /v1/completions --------------------
-
-
-@app.post("/v1/completions")
-async def comletions(request: Request):
-    """
-    Generate text based on a text prompt
-    """
-
-    # -------------------- Parameters from request --------------------
-    request_dict = await request.json()
-    # print(f"{request_dict=}")
-
-    prompt = request_dict.get("prompt")
-    model = request_dict.get("model")
-    stream = request_dict.get("stream", False)
-
-    # -------------------- generate() --------------------
-    request_id = random_uuid()
-    generated_text = None
-
-    completion_generator = llm.async_generate(prompt, request_dict, request_id)
-    if stream:
-        # Streaming case
-        async def stream_results() -> AsyncGenerator[bytes, None]:
-            async for generated_output in completion_generator:
-                yield generated_output['text']
-
-        async def abort_request() -> None:
-            await llm.abort(request_id)
-
-        background_tasks = BackgroundTasks()
-        # Abort the request if the client disconnects.
-        background_tasks.add_task(abort_request)
-        return StreamingResponse(stream_results(), background=background_tasks)
-    else:
-        # Non-streaming case
-        async for generated_output in completion_generator:
-            # Abort the request if the client disconnects.
-            if await request.is_disconnected():
-                await llm.abort(request_id)
-                return Response(status_code=499)
-            generated_text = generated_output['text']
-
-        prompt_tokens = 0
-        completion_tokens = 0
-        total_tokens = prompt_tokens + completion_tokens
-        response_dict = {
-            'id': request_id,
-            'object': 'text_completion',
-            'created': round(time.time()),
-            'model': model,
-            'choices': [
-                {
-                    'text': generated_text,
-                    'index': 0,
-                    'logprobs': None,
-                    'finish_reason': 'stop',
-                }
-            ],
-            'usage': {
-                'prompt_tokens': prompt_tokens,
-                'completion_tokens': completion_tokens,
-                'total_tokens': total_tokens,
-            },
-        }
-
-        completion_response = CompletionResponse(**response_dict)
-
-        return JSONResponse(completion_response.__dict__)
-
-# @app.post("/v1/chat/completions")
-# async def chat_comletions(request: Request):
-#     """
-#     Generate text based on a text prompt
-#     """
-
-#     # -------------------- Parameters from request --------------------
-#     request_dict = await request.json()
-#     print(f"{request_dict=}")
-
-#     # prompt = request_dict.get("prompt")
-#     # model = request_dict.get("model")
-#     # stream = request_dict.get("stream", False)
-
-#     # # -------------------- generate() --------------------
-#     # request_id = random_uuid()
-#     # generated_text = None
-
-#     # completion_generator = llm.async_generate(prompt, request_dict, request_id)
-#     # if stream:
-#     #     # Streaming case
-#     #     async def stream_results() -> AsyncGenerator[bytes, None]:
-#     #         async for generated_output in completion_generator:
-#     #             yield generated_output['text']
-
-#     #     async def abort_request() -> None:
-#     #         await llm.abort(request_id)
-
-#     #     background_tasks = BackgroundTasks()
-#     #     # Abort the request if the client disconnects.
-#     #     background_tasks.add_task(abort_request)
-#     #     return StreamingResponse(stream_results(), background=background_tasks)
-#     # else:
-#     #     # Non-streaming case
-#     #     async for generated_output in completion_generator:
-#     #         # Abort the request if the client disconnects.
-#     #         if await request.is_disconnected():
-#     #             await llm.abort(request_id)
-#     #             return Response(status_code=499)
-#     #         generated_text = generated_output['text']
-
-#     #     prompt_tokens = 0
-#     #     completion_tokens = 0
-#     #     total_tokens = prompt_tokens + completion_tokens
-#     #     response_dict = {
-#     #         'id': request_id,
-#     #         'object': 'text_completion',
-#     #         'created': round(time.time()),
-#     #         'model': model,
-#     #         'choices':[
-#     #             {
-#     #                 'text': generated_text,
-#     #                 'index': 0,
-#     #                 'logprobs': None,
-#     #                 'finish_reason': 'stop',
-#     #             }
-#     #         ],
-#     #         'usage': {
-#     #             'prompt_tokens': prompt_tokens,
-#     #             'completion_tokens': completion_tokens,
-#     #             'total_tokens': total_tokens,
-#     #         },
-#     #     }
-
-#     #     completion_response = CompletionResponse(**response_dict)
-
-#     #     return JSONResponse(completion_response.__dict__)
-
 # -------------------- API /generate --------------------
-
-
 @app.post("/generate")
 def generate(payload: GenerateRequest):
     """
@@ -306,16 +110,6 @@ def embeddings(payload: EmbeddingsRequest):
     Generate embeddings for a text input
     """
     return llm.embeddings(payload.text)
-
-# -------------------- API /models --------------------
-
-
-@app.post("/models")
-def models(payload: EmbeddingsRequest):
-    """
-    Return available models. 
-    """
-    return "Available models: " + ",".join(available_models.keys())
 
 
 # -------------------- API /check --------------------
@@ -384,74 +178,23 @@ request_dict={
 """
 
 
-def format_finish_reason(finish_reason) -> Optional[str]:
-    if finish_reason.startswith("None"):
-        return None
-    elif finish_reason.startswith("FINISH_MATCHED"):
-        return "stop"
-    elif finish_reason.startswith("FINISH_LENGTH"):
-        return "length"
-    elif finish_reason.startswith("FINISH_ABORT"):
-        return "abort"
-    else:
-        return "unknown"
-
-
-def v1_chat_generate_response(request, ret):
-    choices = []
-    for idx, ret_item in enumerate(ret):
-        token_logprobs = []
-        choice_logprobs = ChoiceLogprobs(content=token_logprobs)
-        choice_data = ChatCompletionResponseChoice(
-            index=idx,
-            message=ChatMessage(role="assistant", content=ret_item["text"]),
-            logprobs=choice_logprobs,
-            finish_reason=format_finish_reason(
-                ret_item["meta_info"]["finish_reason"]
-            ),
-        )
-
-    choices.append(choice_data)
-
-    prompt_tokens = sum(
-        ret[i]["meta_info"]["prompt_tokens"] for i in range(0, len(ret), request.n)
-    )
-    completion_tokens = sum(
-        item["meta_info"]["completion_tokens"] for item in ret)
-    response = CompletionResponse(
-        id=ret[0]["meta_info"]["id"],
-        model=request.model,
-        choices=choices,
-        usage=UsageInfo(
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=prompt_tokens + completion_tokens,
-        ),
-    )
-
-    return response
-
-
-import uuid
-def random_uuid() -> str:
-    return str(uuid.uuid4().hex)
-
 async def v1_chat_completions(request: ChatCompletionRequest, verbose: bool = False) -> ChatCompletionResponse:
     request_id = random_uuid()
 
     logger.debug(f"{request_id=}: {request=}")
     logger.debug(f"{llm=}")
 
-    # ---------- prompt ----------
-    # prompt = ""
-    # for m in request.messages:
-    #     prompt += f"### {m.role.upper()}\n{m.content}\n\n"
-    # prompt += "### ASSISTANT\n"
+    # ---------- messages ----------
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
     # ---------- generated_text ----------
-    # response = llm.generate(prompt)
-    response = llm.generate(messages, verbose=verbose)
+    response = llm.generate(
+        messages, 
+        verbose=verbose, 
+        temperature=args.temperature, 
+        max_new_tokens=args.max_new_tokens, 
+        top_p=args.top_p, 
+        min_p=args.min_p)
     generated_text = response['text']
     prompt_tokens = 0
     completion_tokens = 0
@@ -484,39 +227,7 @@ async def v1_chat_completions(request: ChatCompletionRequest, verbose: bool = Fa
 
     return response
 
-    # tokenizer_manager = None
-    # request_json = await raw_request.json()
-    # request = ChatCompletionRequest(**request_json)
-    # all_requests = [request]
-
-    # ret = []
-    # # ret = await tokenizer_manager.generate_request(all_requests, raw_request).__anext__()
-    # response = v1_chat_generate_response(request, ret)
-
-    # return response
-    # from sglang.srt.openai_api.adapter import v1_chat_generate_request, v1_chat_generate_response
-    # adapted_request, request = v1_chat_generate_request(all_requests, tokenizer_manager)
-    # if adapted_request.stream:
-    #     raise NotImplementedError("Streaming is not supported for chat completions")
-    # else:
-    #     # Non-streaming response.
-    #     try:
-    #         ret = await tokenizer_manager.generate_request(
-    #             adapted_request, raw_request
-    #         ).__anext__()
-    #     except ValueError as e:
-    #         return create_error_response(str(e))
-    #     if not isinstance(ret, list):
-    #         ret = [ret]
-
-    #     response = v1_chat_generate_response(request, ret)
-
-    #     return response
-
-
-@app.post("/v1/chat/completions")
-async def openai_v1_chat_completions(request: ChatCompletionRequest) -> ChatCompletionResponse:
-    return await v1_chat_completions(request, verbose=args.verbose)
+# -------------------- load_models --------------------
 
 from .llms.base_llm import BaseLLM
 
@@ -525,16 +236,13 @@ def load_mlx_model(model_path, eos_token=None) -> BaseLLM:
     llm = MlxLLM(model_path, eos_token=eos_token)
     return llm
 
-def load_gguf_model(model_path) -> BaseLLM:
-    # from .llms.exllama import ExllamaV2LLM
-    # llm = ExllamaV2LLM(model_path)
-    # return llm
-    raise NotImplementedError("GGUF is not supported yet")
-
 def load_hf_model(model_path) -> BaseLLM:
     from .llms.hf import HFLLM
     llm = HFLLM(model_path)
     return llm
+
+def load_gguf_model(model_path) -> BaseLLM:
+    raise NotImplementedError("GGUF is not supported yet")
 
 def load_model(args):
     if args.model_name_or_path is None:
@@ -566,6 +274,10 @@ def get_args():
     parser.add_argument("--log_level", type=str, default="info", help="Log level")
     parser.add_argument("--stream", action="store_true", help="Stream output")
     parser.add_argument("--eos_token", type=str, default=None, help="End of sentence token")
+    parser.add_argument("--temperature", type=float, default=0.7, help="Temperature")
+    parser.add_argument("--max_new_tokens", type=int, default=1024, help="Max new tokens")
+    parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
+    parser.add_argument("--min_p", type=float, default=0.0, help="Min p")
     parser.add_argument("--verbose", action="store_true", help="Verbose")
 
     args = parser.parse_args()

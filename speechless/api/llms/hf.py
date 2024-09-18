@@ -128,8 +128,14 @@ class HFLLM(BaseLLM):
             "temperature": temperature,
             "max_new_tokens": max_new_tokens,
             "do_sample": True,
-            "top_p": top_p,
+            # "top_p": top_p,
+            "min_p": min_p,
         }
+        if min_p > 0:
+            gen_kwargs["min_p"] = min_p
+        else:
+            gen_kwargs["top_p"] = top_p
+
         start_time = time.time()
         inputs = self.tokenizer(prompt, return_tensors="pt", padding=True, truncation=True).to(self.model.device)
         
