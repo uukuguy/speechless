@@ -28,7 +28,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --max_eval_samples ${MAX_EVAL_SAMPLES} \
     --dataloader_num_workers 3 \
     --logging_strategy steps \
-    --logging_steps 1 \
+    --logging_steps ${LOGGING_STEPS} \
     --report_to tensorboard \
     --remove_unused_columns False \
     --do_train \
