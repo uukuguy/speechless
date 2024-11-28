@@ -17,7 +17,7 @@ output_file = "output.jsonl"
 test_file = "/opt/local/datasets/competitions/IndustryCorpus2024/finance2024_test_data.jsonl"
 
 test_data = [json.loads(line.strip()) for line in open(test_file).readlines()]
-raw_datas = [ json.loads(line.strip()) for line in open("/opt/local/datasets/competitions/CCKS2024/digital_finance_test_data.jsonl").readlines()]
+# raw_datas = [ json.loads(line.strip()) for line in open("/opt/local/datasets/competitions/CCKS2024/digital_finance_test_data.jsonl").readlines()]
 
 max_tokens = 2048
 # # vllm
@@ -52,7 +52,8 @@ with open(output_file, 'w', encoding='utf-8') as fd:
     # for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples, **sampling_params):
     for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples):
         assert e - s == len(batch_responses), f"{s=}, {e=}, {len(batch_responses)=}"
-        for response, instruction, raw_data in zip(batch_responses, prompts[s:e], raw_datas[s:e]):
+        # for response, instruction, raw_data in zip(batch_responses, prompts[s:e], raw_datas[s:e]):
+        for response, instruction in zip(batch_responses, prompts[s:e]):
             logger.debug(f"{instruction=}")
             logger.info(f"{response=}")
             # raw_data = deepcopy(raw_data)
@@ -60,4 +61,4 @@ with open(output_file, 'w', encoding='utf-8') as fd:
             # fd.write(json.dumps(raw_data, ensure_ascii=False) + "\n")
             # fd.flush()
 
-print(f"Saved {len(raw_datas)} lines in {output_file}")
+print(f"Saved {len(test_data)} lines in {output_file}")
