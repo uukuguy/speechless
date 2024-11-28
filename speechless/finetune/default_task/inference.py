@@ -13,8 +13,6 @@ from speechless.generate.llm import VllmAIModel
 
 model_path = "/opt/local/llm_models/huggingface.co/01-ai/Yi-1.5-9B"
 output_file = "digital_finance_test_result_Yi-1.5-9B.jsonl"
-# model_path = "/opt/local/llm_models/huggingface.co/Tongyi-Finance-14B"
-# output_file = "digital_finance_test_result_Tongyi_Finance_14B.jsonl"
 test_file = "/opt/local/datasets/competitions/CCKS2024/digital_finance_test_prompts.jsonl"
 
 test_data = [json.loads(line.strip()) for line in open(test_file).readlines()]
