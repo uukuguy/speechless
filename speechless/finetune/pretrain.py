@@ -33,7 +33,7 @@ def preprocess_pretrain_dataset(
 ) -> Dict[str, List[List[int]]]:
     # build grouped texts with format `X1 X2 X3 ...` if packing is enabled
     # text_examples = [messages[0]["content"] + tokenizer.eos_token for messages in examples["prompt"]]
-    text_examples = [prompt + tokenizer.eos_token for prompt in examples["prompt"]]
+    text_examples = [prompt + tokenizer.eos_token for prompt in examples["text"]]
 
     if not data_args.packing:
         if data_args.template == "gemma":
