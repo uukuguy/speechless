@@ -179,6 +179,7 @@ class HFAIModel(BaseLLM):
                 "quantization_config": bnb_config,
             }
             model_kwargs["attn_implementation"] = "flash_attention_2"
+        self.model_kwargs = model_kwargs
 
         if gen_kwargs is None:
             gen_kwargs = {
@@ -190,7 +191,6 @@ class HFAIModel(BaseLLM):
             }
         self.gen_kwargs = gen_kwargs
 
-        self.model_kwargs = model_kwargs
         self.model, self.tokenizer = self.load_model()
 
 
@@ -265,6 +265,22 @@ class HFAIModel(BaseLLM):
 
         return generated_text
 
+    def generate_batch(self, instructions: List[str], batch_size: int=2, gen_kwargs=None, ignore_chat_template=False, verbose=False) -> Generator[Any, Any, Any]: 
+        cached_instructions = []
+        s = 0
+        for i, prompt in enumerate(tqdm(instructions, ncols=100)):
+            cached_instructions.append(prompt)
+            e = i + 1
+            if i < len(instructions) - 1 and len(cached_instructions) < batch_size:
+                continue
+            generated_texts = []
+            for instruction in cached_instructions:
+                generated_text = self.generate(instruction, gen_kwargs=gen_kwargs, ignore_chat_template=ignore_chat_template, verbose=verbose)
+                generated_texts.append(generated_text)
+            yield s, e, generated_texts
+
+            cached_instructions = []
+            s = e
 
     async def a_generate(self, prompt: str) -> str:
         raise NotImplementedError("异步接口尚未实现")
