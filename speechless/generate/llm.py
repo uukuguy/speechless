@@ -169,7 +169,7 @@ class HFAIModel(BaseLLM):
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-        ) if bits in (4, 8) else None,
+        ) if bits in (4, 8) else None
 
         if model_kwargs is None:
             model_kwargs = {
