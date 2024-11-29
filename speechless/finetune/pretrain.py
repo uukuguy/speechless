@@ -157,6 +157,8 @@ def get_dataset(
                 desc="Running tokenizer on dataset",
             )
 
+        if data_args.max_samples > 0:
+            dataset = dataset[:data_args.max_samples]
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
         if data_args.tokenized_path is not None:
