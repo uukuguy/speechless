@@ -13,7 +13,7 @@ from torch.nn import BCEWithLogitsLoss
 from transformers import DataCollatorWithPadding
 from transformers import TrainerCallback
 from datasets import concatenate_datasets
-from prm.code.finetune_qwen import DATA_PATH
+from finetune_qwen import DATA_PATH
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="Qwen/Qwen2.5-Math-7B-Instruct")
