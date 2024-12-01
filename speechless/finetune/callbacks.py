@@ -1,6 +1,4 @@
-import json
-import os
-import time
+import os, json, time
 from datetime import timedelta
 
 from transformers import TrainerCallback
@@ -198,3 +196,41 @@ class EarlyStoppingCallback(TrainerCallback):#, ExportableState):
     #         "attributes": {
     #         }
     #     }
+
+
+class SavePeftModelCallback(TrainerCallback):
+    def save_model(self, args, state, kwargs):
+        logger.info('Saving PEFT checkpoint...')
+        checkpoint_folder = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
+
+        peft_model_path = os.path.join(checkpoint_folder, "adapter_model")
+        kwargs["model"].save_pretrained(peft_model_path)
+
+        pytorch_model_path = os.path.join(checkpoint_folder, "pytorch_model.bin")
+        if os.path.exists(pytorch_model_path):
+            os.remove(pytorch_model_path)
+
+        self._symlink_latest_checkpoint(checkpoint_folder)
+
+    def _symlink_latest_checkpoint(self, checkpoint_folder):
+        # if the latest checkpoint is a symlink, remove it
+        output_dir = os.path.dirname(checkpoint_folder)
+        latest_checkpoint = os.path.join(output_dir, "latest")
+        if os.path.islink(latest_checkpoint):
+            os.remove(latest_checkpoint)
+        # symlink the latest checkpoint to the checkpoint folder
+        os.symlink(os.path.basename(checkpoint_folder), latest_checkpoint)
+
+    def on_save(self, args, state, control, **kwargs):
+        if state.is_local_process_zero:
+            self.save_model(args, state, kwargs)
+        return control
+
+    def on_train_end(self, args, state, control, **kwargs):
+        def touch(fname, times=None):
+            with open(fname, 'a'):
+                os.utime(fname, times)
+
+        if state.is_local_process_zero:
+            touch(os.path.join(args.output_dir, 'completed'))
+            self.save_model(args, state, kwargs)
