@@ -1,6 +1,6 @@
 import os
 import transformers
-from typing import Optional
+from typing import Optional, Literal
 from dataclasses import dataclass, field
 
 @dataclass
@@ -19,6 +19,16 @@ class ModelArguments:
 
 @dataclass
 class DataArguments:
+
+    mix_strategy: Literal["concat", "interleave_under", "interleave_over"] = field(
+        default="concat",
+        metadata={"help": "Strategy to use in dataset mixing (concat/interleave) (undersampling/oversampling)."},
+    )
+    streaming: bool = field(
+        default=False,
+        metadata={"help": "Enable dataset streaming."},
+    )
+
     force_remove_overlength_samples: bool = field(
         default=True,
         metadata={"help": "Remove overlength samples."}
