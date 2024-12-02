@@ -22,7 +22,7 @@ def print_trainable_parameters(args, model):
         if param.requires_grad:
             trainable_params += param.numel()
     if args.bits == 4: trainable_params /= 2
-    print(
+    logger.info(
         f"trainable params: {trainable_params} || "
         f"all params: {all_param} || "
         f"trainable: {100 * trainable_params / all_param}"
