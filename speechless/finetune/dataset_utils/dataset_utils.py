@@ -1,6 +1,6 @@
 import os, re
 import pandas as pd
-from typing import Dict
+from typing import Dict, List, Union
 from loguru import logger
 import transformers
 from datasets import load_dataset, Dataset
@@ -43,15 +43,48 @@ def extract_alpaca_dataset(example):
     }
 
 
-def local_dataset(dataset_name, test_size=0.02):
-    if dataset_name.endswith(('.json', '.jsonl')):
-        full_dataset = Dataset.from_json(path_or_paths=dataset_name)
-    elif dataset_name.endswith('.csv'):
-        full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name))
-    elif dataset_name.endswith('.tsv'):
-        full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name, delimiter='\t'))
+from datasets import concatenate_datasets, interleave_datasets, Dataset, IterableDataset
+for ..finetune_qlora_arguments import DataArguments, TrainingArguments
+def merge_dataset(
+    all_datasets: List[Union["Dataset", "IterableDataset"]],
+    args,
+    # data_args: "DataArguments",
+    # training_args: "TrainingArguments",
+) -> Union["Dataset", "IterableDataset"]:
+    if len(all_datasets) == 1:
+        return all_datasets[0]
+    elif args.mix_strategy == "concat":
+        if args.streaming:
+            logger.warning("The samples between different datasets will not be mixed in streaming mode.")
+        return concatenate_datasets(all_datasets)
+    elif args.mix_strategy.startswith("interleave"):
+        if not args.streaming:
+            logger.warning("We recommend using `mix_strategy=concat` in non-streaming mode.")
+        return interleave_datasets(
+            datasets=all_datasets,
+            probabilities=args.interleave_probs,
+            seed=args.seed,
+            stopping_strategy="first_exhausted" if args.mix_strategy.endswith("under") else "all_exhausted",
+        )
     else:
-        raise ValueError(f"Unsupported dataset format: {dataset_name}")
+        raise ValueError("Unknown mixing strategy.")
+
+def local_dataset(dataset_name, args, test_size=0.02):
+    if "," in dataset_name:
+        all_datasets = []
+        for dataset_attr in [ n.strip() for n in dataset_name.split(',')]:
+            all_datasets.append(load_dataset("json", data_files=dataset_attr))
+        # dataset = merge_dataset(all_datasets, data_args, training_args)
+        full_dataset = merge_dataset(all_datasets, args)
+    else:
+        if dataset_name.endswith(('.json', '.jsonl')):
+            full_dataset = Dataset.from_json(path_or_paths=dataset_name)
+        elif dataset_name.endswith('.csv'):
+            full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name))
+        elif dataset_name.endswith('.tsv'):
+            full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name, delimiter='\t'))
+        else:
+            raise ValueError(f"Unsupported dataset format: {dataset_name}")
 
     if 'category' in full_dataset.column_names:
         full_dataset = full_dataset.class_encode_column('category')
@@ -105,7 +138,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
             if os.path.exists(dataset_name):
                 try:
                     args.dataset_format = args.dataset_format if args.dataset_format else "input-output"
-                    full_dataset = local_dataset(dataset_name, test_size=args.eval_dataset_size)
+                    full_dataset = local_dataset(dataset_name, args, test_size=args.eval_dataset_size)
                     return full_dataset
                 except:
                     raise ValueError(f"Error loading dataset from {dataset_name}")
