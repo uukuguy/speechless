@@ -11,11 +11,11 @@ MISTRAL_INSTRUCTION_DELIMITERS_NO_BOS = {
 class TrainingRecordHandler:
     @classmethod
     def get_input(cls, record) -> str:
-        return format(record["input"], delimiters=cls.get_delimiters())
+        return format(record["instruction"], delimiters=cls.get_delimiters())
 
     @classmethod
     def get_output(cls, record) -> str:
-        return record["output"]
+        return record["response"]
 
     @classmethod
     def get_delimiters(cls) -> Dict:
