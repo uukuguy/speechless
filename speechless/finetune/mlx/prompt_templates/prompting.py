@@ -28,6 +28,44 @@ class ordering(Enum):
     CONTEXT_QUERY = 2
 
 
+
+CHATML_DELIMITERS = {
+    pdelim.PRE_PREAMBLE: '<|im_start|>system\n',
+    pdelim.PREQUERY: '<|im_end|>\n<|im_start|>user\n',
+    pdelim.POSTQUERY: '<|im_end|>\n<|im_start|>assistant',
+}
+
+MISTRAL_INSTRUCTION_DELIMITERS = {
+    pdelim.PRE_ALL_CONTEXT: '<s>[INST]',
+    pdelim.POST_ALL_CONTEXT: '\n[/INST]',
+}
+
+LLAMA_INSTRUCT = {
+    pdelim.PRE_PREAMBLE: '### System:\n',
+    pdelim.PREQUERY: '\n\n### User:\n',
+    pdelim.POSTQUERY: '\n\n### Assistant:\n',
+}
+
+ALPACA_INSTRUCT_DELIMITERS = {  # remove? seems redundant with ALPACA_INSTRUCT_INPUT_DELIMITERS
+    pdelim.PREQUERY: '### Instruction:\n',
+    pdelim.POSTQUERY: '\n### Response:\n',
+}
+
+ALPACA_INSTRUCT_INPUT_DELIMITERS = {
+    pdelim.PREQUERY: '### Instruction:\n',
+    pdelim.POSTQUERY: '\n\n### Response:\n',
+    # Expect a single context item, to treat as the input:
+    pdelim.PRE_ALL_CONTEXT: '\n\n### Input:\n',
+    pdelim.META_ORDERING: ordering.QUERY_CONTEXT
+}
+
+VICUNA_DELIMITERS = {
+    pdelim.PREQUERY: '### USER: ',
+    pdelim.POSTQUERY: '\n### ASSISTANT: ',
+}
+
+
+
 def format(query, preamble='', contexts=None, delimiters=None, context_with_metadata=False):
     '''
     Build a full LLM prompt out of the actual human/user query, an optional

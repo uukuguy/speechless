@@ -1,3 +1,9 @@
+"""
+Usage:
+python -m speechless.finetune.mlx.sft \
+    --model 
+    --train-type lora-completion-only
+"""
 import warnings
 
 import mlx.optimizers as optim
