@@ -14,11 +14,11 @@ LLAMA3_DELIMITERS = {
 class TrainingRecordHandler:
     @classmethod
     def get_input(cls, record) -> str:
-        return format(record["input"], delimiters=cls.get_delimiters())
+        return format(record["instruction"], delimiters=cls.get_delimiters())
 
     @classmethod
     def get_output(cls, record) -> str:
-        return f"<|start_header_id|>assistant<|end_header_id|>\n\n{record['output']}<|eot_id|>"
+        return f"<|start_header_id|>assistant<|end_header_id|>\n\n{record['response']}<|eot_id|>"
 
     @classmethod
     def get_delimiters(cls) -> Dict:
