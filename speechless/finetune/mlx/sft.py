@@ -215,6 +215,11 @@ def main():
     if args.save_strategy == "epochs":
         args.save_steps = epoch_num_steps
 
+    args.train = args.do_train
+    args.steps_per_report=args.logging_steps, #scaled_steps_per_report,
+    args.steps_per_eval=args.eval_steps, # scaled_steps_per_eval,
+    args.steps_per_save=args.save_steps, #scaled_save_every,
+
     # if wandb_project:
     #     training_callback = WandbCallback(tqdm(total=num_iterations))
 
