@@ -52,7 +52,7 @@ CONFIG_DEFAULTS = {
     "batch_size": 4,
     "iters": -1,
     "epochs": -1,
-    "val_batches": 25,
+    "val_batches": -1,
     "learning_rate": 1e-5,
     "steps_per_report": 10,
     "steps_per_eval": 200,
