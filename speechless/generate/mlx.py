@@ -75,7 +75,7 @@ def generate(args):
     print(response)
 
 class MLX_API:
-    def __init__(self, model, adapter_path=None, gen_params=None, eos_token=None, trust_remote_code=True, ignore_chat_template=False, verbose=False, seed=42):
+    def __init__(self, model, adapter_path=None, gen_params=None, lazy=True, eos_token=None, trust_remote_code=True, ignore_chat_template=False, verbose=False, seed=42):
         self.model_path = model
         self.adapter_path = adapter_path
         self.eos_token = eos_token
@@ -91,7 +91,8 @@ class MLX_API:
 
         self.model, self.tokenizer = mlx_lm.load(self.model_path, 
                                                  adapter_path=self.adapter_path,
-                                                 tokenizer_config=self.tokenizer_config)
+                                                 tokenizer_config=self.tokenizer_config,
+                                                 lazy=lazy)
 
         self.gen_arams = gen_params
 
