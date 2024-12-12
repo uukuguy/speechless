@@ -41,7 +41,7 @@ def generate(args):
     if args.eos_token is not None:
         tokenizer_config["eos_token"] = args.eos_token
 
-    model, tokenizer = mlx_lm.load(args.model_path, adapter_path=args.adapter_file, tokenizer_config=tokenizer_config)
+    model, tokenizer = mlx_lm.load(args.model_path, adapter_path=args.adapter_path, tokenizer_config=tokenizer_config)
 
     if args.prompt_file:
         prompt = open(args.prompt_file).read().strip()
@@ -74,6 +74,80 @@ def generate(args):
     )
     print(response)
 
+class MLX_API:
+    def __init__(self, model, adapter_path=None, gen_params=None, lazy=True, eos_token=None, trust_remote_code=True, ignore_chat_template=False, verbose=False, seed=42):
+        self.model_path = model
+        self.adapter_path = adapter_path
+        self.eos_token = eos_token
+        self.trust_remote_code = trust_remote_code
+        self.seed = seed
+        self.verbose = verbose
+
+        mx.random.seed(self.seed)
+        # Building tokenizer_config
+        self.tokenizer_config = {"trust_remote_code": True if self.trust_remote_code else None}
+        if self.eos_token is not None:
+            self.tokenizer_config["eos_token"] = self.eos_token
+
+        self.model, self.tokenizer = mlx_lm.load(self.model_path, 
+                                                 adapter_path=self.adapter_path,
+                                                 tokenizer_config=self.tokenizer_config,
+                                                 lazy=lazy)
+
+        self.gen_arams = gen_params
+
+
+    def generate(self, prompt, system_message="", gen_params=None, stream=False, ignore_chat_template=False, verbose=False):
+        if not ignore_chat_template and (
+            hasattr(self.tokenizer, "apply_chat_template")
+            and self.tokenizer.chat_template is not None
+        ):
+            messages = [{"role": "system", "content": system_message}] if system_message else []
+            messages.append({"role": "user", "content": prompt})
+                
+            prompt = self.tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+
+        if gen_params is None:
+            gen_params = self.gen_arams
+
+        if gen_params is None:
+            gen_params={
+                "temperature": 0.7,
+                # "top_p": 0.9,
+                "min_p": 0.1,
+                "max_tokens": 512,
+            }
+
+        mlx_gen_params = {
+            'temp': gen_params.get("temperature", 0.7),
+            'max_tokens': gen_params.get("max_tokens", 1024),
+            "top_p": gen_params.get("top_p", 0.9),
+            "min_p": gen_params.get("min_p", 0.1),
+        }
+    
+        if stream:
+            stream_generator = mlx_lm.stream_generate(
+                model=self.model,
+                tokenizer=self.tokenizer,
+                prompt=prompt,
+                **mlx_gen_params,
+            )
+            for chunk in stream_generator:
+                yield chunk
+        else:
+            response = mlx_lm.generate(
+                model=self.model,
+                tokenizer=self.tokenizer,
+                prompt=prompt,
+                verbose=verbose,
+                **mlx_gen_params,
+            )
+
+            generated_text = response
+            return generated_text
+
 
 def get_args():
     from argparse import ArgumentParser
@@ -85,7 +159,7 @@ def get_args():
     # parser.add_argument("--colorize", action="store_true", help="Colorize output based on T[0] probability")
 
     parser.add_argument("--model_path", type=str, required=True, help="HF model path")
-    parser.add_argument("--adapter_file", type=str, help="adapter file path")
+    parser.add_argument("--adapter_path", type=str, help="adapter file path")
     parser.add_argument("--prompt", type=str, help="prompt to run")
     parser.add_argument("--prompt_file", type=str, help="prompt file")
 
