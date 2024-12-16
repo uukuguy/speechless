@@ -44,7 +44,7 @@ def extract_alpaca_dataset(example):
 
 
 from datasets import concatenate_datasets, interleave_datasets, Dataset, IterableDataset
-for ..finetune_qlora_arguments import DataArguments, TrainingArguments
+from ..finetune_qlora_arguments import DataArguments, TrainingArguments
 def merge_dataset(
     all_datasets: List[Union["Dataset", "IterableDataset"]],
     args,
