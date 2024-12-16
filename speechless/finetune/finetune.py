@@ -346,16 +346,27 @@ from transformers import TrainerCallback
 
 def get_accelerate_model(args, checkpoint_dir):
 
-    n_gpus = torch.cuda.device_count()
+    if torch.backends.mps.is_available():
+        n_gpus = 1
+    elif torch.cuda.is_available():
+        n_gpus = torch.cuda.device_count()
+    else:
+        n_gpus = 0
+    
+
     max_memory = f'{args.max_memory_MB}MB'
     max_memory = {i: max_memory for i in range(n_gpus)}
-    device_map = "auto"
+    if torch.backends.mps.is_available():
+        device_map = {"": torch.device("mps")}
+    else:
+        device_map = "auto"
 
     # if we are in a distributed setting, we need to set the device map and max memory per device
-    if os.environ.get('LOCAL_RANK') is not None:
-        local_rank = int(os.environ.get('LOCAL_RANK', '0'))
-        device_map = {'': f'cuda:{local_rank}'}
-        max_memory = {'': max_memory[local_rank]}
+    if torch.cuda.is_available():
+        if os.environ.get('LOCAL_RANK') is not None:
+            local_rank = int(os.environ.get('LOCAL_RANK', '0'))
+            device_map = {'': f'cuda:{local_rank}'}
+            max_memory = {'': max_memory[local_rank]}
 
 
     if args.full_finetune: assert args.bits in [16, 32]
@@ -383,6 +394,17 @@ def get_accelerate_model(args, checkpoint_dir):
             config.fp16 = True
 
     compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+    bnb_config = None
+    if torch.cuda.is_available():
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=args.bits == 4,
+            load_in_8bit=args.bits == 8,
+            llm_int8_threshold=6.0,
+            llm_int8_has_fp16_weight=False,
+            bnb_4bit_compute_dtype=compute_dtype,
+            bnb_4bit_use_double_quant=args.double_quant,
+            bnb_4bit_quant_type=args.quant_type,
+        ) if args.bits in (4, 8) else None
     model_kwargs = {
         "cache_dir": args.cache_dir,
         # transformers-4.39.0.dev0
@@ -391,23 +413,16 @@ def get_accelerate_model(args, checkpoint_dir):
         # "load_in_8bit": args.bits == 8,
         "device_map": device_map if not args.deepspeed else None,
         "max_memory": max_memory if not args.deepspeed else None,
-        "quantization_config": BitsAndBytesConfig(
-            load_in_4bit=args.bits == 4,
-            load_in_8bit=args.bits == 8,
-            llm_int8_threshold=6.0,
-            llm_int8_has_fp16_weight=False,
-            bnb_4bit_compute_dtype=compute_dtype,
-            bnb_4bit_use_double_quant=args.double_quant,
-            bnb_4bit_quant_type=args.quant_type,
-        ) if args.bits in (4, 8) else None,
+        "quantization_config": bnb_config,
         "torch_dtype": (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
         "trust_remote_code": args.trust_remote_code,
         # "use_flash_attention_2": args.flash_attention,
         # "use_auth_token": args.use_auth_token
     }
 
-    if args.flash_attention:
-        model_kwargs["attn_implementation"] = "flash_attention_2"
+    if torch.cuda.is_available():
+        if args.flash_attention:
+            model_kwargs["attn_implementation"] = "flash_attention_2"
 
     # if args.mpt:
     #     model_kwargs["attn_config"] = {"attn_impl": "triton"}
