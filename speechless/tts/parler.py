@@ -1,8 +1,8 @@
 from transformers import AutoTokenizer
 from loguru import logger
 
-
-class ParlerTTSGenerator:
+from .base import TTSGenerator
+class ParlerTTSGenerator(TTSGenerator):
     def __init__(self, model_path, device="cpu"):
         self.model_path = model_path
         self.device = device
