@@ -2,7 +2,8 @@
 from loguru import logger
 from transformers import BarkModel, AutoProcessor 
 
-class BarkTTSGenerator:
+from .base import TTSGenerator
+class BarkTTSGenerator(TTSGenerator):
     def __init__(self, model_path, device="cpu", sampling_rate=24000):
         # BARK_MODEL="/opt/local/TTS/bark"
         self.model_path=model_path
