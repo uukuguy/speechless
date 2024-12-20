@@ -31,13 +31,10 @@ class LLM_API(ABC):
             from .mlx import MLX_API
             return MLX_API(model)
         elif name == "Vllm":
-            from .vllm import VllmAPI
             return VllmAPI(model)
         elif name == "Ollama":
-            from .ollama import OllamaAPI
             return OllamaAPI(model)
         elif name == "llamacpp":
-            from .llamacpp import LlamaCppAPI
             return LlamaCppAPI(model)
         elif name == "OpenAI":
             from .llm_api import OpenAI_API
