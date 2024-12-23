@@ -24,6 +24,25 @@ class LlamaCppAPI(LLM_API):
     def generate(self, prompt, system_message="", gen_params=None, stream=False, ignore_chat_template=False, verbose=False):
         pass
 
+def ollama_make_api_call(messages, max_tokens, model_name, is_final_answer=False):
+    for attempt in range(3):
+        try:
+            response = ollama.chat(
+                model=model_name,
+                messages=messages,
+                options={
+                    "num_predict": max_tokens,
+                    "temperature": 0.2
+                }
+            )
+            
+            print(f"Raw API response: {response}")
+            
+            if 'message' not in response or 'content' not in response['message']:
+                raise ValueError(f"Unexpected API response structure: {response}")
+            
+            content = response['message']['content']
+            done_reason = response.get('done', False)
 class LLM_API(ABC):
     @classmethod
     def from_config(name: str, model: str):
