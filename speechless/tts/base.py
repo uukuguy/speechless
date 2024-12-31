@@ -2,6 +2,8 @@ from loguru import logger
 from transformers import AutoTokenizer
 from scipy.io import wavfile 
 from pydub import AudioSegment
+import io
+import numpy as np
 
 def numpy_to_audio_segment(audio_arr, sampling_rate):
     """Convert numpy array to AudioSegment"""
@@ -34,12 +36,11 @@ class TTSGenerator:
             raise ValueError(f"Unknown TTS model: {model_path}")
 
 
-    @abstractmethod
     def generate_speaker_audio(text , device=None):
         raise NotImplementedError
 
-    def generate_audio_segment(self, text):
-        audio_arr, rate = generate_speaker_audio(text)
+    def generate_audio_segment(self, text, speaker=0):
+        audio_arr, rate = self.generate_speaker_audio(text, speaker=speaker)
         audio_segment = numpy_to_audio_segment(audio_arr, rate)
 
         # from pydub.playback import play as play_snd
