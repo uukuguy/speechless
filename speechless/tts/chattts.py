@@ -9,7 +9,7 @@ import ChatTTS
 from .base import TTSGenerator
 
 class ChatTTSGenerator(TTSGenerator):
-    def __init__(self, model_path="/opt/local/TTS/ChatTTS", device="cpu", sampling_rate=24000, compile=False):
+    def __init__(self, model_path="/opt/local/TTS/ChatTTS", num_speakers=2, device="cpu", sampling_rate=24000, compile=False):
         self.model_path = model_path
         self.device = device
         self.sampling_rate = sampling_rate
@@ -17,7 +17,12 @@ class ChatTTSGenerator(TTSGenerator):
         self.chat_tts = ChatTTS.Chat()
         self.chat_tts.load(source="custom", custom_path=model_path, device=device, compile=compile) # Set to True for better performance
 
-    def generate_speaker_audio(self, text, , device=None):
+        self.speakers = [self.chat_tts.sample_random_speaker() for i in range(num_speakers)]
+        for i in range(num_speakers):
+            with open(f"speaker_{i}.txt", "w") as f:
+                f.write(self.speakers[i])
+
+    def generate_speaker_audio(self, text, speaker=0, device=None):
         # ###################################
         # # Sample a speaker from Gaussian.
 
@@ -46,7 +51,17 @@ class ChatTTSGenerator(TTSGenerator):
         #     params_infer_code=params_infer_code,
         # )
 
-        wavs = self.chat_tts.infer(texts)
+        params_refine_text = ChatTTS.Chat.RefineTextParams(
+            prompt='[oral_2][laugh_0][break_6]',
+        )
+        params_infer_code = ChatTTS.Chat.InferCodeParams(
+            spk_emb = self.speakers[speaker], # add sampled speaker embedding
+        )
+        wavs = self.chat_tts.infer(
+            text, 
+            params_refine_text=params_refine_text,
+            params_infer_code=params_infer_code,
+            )
         audio_arr = wavs[0]
 
         # from IPython.display import Audio
