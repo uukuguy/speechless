@@ -695,21 +695,21 @@ class MultiLevelAggregatorAgent:
 # {input_text}
 # """
 #         return prompt
-    def _build_aggregation_prompt(self, query: str, input_text: str) -> str:
-        """
-        聚合多个 partial_summary 的 Prompt，需保留引用标签。
-        """
-        prompt = f"""
-请将以下多段摘要进行合并，写成一个更加全面、连贯的5000字以上的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
-重点保留带有引用标注的文本片段的观点，可以直接引用，也可以根据需要进行合并。
-如果有同一观点来自多个来源，可将引用合并在一起。
-只参考有助于回答“{query}”问题的片断，与问题无关的内容可以忽略。
+#     def _build_aggregation_prompt(self, query: str, input_text: str) -> str:
+#         """
+#         聚合多个 partial_summary 的 Prompt，需保留引用标签。
+#         """
+#         prompt = f"""
+# 请将以下多段摘要进行合并，写成一个更加全面、连贯的5000字以上的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
+# 重点保留带有引用标注的文本片段的观点，可以直接引用，也可以根据需要进行合并。
+# 如果有同一观点来自多个来源，可将引用合并在一起。
+# 只参考有助于回答“{query}”问题的片断，与问题无关的内容可以忽略。
 
-{input_text}
+# {input_text}
 
-请输出合并后的文本：
-"""
-        return prompt
+# 请输出合并后的文本：
+# """
+#         return prompt
 
 class StructuredWriterAgent:
     def __init__(self, llm_client):
