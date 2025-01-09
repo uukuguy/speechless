@@ -15,6 +15,32 @@ kb = KnowledgeBase()
 
 verbose = True
 
+def cache_or_rebuild(cache_file: str =None): 
+    is_pickle = False
+    is_json = False
+    if cache_file.endswith(".pkl"):
+        is_pickle = True
+    elif cache_file.endswith(".json"):
+        is_json = True
+    else:
+        raise ValueError("Unknown cache file format")
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if os.path.exists(cache_file):
+                if is_pickle:
+                    return pickle.load(open(cache_file, "rb"))
+                elif is_json:
+                    return json.load(open(cache_file, "r", encoding='utf-8'))
+            else:
+                result = func(*args, **kwargs)
+                if is_pickle:
+                    pickle.dump(result, open(cache_file, "wb"))
+                elif is_json:
+                    json.dump(result, open(cache_file, "w", encoding='utf-8'), ensure_ascii=False, indent=2, cls=NpEncoder)
+                return result
+        return wrapper
+    return decorator
+
 class LLMClient:
     def __init__(self, model_name: str):
         # ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY")
@@ -626,18 +652,18 @@ class SegmentSummarizerAgent:
     def __init__(self, llm_client):
         self.llm = llm_client
 
-    def summarize_in_batches(self, query: str, documents: List[Dict], batch_size=10) -> List[str]:
+    def summarize_in_batches(self, query: str, documents: List[Dict], review_type, batch_size=10) -> List[str]:
         partial_summaries = []
         all_citations = []
         for i in range(0, len(documents), batch_size):
             batch_docs = documents[i : i+batch_size]
-            prompt, batch_citations = self._build_batch_prompt(query, batch_docs)
+            prompt, batch_citations = self._build_batch_prompt(query, batch_docs, review_type)
             all_citations.extend(batch_citations)
             summary_text = self.llm.generate(prompt)
             partial_summaries.append(summary_text)
         return partial_summaries, all_citations
 
-    def _build_batch_prompt(self, query, batch_docs: List[Dict]) -> str:
+    def _build_batch_prompt(self, query, batch_docs: List[Dict], review_type) -> str:
         references_text = []
         # for doc in batch_docs:
         #     snippet = doc["content"][:300]
@@ -659,7 +685,8 @@ class SegmentSummarizerAgent:
         prompt = f"""
 你是一位学术研究助手。以下是一批文献内容片段，请为它们生成一个5000字以上的整合性的摘要。
 摘要内容要保证全面、连贯，尽可能引用文献片段原文，避免使用不存在于文献内容片段的观点。
-只参考有助于回答“{query}”问题的片断，与问题无关的内容可以忽略。
+只参考有助于回答“{query}”{review_desciptions[review_type]}问题的片断，与问题无关的内容可以忽略。
+不需要摘要标题和章节，以列表形式给出符合给出的文献片段观点的描述。
 需要在对应信息后面标注引用，使用文献片段结尾的[paper_id-chunk_id]信息：
 
 {references_joined}
@@ -675,41 +702,42 @@ class MultiLevelAggregatorAgent:
     def __init__(self, llm_client):
         self.llm = llm_client
 
-    def iterative_aggregate(self, query: str, partial_summaries: List[str], max_chunk_size=3) -> str:
+    def iterative_aggregate(self, query: str, partial_summaries: List[str], review_type: ReviewType, max_chunk_size=3) -> str:
         current_level = partial_summaries
         while len(current_level) > 1:
             next_level = []
             for i in range(0, len(current_level), max_chunk_size):
                 chunk_summaries = current_level[i : i+max_chunk_size]
                 input_text = "\n---\n".join(chunk_summaries)
-                prompt = self._build_aggregation_prompt(query, input_text)
+                prompt = self._build_aggregation_prompt(query, input_text, review_type)
                 aggregated = self.llm.generate(prompt)
                 next_level.append(aggregated)
             current_level = next_level
         # 最终只剩一个大摘要
         return current_level[0]
 
-#     def _build_aggregation_prompt(self, input_text: str) -> str:
+#     def _build_aggregation_prompt(self, input_text: str, review_type: ReviewType) -> str:
 #         prompt = f"""
 # 请将以下多段摘要进行合并，写成一个更全面的总结性文本，并保留/合并引用标注：
 # {input_text}
 # """
-#         return prompt
-#     def _build_aggregation_prompt(self, query: str, input_text: str) -> str:
-#         """
-#         聚合多个 partial_summary 的 Prompt，需保留引用标签。
-#         """
-#         prompt = f"""
-# 请将以下多段摘要进行合并，写成一个更加全面、连贯的5000字以上的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
-# 重点保留带有引用标注的文本片段的观点，可以直接引用，也可以根据需要进行合并。
-# 如果有同一观点来自多个来源，可将引用合并在一起。
-# 只参考有助于回答“{query}”问题的片断，与问题无关的内容可以忽略。
+        return prompt
+    def _build_aggregation_prompt(self, query: str, input_text: str, review_type: ReviewType) -> str:
+        """
+        聚合多个 partial_summary 的 Prompt，需保留引用标签。
+        """
+        prompt = f"""
+请将以下多段摘要进行合并，写成一个更加全面、连贯的5000字以上的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
+重点保留带有引用标注的文本片段的观点，可以直接引用，也可以根据需要进行合并。
+如果有同一观点来自多个来源，可将引用合并在一起。
+不需要摘要标题和章节，以列表形式给出符合给出的文献片段观点的描述。
+只参考有助于回答“{query}”{review_desciptions[review_type]}问题的片断，与问题无关的内容可以忽略。
 
-# {input_text}
+{input_text}
 
-# 请输出合并后的文本：
-# """
-#         return prompt
+请输出合并后的文本：
+"""
+        return prompt
 
 class StructuredWriterAgent:
     def __init__(self, llm_client):
@@ -719,109 +747,163 @@ class StructuredWriterAgent:
         """
         根据不同的review_type对final_summary进行扩写，形成完整结构。
         """
+        common_requirements = """
+- 每一章节内容要有逻辑性和连贯性，全文应全面反映提牮的文献片段的观点。
+- 尽量保留带引用标注的文本片段的原文内容观点，并保留原有的引用标注 [paper_id-chunk_id]，可以直接引用，也可以根据需要进行合并和润色扩写。
+- 引用标注的内容观点至少20个以上。
+- 综述全文不少于5000字:
+        """
+
+# 不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+
         # if review_type == "concept":
         if review_type == ReviewType.CONCEPT:
-            prompt = f"""
-你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”提问中技术概念的调研综述，包括：
-1) 概念定义
-2) 分类或子领域
-3) 应用场景
-4) 主要挑战
-5) 未来展望
-6) 参考文献
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术概念的调研综述，包括：
+# 1) 概念定义
+# 2) 分类或子领域
+# 3) 应用场景
+# 4) 主要挑战
+# 5) 未来展望
+# 6) 参考文献
 
-不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+# {common_requirements}
+
+# {final_summary}
+# """
+
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术概念的调研综述。
+
+# {common_requirements}
+
+# {final_summary}
+# """
+
+# 根据{review_desciptions[review_type]}类综述的通常结构（合适的综述标题，完整的综述大纲，主要内容控制在5-8个章节，不需要参考文献章节），并结合文献片段的观点，撰写一篇完整的{review_desciptions[review_type]}类综述文章。
+# 合适的综述标题，主要章节包括：概念定义、分类或子领域、应用场景、主要挑战、未来展望，可根据提供的文献片段内容进行适当扩展,主要内容控制在6-8个章节，不需要参考文献章节。
+
+            prompt = f"""
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+
+- 合适的综述标题，主要章节包括：概念定义、分类或子领域、应用场景、主要挑战、未来展望等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
+- 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
+{common_requirements}
 
 {final_summary}
 """
         # elif review_type == "direction":
         # elif review_type == "status":
         elif review_type == ReviewType.STATUS:
-            """
-            研究背景、现状、挑战和未来方向，
-            1. 研究背景和意义
-            2. 主要研究问题
-            3. 目前的研究进展
-            4. 存在的挑战
-            5. 未来的发展趋势
-            """
-            prompt = f"""
-你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”提问中研究方向的综述，包括:
-1. 研究背景和意义
-2. 主要研究问题
-3. 目前的研究进展
-4. 存在的挑战
-5. 未来的发展趋势
-6. 参考文献
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中研究方向的综述，包括:
+# 1. 研究背景和意义
+# 2. 主要研究问题
+# 3. 目前的研究进展
+# 4. 存在的挑战
+# 5. 未来的发展趋势
+# 6. 参考文献
 
-不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+# {common_requirements}
+
+# {final_summary}
+# """
+
+            prompt = f"""
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+
+- 合适的综述标题，主要章节包括：研究背景和意义、主要研究问题、目前的研究进展、存在的挑战、未来的发展趋势等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
+- 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
+{common_requirements}
 
 {final_summary}
 """
         # elif review_type == "comparison":
         elif review_type == ReviewType.COMPARISON:
-            """
-            核心思想、优缺点、性能对比与改进方向，
-            """
-            prompt = f"""
-你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”提问中对多种方法进行对比分析的综述，包括
-1. 主要方法类别
-2. 各个方法的核心思想
-3. 优势和局限性
-4. 适用场景
-5. 参考文献
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中对多种方法进行对比分析的综述，包括
+# 1. 主要方法类别
+# 2. 各个方法的核心思想
+# 3. 优势和局限性
+# 4. 适用场景
+# 5. 参考文献
 
-不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+# {common_requirements}
+
+# {final_summary}
+# """
+            prompt = f"""
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+
+- 合适的综述标题，主要章节包括：主要方法类别、各个方法的核心思想、优势和局限性、适用场景等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
+- 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
+{common_requirements}
 
 {final_summary}
 """
         # elif review_type == "evolution":
         # elif review_type == "timeline":
         elif review_type == ReviewType.TIMELINE:
-            """
-            期研究、关键里程碑、新进展和未来趋势
-            """
-            prompt = f"""
-你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”提问中技术方法的发展脉络综述，包括
-1. 发展阶段划分
-2. 各阶段的特征
-3. 关键技术突破
-4. 未来趋势
-5. 参考文献
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术方法的发展脉络综述，包括
+# 1. 发展阶段划分
+# 2. 各阶段的特征
+# 3. 关键技术突破
+# 4. 未来趋势
+# 5. 参考文献
 
-不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+# {common_requirements}
+
+# {final_summary}
+# """
+            prompt = f"""
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+
+- 合适的综述标题，主要章节包括：发展阶段划分、各阶段的特征、关键技术突破、未来趋势等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
+- 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
+{common_requirements}
 
 {final_summary}
 """
         else:
-            prompt = f"""
-你是一位学术写作者。根据下列综合摘要，写一篇文献综述, 包括:
-引言
-主体
-相关工作
-结论
-参考文献
+#             prompt = f"""
+# 你是一位学术写作者。根据下列综合摘要，写一篇文献综述, 包括:
+# 引言
+# 主体
+# 相关工作
+# 结论
+# 参考文献
 
-不少于5000字，并保留原有的引用标注 [paper_id-chunk_id]:
+# {common_requirements}
+
+# {final_summary}
+# """
+            prompt = f"""
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+
+- 合适的综述标题，主要章节包括：引言、主体、相关工作、结论等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
+- 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
+{common_requirements}
 
 {final_summary}
 """
+
         full_text = self.llm.generate(prompt)
         return full_text
 
-    def _build_aggregation_prompt(self, input_text: str) -> str:
-        """
-        聚合多个 partial_summary 的 Prompt，需保留引用标签。
-        """
-        prompt = f"""
-请将以下多段摘要进行合并，写成一个更加精炼、连贯的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
-如果有同一观点来自多个来源，可将引用合并在一起。
+#     def _build_aggregation_prompt(self, input_text: str) -> str:
+#         """
+#         聚合多个 partial_summary 的 Prompt，需保留引用标签。
+#         """
+#         prompt = f"""
+# 请将以下多段摘要进行合并，写成一个更加精炼、连贯的总结性文本，保持关键信息不丢失，并保留各段的引用标注（[paper_id-chunk_id]）。
+# 如果有同一观点来自多个来源，可将引用合并在一起。
 
-{input_text}
+# {input_text}
 
-请输出合并后的文本：
-"""
-        return prompt
+# 请输出合并后的文本：
+# """
+#         return prompt
 
 ########################
 # 6. 引用校验 & 质量审校
@@ -845,6 +927,7 @@ class QualityAgent:
         #     # 若不够长, 进行简单补充
         #     text += "\n\n(自动补充内容以满足2000字要求) " + "延伸讨论..."*100
         return text
+
 
 class ReviewOrchestrator:
     """系统协调器,负责整体流程控制"""
@@ -961,7 +1044,7 @@ class ReviewOrchestrator:
         """扩展查询"""
         return self.query_expander.expand_query(query, review_type)
 
-    def do_retrieve_chunks(self, queries: List[str], min_papers=50) -> List[PaperChunk]:
+    def retrieve_chunks(self, queries: List[str], min_papers=50) -> List[PaperChunk]:
         chunks = self.retriever.retrieve_by_queries(queries)
         logger.info(f"Retrieved {len(chunks)} chunks")
         if len(chunks) < min_papers:
@@ -977,89 +1060,127 @@ class ReviewOrchestrator:
 
         """生成完整的文献综述"""
         # 1. 扩展查询
-        # expanded_queries = self.query_expander.expand_query(query, review_type)
-        expaned_queries_file = f"{root_dir}/expanded_queries.json"
-        if os.path.exists(expaned_queries_file):
-            expanded_queries = json.load(open(expaned_queries_file, "r", encoding="utf-8"))
-        else:
-            expanded_queries = self.do_expand_query(query, review_type)
-            with open(expaned_queries_file, "w", encoding="utf-8") as f:
-                json.dump(expanded_queries, f, ensure_ascii=False, indent=2)
+        @cache_or_rebuild(cache_file=f"{root_dir}/expanded_queries.json")
+        def do_expand_query(query: str, review_type: ReviewType) -> List[str]:
+            """扩展查询"""
+            return self.query_expander.expand_query(query, review_type)
+        expanded_queries = do_expand_query(query, review_type)
+        # # expanded_queries = self.query_expander.expand_query(query, review_type)
+        # expaned_queries_file = f"{root_dir}/expanded_queries.json"
+        # if os.path.exists(expaned_queries_file):
+        #     expanded_queries = json.load(open(expaned_queries_file, "r", encoding="utf-8"))
+        # else:
+        #     expanded_queries = self.do_expand_query(query, review_type)
+        #     with open(expaned_queries_file, "w", encoding="utf-8") as f:
+        #         json.dump(expanded_queries, f, ensure_ascii=False, indent=2)
         
         # 2. 检索内容
+        @cache_or_rebuild(cache_file=f"{root_dir}/chunks.pkl")
+        def do_retrieve_chunks(expanded_queries: List[str], min_papers=50) -> List[PaperChunk]:
+            return self.retrieve_chunks(expanded_queries, min_papers=min_papers)
+        chunks = do_retrieve_chunks(expanded_queries, min_papers=50)
 
-        # chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
-        chunks_file = f"{root_dir}/chunks.pkl"
-        if os.path.exists(chunks_file):
-            # chunks = json.load(open(chunks_file, "r", encoding="utf-8"))
-            chunks = pickle.load(open(chunks_file, "rb"))
-        else:
-            chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
-            # with open(chunks_file, "w", encoding="utf-8") as f:
-            #     json.dump(chunks, f, ensure_ascii=False, indent=2)
-            pickle.dump(chunks, open(chunks_file, "wb"))
+        # # chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
+        # chunks_file = f"{root_dir}/chunks.pkl"
+        # if os.path.exists(chunks_file):
+        #     # chunks = json.load(open(chunks_file, "r", encoding="utf-8"))
+        #     chunks = pickle.load(open(chunks_file, "rb"))
+        # else:
+        #     chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
+        #     # with open(chunks_file, "w", encoding="utf-8") as f:
+        #     #     json.dump(chunks, f, ensure_ascii=False, indent=2)
+        #     pickle.dump(chunks, open(chunks_file, "wb"))
 
-        # clustered_chunks = self.retriever.cluster_chunks(chunks)
-        clustered_chunks_file = f"{root_dir}/clustered_chunks.pkl"
-        if os.path.exists(clustered_chunks_file):
-            # clustered_chunks = json.load(open(clustered_chunks_file, "r", encoding="utf-8"))
-            clustered_chunks = pickle.load(open(clustered_chunks_file, "rb"))
-        else:
-            clustered_chunks = self.retriever.cluster_chunks(chunks)
-            # with open(clustered_chunks_file, "w", encoding="utf-8") as f:
-            #     json.dump(clustered_chunks, f, ensure_ascii=False, indent=2)
-            pickle.dump(clustered_chunks, open(clustered_chunks_file, "wb"))
+        @cache_or_rebuild(cache_file=f"{root_dir}/clustered_chunks.pkl")
+        def do_cluster_chunks(chunks: List[PaperChunk]) -> Dict:
+            return self.retriever.cluster_chunks(chunks)
+        clustered_chunks = do_cluster_chunks(chunks)
+
+        # # clustered_chunks = self.retriever.cluster_chunks(chunks)
+        # clustered_chunks_file = f"{root_dir}/clustered_chunks.pkl"
+        # if os.path.exists(clustered_chunks_file):
+        #     # clustered_chunks = json.load(open(clustered_chunks_file, "r", encoding="utf-8"))
+        #     clustered_chunks = pickle.load(open(clustered_chunks_file, "rb"))
+        # else:
+        #     clustered_chunks = self.retriever.cluster_chunks(chunks)
+        #     # with open(clustered_chunks_file, "w", encoding="utf-8") as f:
+        #     #     json.dump(clustered_chunks, f, ensure_ascii=False, indent=2)
+        #     pickle.dump(clustered_chunks, open(clustered_chunks_file, "wb"))
         
         # 3) 分批摘要
-        # FIXME
-        # partial_summaries = self.segment_summarizer.summarize_in_batches(chunks, batch_size=5)
-        partial_summaries_file = f"{root_dir}/partial_summaries.pkl"
-        if os.path.exists(partial_summaries_file):
-            partial_summaries, partial_citations = pickle.load(open(partial_summaries_file, "rb"))
-        else:
-            partial_summaries, patial_citations = self.segment_summarizer.summarize_in_batches(query, chunks, batch_size=5)
-            pickle.dump(partial_summaries, open(partial_summaries_file, "wb"))
+        @cache_or_rebuild(cache_file=f"{root_dir}/partial_summaries.pkl")
+        def do_partial_summaries(query: str, chunks: List[PaperChunk], review_type, batch_size=5) -> Tuple[List[str], List[str]]:
+            return self.segment_summarizer.summarize_in_batches(query, chunks, review_type=review_type, batch_size=batch_size)
+        partial_summaries, partial_citations = do_partial_summaries(query, chunks, review_type=review_type, batch_size=5)
+
+        with open(f"{root_dir}/partial_citations.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(partial_citations))
+
+        # # FIXME
+        # # partial_summaries = self.segment_summarizer.summarize_in_batches(chunks, batch_size=5)
+        # partial_summaries_file = f"{root_dir}/partial_summaries.pkl"
+        # if os.path.exists(partial_summaries_file):
+        #     partial_summaries, partial_citations = pickle.load(open(partial_summaries_file, "rb"))
+        # else:
+        #     partial_summaries, patial_citations = self.segment_summarizer.summarize_in_batches(query, chunks, batch_size=5)
+        #     pickle.dump(partial_summaries, open(partial_summaries_file, "wb"))
         
 
         # 4) 多层聚合
-        # FIXME
-        # global_summary = self.aggregator.iterative_aggregate(partial_summaries, max_chunk_size=2)
-        global_summary_file = f"{root_dir}/global_summary.pkl"
-        if os.path.exists(global_summary_file):
-            global_summary = pickle.load(open(global_summary_file, "rb"))
-        else:
-            global_summary = self.aggregator.iterative_aggregate(query, partial_summaries, max_chunk_size=2)
-            pickle.dump(global_summary, open(global_summary_file, "wb"))
+        @cache_or_rebuild(cache_file=f"{root_dir}/global_summary.pkl")
+        def do_global_summary(query: str, partial_summaries: List[str], review_type: ReviewType, max_chunk_size=2) -> str:
+            return self.aggregator.iterative_aggregate(query, partial_summaries, review_type=review_type, max_chunk_size=max_chunk_size)
+        global_summary = do_global_summary(query, partial_summaries, review_type=review_type, max_chunk_size=2)
+        # # FIXME
+        # # global_summary = self.aggregator.iterative_aggregate(partial_summaries, max_chunk_size=2)
+        # global_summary_file = f"{root_dir}/global_summary.pkl"
+        # if os.path.exists(global_summary_file):
+        #     global_summary = pickle.load(open(global_summary_file, "rb"))
+        # else:
+        #     global_summary = self.aggregator.iterative_aggregate(query, partial_summaries, max_chunk_size=2)
+        #     pickle.dump(global_summary, open(global_summary_file, "wb"))
 
         # 5) 结构化写作
+        @cache_or_rebuild(cache_file=f"{root_dir}/structured_review.pkl")
+        def do_write_review(query: str, global_summary: str, review_type: ReviewType) -> Dict:
+            return self.writer.write_review(query, global_summary, review_type)
+        structured_review = do_write_review(query, global_summary, review_type)
         # FIXME
-        # structured_review = self.writer.write_review(global_summary, review_type)
-        structured_review_file = f"{root_dir}/structured_review.pkl"
-        if os.path.exists(structured_review_file):
-            structured_review = pickle.load(open(structured_review_file, "rb"))
-        else:
-            structured_review = self.writer.write_review(query, global_summary, review_type)
-            pickle.dump(structured_review, open(structured_review_file, "wb"))
+        # # structured_review = self.writer.write_review(global_summary, review_type)
+        # structured_review_file = f"{root_dir}/structured_review.pkl"
+        # if os.path.exists(structured_review_file):
+        #     structured_review = pickle.load(open(structured_review_file, "rb"))
+        # else:
+        #     structured_review = self.writer.write_review(query, global_summary, review_type)
+        #     pickle.dump(structured_review, open(structured_review_file, "wb"))
 
         # 6) 引用校验
-        # FIXME
-        # verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
-        verified_text_file = f"{root_dir}/verified_text.pkl"
-        if os.path.exists(verified_text_file):
-            verified_text = pickle.load(open(verified_text_file, "rb"))
-        else:
-            verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
-            pickle.dump(verified_text, open(verified_text_file, "wb"))
+        @cache_or_rebuild(cache_file=f"{root_dir}/verified_text.pkl")
+        def do_verify_citations(structured_review: Dict, chunks: List[PaperChunk]) -> Dict:
+            return self.citation_verifier.verify_citations(structured_review, chunks)
+        verified_text = do_verify_citations(structured_review, chunks)
+        # # FIXME
+        # # verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
+        # verified_text_file = f"{root_dir}/verified_text.pkl"
+        # if os.path.exists(verified_text_file):
+        #     verified_text = pickle.load(open(verified_text_file, "rb"))
+        # else:
+        #     verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
+        #     pickle.dump(verified_text, open(verified_text_file, "wb"))
 
         # 7) 质量审校
-        # FIXME
-        # review_content = self.quality_agent.review_and_refine(verified_text)
-        review_content_file = f"{root_dir}/review_content.pkl"
-        if os.path.exists(review_content_file):
-            review_content = pickle.load(open(review_content_file, "rb"))
-        else:
-            review_content = self.quality_agent.review_and_refine(verified_text)
-            pickle.dump(review_content, open(review_content_file, "wb"))
+        @cache_or_rebuild(cache_file=f"{root_dir}/review_content.pkl")
+        def do_quality_review(verified_text: str) -> str:
+            return self.quality_agent.review_and_refine(verified_text)
+        review_content = do_quality_review(verified_text)
+        # # FIXME
+        # # review_content = self.quality_agent.review_and_refine(verified_text)
+        # review_content_file = f"{root_dir}/review_content.pkl"
+        # if os.path.exists(review_content_file):
+        #     review_content = pickle.load(open(review_content_file, "rb"))
+        # else:
+        #     review_content = self.quality_agent.review_and_refine(verified_text)
+        #     pickle.dump(review_content, open(review_content_file, "wb"))
 
         output_file = f"{root_dir}/review_{query}.md"
         with open(output_file, 'w', encoding='utf-8') as f:
