@@ -13,6 +13,10 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from knowledge_base import KnowledgeBase 
 kb = KnowledgeBase()
 
+from common_utils import ReviewType, PaperChunk, Citation, review_desciptions, kb_chunk_to_paper_chunk 
+from citation_utils import generate_references
+from llm_utils import LLMClient
+
 verbose = True
 
 def cache_or_rebuild(cache_file: str =None): 
@@ -41,67 +45,6 @@ def cache_or_rebuild(cache_file: str =None):
         return wrapper
     return decorator
 
-class LLMClient:
-    def __init__(self, model_name: str):
-        # ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY")
-        # self.client = ZhipuAI(api_key=ZHIPUAI_API_KEY)
-        from openai import OpenAI
-        self.client =  OpenAI()
-        self.model_name = model_name or "gpt-4o"
-
-        self.client =OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
-
-
-    def generate(self, prompt: str, system_prompt: str = None, verbose: bool = verbose) -> str:
-        if verbose:
-            logger.info(f"Generating text with prompt: {prompt}")
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model_name,  
-                messages=[
-                    {"role": "system", "content": system_prompt if system_prompt else "You are an AI assistant."},
-                    {"role": "user", "content": prompt},
-                ],
-            )
-            generated_text = response.choices[0].message.content
-        except Exception as e:
-            logger.error(f"Error generating text: {e}")
-            generated_text = "error"
-        if verbose:
-            logger.debug(f"Generated text: {generated_text}")
-
-        generated_text = generated_text.replace("```json", "").replace("```", "")
-        return generated_text
-
-
-# 定义综述类型枚举
-class ReviewType(Enum):
-    CONCEPT = "concept"  # 技术概念调研
-    STATUS = "status"    # 研究现状
-    COMPARISON = "comparison"  # 方法对比
-    TIMELINE = "timeline"   # 技术脉络
-
-review_desciptions = {
-    ReviewType.CONCEPT: "技术概念调研",
-    ReviewType.STATUS: "研究现状",
-    ReviewType.COMPARISON: "方法对比",
-    ReviewType.TIMELINE: "技术脉络"
-}
-
-@dataclass
-class PaperChunk:
-    paper_id: str
-    title: str
-    chunk_id: str
-    content: str
-
-
-@dataclass
-class Citation:
-    paper_id: str
-    chunk_id: str
-    content: str
-    title: str
 
 import nltk
 from nltk.tokenize import sent_tokenize
@@ -165,18 +108,8 @@ class QueryExpander:
         4. 以JSON列表格式返回
         """
         
-        generated_text = self.llm.generate(prompt)
+        generated_text = self.llm.generate(prompt, verbose=verbose)
         return json.loads(generated_text)
-
-def kb_chunk_to_paper_chunk(kb_chunk):
-    chunk_entity = kb_chunk['entity']
-    paper_chunk = PaperChunk(
-        paper_id=chunk_entity["paper_id"],
-        title=chunk_entity["paper_title"],
-        chunk_id=chunk_entity["chunk_id"],
-        content=chunk_entity["chunk_text"]
-    )
-    return paper_chunk
 
 class ContentRetriever:
     """内容检索智能体,负责从文献库检索相关内容"""
@@ -185,7 +118,7 @@ class ContentRetriever:
         self.llm = llm_client
         self.chunk_size = chunk_size
     
-    def retrieve_by_queries(self, queries: List[str], min_papers=50) -> List[PaperChunk]:
+    def retrieve_by_queries(self, queries: List[str], min_papers=50, max_chunks=1000) -> List[PaperChunk]:
         """基于多个查询检索文献内容"""
         all_chunks = []
         papers_seen = set()
@@ -220,11 +153,11 @@ class ContentRetriever:
             标题: {chunk.title}
             内容: {chunk.content[:500]}  # 使用前500字符以节省token
             """
-            response = self.llm.generate(prompt)
+            response = self.llm.generate(prompt, verbos=verbose)
             if response.startswith("error"):
                 bad_chunks.append(chunk)
                 continue
-            topics = self.llm.generate(prompt).strip().split(",")
+            topics = self.llm.generate(prompt, verbose=verbose).strip().split(",")
             chunk_topics[chunk.chunk_id] = [t.strip() for t in topics]
         for c in bad_chunks:
             chunks.remove(c)
@@ -286,7 +219,7 @@ class OutlineGenerator:
         
         # 4. 以JSON格式返回,包含章节标题和子标题
 
-        response = self.llm.generate(prompt)
+        response = self.llm.generate(prompt, verbose=verbose)
         json_outline = json.loads(response)
         sections = json_outline["章节"]
         return sections
@@ -345,7 +278,7 @@ class OutlineGenerator:
             3. 提取研究背景或动机
             4. 以简洁的要点形式返回
             """
-            summary = self.llm.generate(prompt)
+            summary = self.llm.generate(prompt, verbose=verbose)
             summaries.append(summary)
         
         # 2. 根据综述类型组织信息
@@ -394,7 +327,7 @@ class OutlineGenerator:
             {summaries}
             """
             
-        context = self.llm.generate(template)
+        context = self.llm.generate(template, verbose=verbose)
         return context
 
 def remove_escape_sequences(string):
@@ -463,7 +396,7 @@ class ContentGenerator:
                 prompt = self._get_basic_prompt(section_title, batch, batch_idx, len(chunks_batches))
             
             # 生成内容
-            result = self.llm.generate(prompt)
+            result = self.llm.generate(prompt, verbose=verbose)
             try:
                 parsed_result = json.loads(result)
             except json.JSONDecodeError:
@@ -483,7 +416,7 @@ class ContentGenerator:
                 后一段开头:
                 {section_content[-1][:200]}
                 """
-                transition = self.llm.generate(transition_prompt)
+                transition = self.llm.generate(transition_prompt, verbose=verbose)
                 section_content[-2] = section_content[-2] + "\n" + transition
         
         # 4. 合并并优化内容
@@ -510,7 +443,7 @@ class ContentGenerator:
             }
             """)
             
-            generated_text = self.llm.generate(prompt)
+            generated_text = self.llm.generate(prompt, verbose=verbose)
             # generated_text = remove_escape_sequences(generated_text)
             analysis = json.loads(generated_text, cls=None)
             analyzed_chunks.append({
@@ -645,7 +578,7 @@ class ContentGenerator:
         5. 保持学术写作风格
         """
         
-        polished_content = self.llm.generate(polish_prompt)
+        polished_content = self.llm.generate(polish_prompt, verbose=verbose)
         return polished_content
 
 class SegmentSummarizerAgent:
@@ -659,7 +592,7 @@ class SegmentSummarizerAgent:
             batch_docs = documents[i : i+batch_size]
             prompt, batch_citations = self._build_batch_prompt(query, batch_docs, review_type)
             all_citations.extend(batch_citations)
-            summary_text = self.llm.generate(prompt)
+            summary_text = self.llm.generate(prompt, verbose=verbose)
             partial_summaries.append(summary_text)
         return partial_summaries, all_citations
 
@@ -710,7 +643,7 @@ class MultiLevelAggregatorAgent:
                 chunk_summaries = current_level[i : i+max_chunk_size]
                 input_text = "\n---\n".join(chunk_summaries)
                 prompt = self._build_aggregation_prompt(query, input_text, review_type)
-                aggregated = self.llm.generate(prompt)
+                aggregated = self.llm.generate(prompt, verbose=verbose)
                 next_level.append(aggregated)
             current_level = next_level
         # 最终只剩一个大摘要
@@ -888,7 +821,7 @@ class StructuredWriterAgent:
 {final_summary}
 """
 
-        full_text = self.llm.generate(prompt)
+        full_text = self.llm.generate(prompt, verbose=verbose)
         return full_text
 
 #     def _build_aggregation_prompt(self, input_text: str) -> str:
@@ -970,7 +903,7 @@ class ReviewOrchestrator:
         
     #     只返回分数数字
     #     """
-    #     structure_score = float(self.llm.generate(prompt))
+    #     structure_score = float(self.llm.generate(prompt, verbose=verbose))
     #     quality.update('structure', structure_score)
         
     #     # 3. 评估内容连贯性
@@ -1018,7 +951,7 @@ class ReviewOrchestrator:
             
     #         只返回分数数字
     #         """
-    #         score = float(self.llm.generate(prompt))
+    #         score = float(self.llm.generate(prompt, verbose=verbose))
     #         citation_scores.append(score)
         
     #     quality.update('citation', sum(citation_scores) / len(citation_scores))
@@ -1035,7 +968,7 @@ class ReviewOrchestrator:
         
     #     只返回分数数字
     #     """
-    #     novelty_score = float(self.llm.generate(prompt))
+    #     novelty_score = float(self.llm.generate(prompt, verbose=verbose))
     #     quality.update('novelty', novelty_score)
         
     #     return quality
@@ -1113,7 +1046,8 @@ class ReviewOrchestrator:
             return self.segment_summarizer.summarize_in_batches(query, chunks, review_type=review_type, batch_size=batch_size)
         partial_summaries, partial_citations = do_partial_summaries(query, chunks, review_type=review_type, batch_size=5)
 
-        with open(f"{root_dir}/partial_citations.txt", "w", encoding="utf-8") as f:
+        partial_citations_file = f"{root_dir}/partial_citations.txt"
+        with open(partial_citations_file, "w", encoding="utf-8") as f:
             f.write("\n".join(partial_citations))
 
         # # FIXME
@@ -1181,6 +1115,38 @@ class ReviewOrchestrator:
         # else:
         #     review_content = self.quality_agent.review_and_refine(verified_text)
         #     pickle.dump(review_content, open(review_content_file, "wb"))
+
+        all_references_file = f"{root_dir}/all_references.jsonl"
+        if os.path.exists(all_references_file):
+            references = [json.loads(line.strip()) for line in open(all_references_file, "r", encoding="utf-8")]
+        else:
+            references = generate_references(citations_file=partial_citations_file, kb=kb)
+            with open(all_references_file, "w", encoding="utf-8") as fd:
+                for ref in references:
+                    line = json.dumps(ref, ensure_ascii=False)
+                    fd.write(f"{line}\n")
+
+
+        selected_references = []
+        references_text = "\n## 参考文献\n\n"
+        for ref in references:
+           paper_id = ref["paper_id"] 
+           chunk_id = ref["chunk_id"]
+           citation_id = f"{paper_id}-{chunk_id}"
+           if citation_id in review_content:
+               ref_line = ref['ref']
+               references_text += f"{ref_line}\n"
+               selected_references.append(ref)
+        review_content += references_text
+
+        selected_references_file = f"{root_dir}/selected_references.jsonl"
+        if os.path.exists(selected_references_file):
+            selected_references = [json.loads(line.strip()) for line in open(selected_references_file, "r", encoding="utf-8")]
+        else:
+            with open(selected_references_file, "w", encoding="utf-8") as fd:
+                for ref in selected_references:
+                    line = json.dumps(ref, ensure_ascii=False)
+                    fd.write(f"{line}\n")
 
         output_file = f"{root_dir}/review_{query}.md"
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -1290,7 +1256,7 @@ class ReviewOrchestrator:
             3. 观点是否明确
             4. 是否有效利用引用材料
             """
-            need_optimization = self.llm.generate(prompt).strip().lower() == "yes"
+            need_optimization = self.llm.generate(prompt, verbose=verbose).strip().lower() == "yes"
             
             if need_optimization:
                 # 使用更多上下文重新生成
@@ -1350,7 +1316,7 @@ class ReviewOrchestrator:
         
         以逗号分隔的关键词形式返回需要补充的方面
         """
-        aspects_to_expand = self.llm.generate(prompt).strip().split(",")
+        aspects_to_expand = self.llm.generate(prompt, verbose=verbose).strip().split(",")
         
         additional_chunks = []
         for aspect in aspects_to_expand:
@@ -1386,7 +1352,7 @@ class ReviewOrchestrator:
         4. 重要性和影响
         以逗号分隔的关键词列表形式返回
         """
-        section_keywords = set(self.llm.generate(prompt).strip().split(","))
+        section_keywords = set(self.llm.generate(prompt, verbose=verbose).strip().split(","))
         
         # 2. 计算与各个簇的相关度
         cluster_relevance = {}
@@ -1399,7 +1365,7 @@ class ReviewOrchestrator:
             prompt = f"""请从以下文本中提取关键概念,以逗号分隔:
             {cluster_text}
             """
-            cluster_keywords = set(self.llm.generate(prompt).strip().split(","))
+            cluster_keywords = set(self.llm.generate(prompt, verbose=verbose).strip().split(","))
             
             # 计算关键词重叠度作为相关度分数
             relevance = len(section_keywords & cluster_keywords) / len(section_keywords | cluster_keywords)
@@ -1418,7 +1384,7 @@ class ReviewOrchestrator:
                     内容: {chunk.content[:300]}
                     只返回分数数字
                     """
-                    score = float(self.llm.generate(prompt))
+                    score = float(self.llm.generate(prompt, verbose=verbose))
                     chunk_scores.append((chunk, score))
                 
                 # 添加相关度较高的chunks
@@ -1428,42 +1394,54 @@ class ReviewOrchestrator:
         
         return relevant_chunks
 
-async def main():
-    """主函数"""
-    # 示例查询
-    queries = [
-        # ("损失函数", ReviewType.CONCEPT),
-        # ("Text2SQL研究现状如何，面临哪些挑战？", ReviewType.STATUS),
-        # ("有哪些方法可以提升大模型的规划能力，各自优劣是什么？", ReviewType.COMPARISON)
-        ("多模态大模型的技术发展路线是什么样的？", ReviewType.TIMELINE)
-    ]
-    
+def do_summary(args):
+    query = args.query
+
     model_name = os.getenv("OPENAI_DEFAULT_MODEL")
     llm_client = LLMClient(model_name=model_name)
+
+    from intent_recognition import classify_intent_with_prompt
+    intent_type = classify_intent_with_prompt(llm_client, query)
+    assert intent_type == args.review_type
+    review_type = intent_type
+    # review_type = args.review_type
+
+    try:
+        review_type = ReviewType(review_type)
+    except ValueError:
+        raise ValueError(f"Invalid review type: {args.review_type}")
+    print(f"Query: {query}\nReview Type: {review_desciptions[review_type]}\n")
+
     orchestrator = ReviewOrchestrator(llm_client=llm_client)
     
-    for query, review_type in queries:
-        print(f"\n处理查询: {query}")
-        # try:
-        if True:
-            # review, citations = await orchestrator.generate_review(query, review_type)
-            # print(f"\n生成的综述 ({len(review)} 字符):")
-            # print(f"{review[:500]}...")
-            # print(f"\n使用的引用数量: {len(citations)}")
-            # result = await orchestrator.generate_review(query, review_type)
-            result = orchestrator.generate_review(query, review_type)
-        # except Exception as e:
-        #     print(f"处理失败: {e}")
-        #     continue
-        logger.debug(f"{result=}")
-        # root_dir = f"outputs/{query}"
-        # output_file = f"{root_dir}/review_{query}.md"
-        # with open(output_file, 'w', encoding='utf-8') as f:
-        #     f.write(result)
-        # # pickle.dump(result, open(output_file, "wb"))
-        # # # with open(output_file, "w", encoding='utf-8') as fd:
-        # # #     json.dump(result, fd, ensure_ascii=False, indent=2)
-        # logger.info(f"综述已保存到文件: {output_file}")
+    logger.info(f"\n处理查询: {query}")
+    result = orchestrator.generate_review(query, review_type)
+    logger.debug(f"{result=}")
+
+
+def get_args():
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description="文献综述生成器")
+    parser.add_argument("--do_summary", action="store_true", help="是否执行综述生成")
+    parser.add_argument("--query", type=str, default="损失函数", help="查询问题")
+    parser.add_argument("--review_type", type=str, default="concept", help="综述类型")
+    args = parser.parse_args()
+    return args
+
+async def main():
+    args = get_args()
+
+    # 示例查询
+    # queries = [
+    #     ("损失函数", ReviewType.CONCEPT),
+    #     ("Text2SQL研究现状如何，面临哪些挑战？", ReviewType.STATUS),
+    #     ("有哪些方法可以提升大模型的规划能力，各自优劣是什么？", ReviewType.COMPARISON)
+    #     ("多模态大模型的技术发展路线是什么样的？", ReviewType.TIMELINE)
+    # ]
+
+    if args.do_summary:
+        do_summary(args)
+    
 
 if __name__ == "__main__":
     import asyncio
