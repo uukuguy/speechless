@@ -2,12 +2,12 @@ import os
 from loguru import logger
 
 class LLMClient:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str = None):
         # ZHIPUAI_API_KEY = os.getenv("ZHIPUAI_API_KEY")
         # self.client = ZhipuAI(api_key=ZHIPUAI_API_KEY)
         from openai import OpenAI
         self.client =  OpenAI()
-        self.model_name = model_name or "gpt-4o"
+        self.model_name = model_name or os.getenv("OPENAI_DEFAULT_MODEL")
 
         self.client =OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
