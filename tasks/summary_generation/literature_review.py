@@ -677,12 +677,16 @@ class StructuredWriterAgent:
         self.llm = llm_client
 
     def write_review(self, query: str, final_summary: str, review_type: str) -> str:
+
+# - 尽量保留带引用标注的文本片段的原文内容观点，并保留原有的引用标注 [paper_id-chunk_id]，可以直接引用，也可以根据需要进行合并和润色扩写。
+
         """
         根据不同的review_type对final_summary进行扩写，形成完整结构。
         """
         common_requirements = """
 - 每一章节内容要有逻辑性和连贯性，全文应全面反映提牮的文献片段的观点。
-- 尽量保留带引用标注的文本片段的原文内容观点，并保留原有的引用标注 [paper_id-chunk_id]，可以直接引用，也可以根据需要进行合并和润色扩写。
+- 尽量保留带引用标注的文本片段的原文内容观点，并将原来的引用格式 [paper_id-chunk_id] 改写成类似 "<sup>1</sup>" 的格式.
+- At the end of the summary, list all references in the "References" section in the format "[1]: paper_id-chunk_id"
 - 引用标注的内容观点至少20个以上。
 - 综述全文不少于5000字:
         """
@@ -998,14 +1002,6 @@ class ReviewOrchestrator:
             """扩展查询"""
             return self.query_expander.expand_query(query, review_type)
         expanded_queries = do_expand_query(query, review_type)
-        # # expanded_queries = self.query_expander.expand_query(query, review_type)
-        # expaned_queries_file = f"{root_dir}/expanded_queries.json"
-        # if os.path.exists(expaned_queries_file):
-        #     expanded_queries = json.load(open(expaned_queries_file, "r", encoding="utf-8"))
-        # else:
-        #     expanded_queries = self.do_expand_query(query, review_type)
-        #     with open(expaned_queries_file, "w", encoding="utf-8") as f:
-        #         json.dump(expanded_queries, f, ensure_ascii=False, indent=2)
         
         # 2. 检索内容
         @cache_or_rebuild(cache_file=f"{root_dir}/chunks.pkl")
@@ -1013,33 +1009,11 @@ class ReviewOrchestrator:
             return self.retrieve_chunks(expanded_queries, min_papers=min_papers)
         chunks = do_retrieve_chunks(expanded_queries, min_papers=50)
 
-        # # chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
-        # chunks_file = f"{root_dir}/chunks.pkl"
-        # if os.path.exists(chunks_file):
-        #     # chunks = json.load(open(chunks_file, "r", encoding="utf-8"))
-        #     chunks = pickle.load(open(chunks_file, "rb"))
-        # else:
-        #     chunks = self.do_retrieve_chunks(expanded_queries, min_papers=50)
-        #     # with open(chunks_file, "w", encoding="utf-8") as f:
-        #     #     json.dump(chunks, f, ensure_ascii=False, indent=2)
-        #     pickle.dump(chunks, open(chunks_file, "wb"))
-
         @cache_or_rebuild(cache_file=f"{root_dir}/clustered_chunks.pkl")
         def do_cluster_chunks(chunks: List[PaperChunk]) -> Dict:
             return self.retriever.cluster_chunks(chunks)
         clustered_chunks = do_cluster_chunks(chunks)
 
-        # # clustered_chunks = self.retriever.cluster_chunks(chunks)
-        # clustered_chunks_file = f"{root_dir}/clustered_chunks.pkl"
-        # if os.path.exists(clustered_chunks_file):
-        #     # clustered_chunks = json.load(open(clustered_chunks_file, "r", encoding="utf-8"))
-        #     clustered_chunks = pickle.load(open(clustered_chunks_file, "rb"))
-        # else:
-        #     clustered_chunks = self.retriever.cluster_chunks(chunks)
-        #     # with open(clustered_chunks_file, "w", encoding="utf-8") as f:
-        #     #     json.dump(clustered_chunks, f, ensure_ascii=False, indent=2)
-        #     pickle.dump(clustered_chunks, open(clustered_chunks_file, "wb"))
-        
         # 3) 分批摘要
         @cache_or_rebuild(cache_file=f"{root_dir}/partial_summaries.pkl")
         def do_partial_summaries(query: str, chunks: List[PaperChunk], review_type, batch_size=5) -> Tuple[List[str], List[str]]:
@@ -1050,71 +1024,29 @@ class ReviewOrchestrator:
         with open(partial_citations_file, "w", encoding="utf-8") as f:
             f.write("\n".join(partial_citations))
 
-        # # FIXME
-        # # partial_summaries = self.segment_summarizer.summarize_in_batches(chunks, batch_size=5)
-        # partial_summaries_file = f"{root_dir}/partial_summaries.pkl"
-        # if os.path.exists(partial_summaries_file):
-        #     partial_summaries, partial_citations = pickle.load(open(partial_summaries_file, "rb"))
-        # else:
-        #     partial_summaries, patial_citations = self.segment_summarizer.summarize_in_batches(query, chunks, batch_size=5)
-        #     pickle.dump(partial_summaries, open(partial_summaries_file, "wb"))
-        
-
         # 4) 多层聚合
         @cache_or_rebuild(cache_file=f"{root_dir}/global_summary.pkl")
         def do_global_summary(query: str, partial_summaries: List[str], review_type: ReviewType, max_chunk_size=2) -> str:
             return self.aggregator.iterative_aggregate(query, partial_summaries, review_type=review_type, max_chunk_size=max_chunk_size)
         global_summary = do_global_summary(query, partial_summaries, review_type=review_type, max_chunk_size=2)
-        # # FIXME
-        # # global_summary = self.aggregator.iterative_aggregate(partial_summaries, max_chunk_size=2)
-        # global_summary_file = f"{root_dir}/global_summary.pkl"
-        # if os.path.exists(global_summary_file):
-        #     global_summary = pickle.load(open(global_summary_file, "rb"))
-        # else:
-        #     global_summary = self.aggregator.iterative_aggregate(query, partial_summaries, max_chunk_size=2)
-        #     pickle.dump(global_summary, open(global_summary_file, "wb"))
 
         # 5) 结构化写作
         @cache_or_rebuild(cache_file=f"{root_dir}/structured_review.pkl")
         def do_write_review(query: str, global_summary: str, review_type: ReviewType) -> Dict:
             return self.writer.write_review(query, global_summary, review_type)
         structured_review = do_write_review(query, global_summary, review_type)
-        # FIXME
-        # # structured_review = self.writer.write_review(global_summary, review_type)
-        # structured_review_file = f"{root_dir}/structured_review.pkl"
-        # if os.path.exists(structured_review_file):
-        #     structured_review = pickle.load(open(structured_review_file, "rb"))
-        # else:
-        #     structured_review = self.writer.write_review(query, global_summary, review_type)
-        #     pickle.dump(structured_review, open(structured_review_file, "wb"))
 
         # 6) 引用校验
         @cache_or_rebuild(cache_file=f"{root_dir}/verified_text.pkl")
         def do_verify_citations(structured_review: Dict, chunks: List[PaperChunk]) -> Dict:
             return self.citation_verifier.verify_citations(structured_review, chunks)
         verified_text = do_verify_citations(structured_review, chunks)
-        # # FIXME
-        # # verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
-        # verified_text_file = f"{root_dir}/verified_text.pkl"
-        # if os.path.exists(verified_text_file):
-        #     verified_text = pickle.load(open(verified_text_file, "rb"))
-        # else:
-        #     verified_text = self.citation_verifier.verify_citations(structured_review, chunks)
-        #     pickle.dump(verified_text, open(verified_text_file, "wb"))
 
         # 7) 质量审校
         @cache_or_rebuild(cache_file=f"{root_dir}/review_content.pkl")
         def do_quality_review(verified_text: str) -> str:
             return self.quality_agent.review_and_refine(verified_text)
         review_content = do_quality_review(verified_text)
-        # # FIXME
-        # # review_content = self.quality_agent.review_and_refine(verified_text)
-        # review_content_file = f"{root_dir}/review_content.pkl"
-        # if os.path.exists(review_content_file):
-        #     review_content = pickle.load(open(review_content_file, "rb"))
-        # else:
-        #     review_content = self.quality_agent.review_and_refine(verified_text)
-        #     pickle.dump(review_content, open(review_content_file, "wb"))
 
         all_references_file = f"{root_dir}/all_references.jsonl"
         if os.path.exists(all_references_file):
@@ -1137,7 +1069,9 @@ class ReviewOrchestrator:
                ref_line = ref['ref']
                references_text += f"{ref_line}\n"
                selected_references.append(ref)
-        review_content += references_text
+
+               review_content = review_content.replace(f"{paper_id}-{chunk_id}", f"{ref_line}, chunk {chunk_id}")
+        # review_content += references_text
 
         selected_references_file = f"{root_dir}/selected_references.jsonl"
         if os.path.exists(selected_references_file):

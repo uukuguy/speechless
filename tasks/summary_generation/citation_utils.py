@@ -40,8 +40,9 @@ def generate_references(citations_file: str, kb: KnowledgeBase):
         paper_id, chunk_id = citation
         paper_chunk = retrieve_chunk(paper_id, chunk_id, kb)
         if paper_chunk:
-            ref = f"[{paper_id}-{chunk_id}]: {paper_chunk.title}"
-            logger.debug(ref)
+            # ref = f"[{paper_id}-{chunk_id}]: {paper_chunk.title}"
+            ref = f"{paper_chunk.title}"
+            logger.debug(f"[{paper_id}-{chunk_id}]: {ref}")
             references.append({
                 'paper_id': paper_id,
                 'chunk_id': chunk_id,
