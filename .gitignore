@@ -164,3 +164,5 @@ cython_debug/
 tmp/
 .DS_Store
 metrics_*/
+
+outputs/
