@@ -211,6 +211,9 @@ INFO:__main__:MMLU Running Time:, 2704.9518427848816
 
 alpaca: 14042: 0.388620
 
+speechless-thoughts-252k
+10000 steps: 0.437972
+
 TPxPP
 1x1 out of memory
 1x4 out of memory
