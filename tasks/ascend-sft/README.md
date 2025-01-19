@@ -213,6 +213,10 @@ alpaca: 14042: 0.388620
 
 speechless-thoughts-252k
 10000 steps: 0.437972
+8000 steps:  0.435764
+6000 steps:  0.426079
+4000 steps:  0.434269
+2000 steps:  0.430922
 
 TPxPP
 1x1 out of memory
