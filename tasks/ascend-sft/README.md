@@ -1,7 +1,41 @@
+# Ascend SFT
 
+## Setup Developing Environment
 
+### 0. Conda Environment (env-ascend)
 
-git clone https://gitee.com/ascend/MindSpeed-LLM.git 
+```bash
+# conda create -n env-mindspeed python=3.8
+# conda activate env-mindspeed
+
+conda create -n env-ascend python=3.10
+conda activate env-ascend
+export ASCEND-SFT=$HOME/sandbox/LLM/speechless.ai/tasks/ascend-sft
+```
+
+### 1. Install PyTorch
+
+```bash
+# pip install torch==2.1.0 torch-npu==2.1.0 torchvision==0.16.0
+pip install torch==2.4.0 torch-npu==2.4.0.post2 torchvision==0.19.0
+```
+
+### 2. Install Apex
+
+```bash
+git clone -b master https://gitee.com/ascend/apex.git
+cd apex/
+bash scripts/build.sh --python=3.8
+cd apex/dist/
+pip3 uninstall apex
+pip3 install apex-0.1+ascend-cp38-cp38-linux_aarch64.whl
+cd ../../..
+```
+
+### 3. Install MindSpeed-LLM
+
+```bash
+git clone https://gitee.com/ascend/MindSpeed-LLM.git
 git clone https://github.com/NVIDIA/Megatron-LM.git
 
 cd Megatron-LM
@@ -10,40 +44,20 @@ cp -r megatron ../MindSpeed-LLM/
 cd ../MindSpeed-LLM
 mkdir logs model_from_hf model_weights dataset ckpt
 cd ..
+```
 
-
-conda create -n env-mindspeed python=3.8
-conda activate env-mindspeed
-
-pip install torch==2.1.0 torch-npu==2.1.0
-pip install torch==2.4.0 torch-npu==2.4.0.post2
-# pip install torchvision==0.16.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-
-git clone -b master https://gitee.com/ascend/apex.git
-cd apex/
-# dnf install patch # 安装patch
-bash scripts/build.sh --python=3.8
-cd apex/dist/
-pip3 uninstall apex
-pip3 install apex-0.1+ascend-cp38-cp38-linux_aarch64.whl
-cd ../../..
+### Setup Ascend Environment
 
 ```bash
+# source atb库 环境变量
+# Ascend nnal https://www.hiascend.ru/developer/download/community/result?module=pt&version=6.0.1.alpha001
 source /usr/local/Ascend/ascend-toolkit/set_env.sh 
 source /usr/local/Ascend/nnal/atb/set_env.sh 
 ```
 
-# source ascend-toolkit 环境变量
+### TorchAir
 
-source /usr/local/Ascend/ascend-toolkit/set_env.sh
-
-# source atb库 环境变量
-# Ascend nnal https://www.hiascend.ru/developer/download/community/result?module=pt&version=6.0.1.alpha001
-source /usr/local/Ascend/nnal/atb/set_env.sh 
-
-
-## TorchAir
+```bash
 mkdir TorchAir
 cd TorchAir
 git clone https://gitee.com/ascend/torchair
@@ -58,8 +72,11 @@ cmake ..
 make torchair -j8
 make install_torchair
 # source TorchAir/torchair/tools/env.sh
+```
 
-# 安装加速库
+### 安装加速库 MindSpeed
+
+```bash
 cd MindSpeed-LLM
 git clone https://gitee.com/ascend/MindSpeed.git
 cd MindSpeed
@@ -70,8 +87,9 @@ git checkout core_r0.7.0
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip3 install -v -e .
 cd ../..
+```
 
-## 安装其余依赖库
+### 安装其余依赖库
 
 ```bash
 cd MindSpeed-LLM
@@ -190,3 +208,14 @@ MMLU:
 57                                total       14042  0.456844
 total: 100%|███████████████████████████████████████████████████| 57/57 [45:04<00:00, 47.46s/it]
 INFO:__main__:MMLU Running Time:, 2704.9518427848816
+
+alpaca: 14042: 0.388620
+
+TPxPP
+1x1 out of memory
+1x4 out of memory
+1x8 6500 ms/it
+2x2 7500 ms/it
+4x2 7500 ms/it
+2x4 7200 ms/it
+8x1 9540 ms/it
