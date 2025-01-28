@@ -1,3 +1,5 @@
+import os, json
+import pickle
 from enum import Enum
 from dataclasses import dataclass
 
@@ -42,3 +44,55 @@ def kb_chunk_to_paper_chunk(kb_chunk):
         content=chunk_entity["chunk_text"]
     )
     return paper_chunk
+
+
+def cache_or_rebuild(cache_file: str =None): 
+    is_pickle = False
+    is_json = False
+    if cache_file.endswith(".pkl"):
+        is_pickle = True
+    elif cache_file.endswith(".json"):
+        is_json = True
+    else:
+        raise ValueError("Unknown cache file format")
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if os.path.exists(cache_file):
+                if is_pickle:
+                    return pickle.load(open(cache_file, "rb"))
+                elif is_json:
+                    return json.load(open(cache_file, "r", encoding='utf-8'))
+            else:
+                result = func(*args, **kwargs)
+                if is_pickle:
+                    pickle.dump(result, open(cache_file, "wb"))
+                elif is_json:
+                    json.dump(result, open(cache_file, "w", encoding='utf-8'), ensure_ascii=False, indent=2, cls=NpEncoder)
+                return result
+        return wrapper
+    return decorator
+
+import re
+class LazyDecoder(json.JSONDecoder):
+    def decode(self, s, **kwargs):
+        regex_replacements = [
+            (re.compile(r'([^\\])\\([^\\])'), r'\1\\\\\2'),
+            (re.compile(r',(\s*])'), r'\1'),
+        ]
+        for regex, replacement in regex_replacements:
+            s = regex.sub(replacement, s)
+        return super().decode(s, **kwargs)
+
+import numpy as np
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NpEncoder, self).default(obj)
