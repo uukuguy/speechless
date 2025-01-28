@@ -11,6 +11,7 @@ from io import StringIO
 from llm_utils import LLMClient
 from rich.console import Console
 from rich.markdown import Markdown
+from loguru import logger
 
 console = Console()
 
@@ -365,32 +366,12 @@ Output the complete English questions first, each clearly numbered. Follow this 
     sys.stdout = old_stdout
 
 from common_utils import ReviewType, review_desciptions
-def test():
-    # query = "损失函数"
-    # review_type = "concept"
-    # query = "Text2SQL研究现状如何，面临哪些挑战？"
-    # review_type = "status"
 
-    # query = "有哪些方法可以提升大模型的规划能力，各自优劣是什么？"
-    # review_type = "comparison"
-
-    query = "多模态大模型的技术发展路线是什么样的？"
-    review_type = "timeline"
-
-    review_type = ReviewType(review_type)
-    review_desc = review_desciptions[review_type]
-
-
-    if review_type == ReviewType.CONCEPT:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.STATUS:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.COMPARISON:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.TIMELINE:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    else:
-        raise ValueError(f"Invalid review type {review_type}")
+def do_generate_overall_outline(query, TOPIC):
+    output_file = f"outputs/{query}/overall_outline.txt"
+    if os.path.exists(output_file):
+        logger.info(f"Overall outline already exists for query {query}: {output_file}")
+        return
 
     HEAD = f"""Your task is to craft a detailed and logical question-based outline for a comprehensive review article about {TOPIC}. The outline should first be presented entirely in English, followed by its translation in Chinese after a line break. The detailed instructions are as follows:
 """
@@ -412,9 +393,111 @@ Start with the complete English version of the outline. After finishing it, prov
     # print(generated_text)
     console.print(Markdown(generated_text))
 
-    output_file = f"outputs/{query}/overall_outline.txt"
     with open(output_file, "w", encoding='utf-8') as f:
         f.write(generated_text)
 
+    logger.info(f"Overall outline saved to {output_file}")
+
+
+def do_generate_detail_outline(query, TOPIC):
+    detail_outlines_file = f"outputs/{query}/detailed_outline.txt"
+    if os.path.exists(detail_outlines_file):
+        logger.info(f"Detail outline already exists for query {query}: {detail_outlines_file}")
+        return
+
+    output_file = f"outputs/{query}/overall_outline.txt"
+    with open(output_file, "r", encoding='utf-8') as f:
+        global_generated_text = f.read()
+
+    PaperQuestionsFromParagraphQuestionsForReview = f"""Utilizing the document provided, create a set of structured questions that correlate with the specific segments related to {TOPIC} as outlined in the literature. These questions are intended to extract precise information directly from the document to construct a comprehensive review article. It's essential to tailor each question to uncover the details specified in the segments of the document, ensuring an in-depth accumulation of data that aligns with the broader queries in the review's outline.
+Construct each question by combining the main topic {TOPIC} with the pertinent questions from the document's individual subsections, then reorder them to present a logical sequence. For instance, if the document presents the following segment:
+```
+1. Background and Significance
+   - What is spin and catalyst?
+   - What is its industrial significance?
+```
+The corresponding questions tailored for information extraction should be formulated and ordered as:
+```
+1. Background and Significance - What are the core principles of spin and catalyst as described in the document?
+2. Background and Significance - How has spin and catalyst impacted the industry according to the document?
+```
+Repeat this process for each segment, ensuring the questions are distinct and provide a clear framework for extracting detailed responses based on the document's specifics.
+Your ultimate aim is to create a sequence of questions that will enable the gathering of rich, specific information from the document to develop a well-rounded perspective on each section related to {TOPIC}.
+After drafting the detailed set of questions in English, translate them into Chinese, preserving the original depth and intention to support a bilingual information extraction process.
+Output the complete English questions first, each clearly numbered. Follow this with the Chinese version, keeping each question separate and ensuring the two language sets are distinctly partitioned.
+<file-attachment-contents filename='"""
+
+
+    ReviewOutline = global_generated_text
+    prompt = PaperQuestionsFromParagraphQuestionsForReview + 'ReviewOutline.txt>\n' + ReviewOutline + '\n</file-attachment-contents>'
+    detail_outlines_prompt_file = f"outputs/{query}/detailed_outline_prompt.txt"
+    with open(detail_outlines_prompt_file, "w", encoding='utf-8') as f:
+        f.write(prompt)
+    # os.makedirs('PaperQuestionsFromParagraphQuestionsForReview', exist_ok=True)
+    # open(
+    #     f'PaperQuestionsFromParagraphQuestionsForReview{os.sep}PromptPaperQuestionsFromParagraphQuestionsForReview.txt',
+    #     'w', encoding='utf-8').write(prompt)
+
+    llm_client = LLMClient()
+    generated_text = llm_client.generate(prompt, system_prompt="你是一个帮助进行学术综述撰写的专家。")
+    # print(f"Detail generated text: {generated_text}")
+    console.print(Markdown(generated_text))
+    # content = ""
+    # if 'Outlines' in generated_text:
+    #     content = '<?xml version="1.0" encoding="UTF-8"?>\n<Outlines>' + generated_text.split('<Outlines>',1)[1].rsplit('</Outlines>',1)[0] + '</Outlines>'
+    #     try:
+    #         root = ET.fromstring(content)
+    #     except Exception as e:
+    #         logger.warning(f"Error parsing XML content: {e}")
+    # print(f"content: {content}")
+    with open(detail_outlines_file, "w", encoding='utf-8') as f:
+        f.write(generated_text)
+    logger.info(f"Detail outline saved to {detail_outlines_file}")
+
+def do_generate_detail_questions(query, TOPIC):
+    detail_outlines_file = f"outputs/{query}/detailed_outline.txt"
+    with open(detail_outlines_file, "r", encoding='utf-8') as f:
+        detail_generated_text = f.read()
+
+    questions_text = GetQuestions(detail_generated_text)
+
+    detail_questions_file = f"outputs/{query}/detailed_questions.txt"
+    with open(detail_questions_file, "w", encoding='utf-8') as f:
+        f.write(questions_text)
+    logger.info(f"Detail questions saved to {detail_questions_file}")
+
+def get_query_and_topic():
+    query = "损失函数"
+    review_type = "concept"
+
+    # query = "Text2SQL研究现状如何，面临哪些挑战？"
+    # review_type = "status"
+
+    # query = "有哪些方法可以提升大模型的规划能力，各自优劣是什么？"
+    # review_type = "comparison"
+
+    # query = "多模态大模型的技术发展路线是什么样的？"
+    # review_type = "timeline"
+
+    review_type = ReviewType(review_type)
+    review_desc = review_desciptions[review_type]
+
+
+    if review_type == ReviewType.CONCEPT:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.STATUS:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.COMPARISON:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.TIMELINE:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    else:
+        raise ValueError(f"Invalid review type {review_type}")
+
+    return query, TOPIC
+    
 if __name__ == '__main__':
-    test()
+    query, TOPIC = get_query_and_topic()
+    do_generate_overall_outline(query, TOPIC)
+    do_generate_detail_outline(query, TOPIC)
+    do_generate_detail_questions(query, TOPIC)

@@ -209,7 +209,8 @@ MMLU:
 total: 100%|███████████████████████████████████████████████████| 57/57 [45:04<00:00, 47.46s/it]
 INFO:__main__:MMLU Running Time:, 2704.9518427848816
 
-alpaca: 14042: 0.388620
+alpaca: 14042: 
+2000 steps: 0.388620
 
 speechless-thoughts-252k
 10000 steps: 0.437972
@@ -217,6 +218,18 @@ speechless-thoughts-252k
 6000 steps:  0.426079
 4000 steps:  0.434269
 2000 steps:  0.430922
+
+Infinity-Instruct-50K
+2000 steps: 0.398376
+
+Infinity-Instruct-250K
+750 steps: 0.417676
+
+Infinity-Instruct-1M
+3000 steps: 0.437473
+
+Infinity-Instruct-3M
+9000 steps: 0.441746
 
 TPxPP
 1x1 out of memory
