@@ -1,4 +1,6 @@
-INTENT_LABELS = ["concept", "status", "comparison", "timeline"]
+from common_utils import ReviewType
+# INTENT_LABELS = ["concept", "status", "comparison", "timeline"]
+INTENT_LABELS = [x.value for x in ReviewType]
 
 # 这是一个示例 Prompt，可做少样本，也可再添加更多示例
 # 注意: 对于中文输入，可在role=system部分写清楚语言偏好
@@ -35,7 +37,7 @@ def classify_intent_with_prompt(llm_client: LLMClient, user_input: str) -> str:
 
     for label in INTENT_LABELS:
         if label in generated_text:
-            return label
+            return ReviewType(label)
     return None
 
     # """

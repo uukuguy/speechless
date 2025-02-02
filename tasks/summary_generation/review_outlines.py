@@ -365,7 +365,7 @@ Output the complete English questions first, each clearly numbered. Follow this 
     os.chdir('..')
     sys.stdout = old_stdout
 
-from common_utils import ReviewType, review_desciptions
+from common_utils import ReviewType, review_type_descriptions
 
 def do_generate_overall_outline(query, TOPIC):
     output_file = f"outputs/{query}/overall_outline.txt"
@@ -480,7 +480,7 @@ def get_query_and_topic():
     # review_type = "timeline"
 
     review_type = ReviewType(review_type)
-    review_desc = review_desciptions[review_type]
+    review_desc = review_type_descriptions[review_type]
 
 
     if review_type == ReviewType.CONCEPT:
