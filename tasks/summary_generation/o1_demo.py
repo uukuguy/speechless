@@ -441,3 +441,14 @@ class LiteratureReviewSystem:
         # 7) 质量审校
         final_text = self.quality_agent.review_and_refine(verified_text)
         return final_text
+
+if __name__ == "__main__":
+    # 模拟用户输入
+    user_input = "我想了解一下深度学习中的损失函数创新有哪些？"
+    # 模拟意图分类器
+    intent_classifier = MockIntentClassifier()
+    # 创建系统
+    system = LiteratureReviewSystem(intent_classifier)
+    # 生成综述
+    review_text = system.generate_review(user_input)
+    print(review_text)
