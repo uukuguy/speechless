@@ -82,6 +82,7 @@ YEAR:2017-2023
 
 """
 import os, json
+import pickle
 from typing import List
 from common_utils import cache_or_rebuild
 from common_utils import ReviewType, PaperChunk, Citation, review_type_descriptions, kb_chunk_to_paper_chunk 
@@ -169,6 +170,26 @@ class ContentRetriever:
         return papers_seen
     
 
+from common_utils import Paper
+def generate_papers_content(query: str, output_file: str):
+    root_dir = f"outputs/{query}"
+    paper_chunks_file = f"{root_dir}/paper_chunks.pkl"
+    with open(paper_chunks_file, 'rb') as f:
+        paper_chunks = pickle.load(f)
+    
+    papers = {}
+    for chunk in tqdm(paper_chunks, desc="Generating papers content"):
+        if chunk.paper_id not in papers:
+            papers[chunk.paper_id] = Paper(paper_id=chunk.paper_id, title=chunk.title)
+        papers[chunk.paper_id].add_chunk(chunk)
+    for paper in papers.values():
+        paper.post_process() 
+
+    with open(output_file, 'wb') as f:
+        pickle.dump(papers, f)
+
+    logger.info(f"Generated {len(papers)} papers content for query '{query}' to {output_file}.")
+
 def do_retrieve_papers(query):
     """
     执行检索论文内容的任务
@@ -232,16 +253,26 @@ def do_retrieve_papers(query):
     paper_chunks = do_retrieve_papers_content(papers_seen)
     print(f"{len(paper_chunks)=}")
 
+    # 3. 生成论文内容
+    output_file = f"{root_dir}/papers_content.pkl"
+    generate_papers_content(query, output_file)
+
+
+
 def get_args():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", type=str, required=True, help="User query")
+    parser.add_argument("--do_generate_papers_content", action="store_true", help="Generate papers content")
     args = parser.parse_args()
     return args
     
 def main():
     args = get_args()
-    do_retrieve_papers(args.query)
+    if args.do_generate_papers_content:
+        generate_papers_content(args.query, f"outputs/{args.query}/papers_content.pkl")
+    else:
+        do_retrieve_papers(args.query)
 
 if __name__ == "__main__":
     main()

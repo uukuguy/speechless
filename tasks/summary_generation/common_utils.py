@@ -41,6 +41,25 @@ class PaperChunk:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
+class Paper:
+    """Represents a research paper with metadata."""
+    paper_id: str
+    title: str
+    content: str = ""
+    chunks: Dict[str, PaperChunk] = field(default_factory=dict)
+
+    def add_chunk(self, chunk: PaperChunk) -> None:
+        """Add a chunk to the paper."""
+        self.chunks[chunk.chunk_id] = chunk
+
+    def post_process(self) -> None:
+        """
+        Post-process paper content after adding chunks.
+        Merge chunks into the main content ordered by chunk ID.
+        """
+        self.content = "\n".join(chunk.content for chunk in sorted(self.chunks.values(), key=lambda x: x.chunk_id))
+
+@dataclass
 class Citation:
     """Represents a citation reference within a paper."""
     paper_id: str
