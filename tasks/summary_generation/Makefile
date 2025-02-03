@@ -1,6 +1,11 @@
 help:
 	@echo "Usage: make [run]"
 
+QUERY="损失函数"
+
+knowledge_extraction:
+	python knowledge_extraction.py --query ${QUERY} --max_tokens 8192
+
 demo1:
 	python literature_review.py \
 		--do_summary \
