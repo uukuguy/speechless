@@ -172,8 +172,8 @@ class ContentRetriever:
 
 from common_utils import Paper
 def generate_papers_content(query: str, output_file: str):
-    root_dir = f"outputs/{query}"
-    paper_chunks_file = f"{root_dir}/paper_chunks.pkl"
+    outputs_dir = f"outputs/{query}/retrieve_papers"
+    paper_chunks_file = f"{outputs_dir}/paper_chunks.pkl"
     with open(paper_chunks_file, 'rb') as f:
         paper_chunks = pickle.load(f)
     
@@ -203,12 +203,12 @@ def do_retrieve_papers(query):
     review_type = intent_type
     # review_type = args.review_type
 
-    root_dir = f"outputs/{query}"
-    os.makedirs(root_dir, exist_ok=True)
+    outputs_dir = f"outputs/{query}/retrieve_papers"
+    os.makedirs(outputs_dir, exist_ok=True)
 
     # 1. 扩展查询
     query_expander = QueryExpander(llm_client)
-    @cache_or_rebuild(cache_file=f"{root_dir}/expanded_queries.json")
+    @cache_or_rebuild(cache_file=f"{outputs_dir}/expanded_queries.json")
     def do_expand_query(query: str, review_type: ReviewType) -> List[str]:
         """扩展查询"""
         return query_expander.expand_query(query, review_type)
@@ -234,7 +234,7 @@ def do_retrieve_papers(query):
         
         return papers_seen
 
-    @cache_or_rebuild(cache_file=f"{root_dir}/papers_seen.pkl")
+    @cache_or_rebuild(cache_file=f"{outputs_dir}/papers_seen.json")
     def do_retrieve_papers(expanded_queries: List[str], min_papers=50) -> List[str]:
         return retrieve_papers(expanded_queries, min_papers=min_papers)
     papers_seen = do_retrieve_papers(expanded_queries, min_papers=50)
@@ -247,14 +247,14 @@ def do_retrieve_papers(query):
             paper_chunks = [kb_chunk_to_paper_chunk(chunk) for chunk in paper_chunks]
             all_chunks.extend(paper_chunks)
         return all_chunks
-    @cache_or_rebuild(cache_file=f"{root_dir}/paper_chunks.pkl")
+    @cache_or_rebuild(cache_file=f"{outputs_dir}/paper_chunks.pkl")
     def do_retrieve_papers_content(papers_seen: List[str]) -> List[PaperChunk]:
         return retrieve_papers_content(papers_seen)
     paper_chunks = do_retrieve_papers_content(papers_seen)
     print(f"{len(paper_chunks)=}")
 
     # 3. 生成论文内容
-    output_file = f"{root_dir}/papers_content.pkl"
+    output_file = f"{outputs_dir}/papers_content.pkl"
     generate_papers_content(query, output_file)
 
 
