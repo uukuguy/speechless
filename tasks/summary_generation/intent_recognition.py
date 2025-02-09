@@ -1,4 +1,4 @@
-from common_utils import ReviewType
+from common_utils import ReviewType, review_type_descriptions
 # INTENT_LABELS = ["concept", "status", "comparison", "timeline"]
 INTENT_LABELS = [x.value for x in ReviewType]
 
@@ -65,3 +65,31 @@ def classify_intent_with_prompt(llm_client: LLMClient, user_input: str) -> str:
     #     if label in lower_content:
     #         return label
     # return "general"
+
+def analysis_query(query: str, llm_client, review_type_for_check: str = None):
+    intent_type = classify_intent_with_prompt(llm_client, query)
+    if review_type_for_check is not None:
+        assert intent_type == review_type_for_check
+    review_type = intent_type
+
+    try:
+        review_type = ReviewType(review_type)
+    except ValueError:
+        raise ValueError(f"Invalid review type: {review_type}")
+    print(f"Query: {query}\nReview Type: {review_type_descriptions[review_type]}\n")
+
+    review_desc = review_type_descriptions[review_type]
+
+    if review_type == ReviewType.CONCEPT:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.STATUS:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.COMPARISON:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    elif review_type == ReviewType.TIMELINE:
+        TOPIC = f"关于“{query}“的{review_desc}"
+    else:
+        raise ValueError(f"Invalid review type {review_type}")
+
+    return TOPIC, review_type
+

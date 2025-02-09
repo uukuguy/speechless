@@ -30,7 +30,6 @@ review_type_descriptions = {
     ReviewType.COMPARISON: "方法对比",
     ReviewType.TIMELINE: "技术脉络"
 }
-
 @dataclass
 class PaperChunk:
     """Represents a chunk of text from a research paper."""
@@ -101,7 +100,7 @@ class CacheManager:
         if not cache_file:
             raise ValueError("Cache file path must be provided")
             
-        if not any(cache_file.endswith(ext) for ext in (".pkl", ".json")):
+        if not any(cache_file.endswith(ext) for ext in (".pkl", ".json", "jsonl")):
             raise ValueError("Cache file must be .pkl or .json")
 
     @classmethod
@@ -109,24 +108,33 @@ class CacheManager:
         """Decorator to cache function results or rebuild if cache is not available."""
         cls.validate_cache_file(cache_file)
         is_pickle = cache_file.endswith(".pkl")
+        is_json = cache_file.endswith(".json")
+        is_jsonl = cache_file.endswith(".jsonl")
 
         def decorator(func):
             def wrapper(*args, **kwargs):
                 if os.path.exists(cache_file):
                     try:
-                        with open(cache_file, "rb" if is_pickle else "r", 
-                                encoding=None if is_pickle else 'utf-8') as f:
-                            return pickle.load(f) if is_pickle else json.load(f, cls=LazyDecoder)
+                        if is_pickle:
+                            return pickle.load(open(cache_file, 'rb'))
+                        elif is_json:
+                            return json.load(open(cache_file, 'r', encoding='utf-8'), cls=LazyDecoder)
+                        elif is_jsonl:
+                            return [json.loads(line, cls=LazyDecoder) for line in open(cache_file, 'r', encoding='utf-8')]
                     except (pickle.PickleError, json.JSONDecodeError) as e:
                         os.remove(cache_file)  # Remove corrupted cache
 
                 result = func(*args, **kwargs)
-                with open(cache_file, "wb" if is_pickle else "w", 
-                        encoding=None if is_pickle else 'utf-8') as f:
-                    if is_pickle:
-                        pickle.dump(result, f)
-                    else:
+                if is_pickle:
+                    pickle.dump(result, open(cache_file, 'wb'))
+                elif is_json:
+                    with open(cache_file, 'w', encoding='utf-8') as f:
                         json.dump(result, f, ensure_ascii=False, indent=2, cls=NpEncoder)
+                elif is_jsonl:
+                    with open(cache_file, 'w', encoding='utf-8') as f:
+                        for item in result:
+                            json.dump(item, f, ensure_ascii=False, cls=NpEncoder)
+                            f.write('\n')
                 return result
             return wrapper
         return decorator
@@ -156,6 +164,8 @@ class NpEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, set):
+            return list(obj)
         return super().default(obj)
 
 # Alias for backward compatibility

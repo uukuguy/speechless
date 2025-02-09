@@ -12,6 +12,7 @@ from llm_utils import LLMClient
 from rich.console import Console
 from rich.markdown import Markdown
 from loguru import logger
+from common_utils import ReviewType, review_type_descriptions
 
 console = Console()
 
@@ -365,10 +366,10 @@ Output the complete English questions first, each clearly numbered. Follow this 
     os.chdir('..')
     sys.stdout = old_stdout
 
-from common_utils import ReviewType, review_type_descriptions
 
 def do_generate_overall_outline(query, TOPIC):
-    output_file = f"outputs/{query}/overall_outline.txt"
+    outputs_dir = f"outputs/{query}/review_outlines"
+    output_file = f"{outputs_dir}/overall_outline.txt"
     if os.path.exists(output_file):
         logger.info(f"Overall outline already exists for query {query}: {output_file}")
         return
@@ -400,12 +401,13 @@ Start with the complete English version of the outline. After finishing it, prov
 
 
 def do_generate_detail_outline(query, TOPIC):
-    detail_outlines_file = f"outputs/{query}/detailed_outline.txt"
+    outputs_dir = f"outputs/{query}/review_outlines"
+    detail_outlines_file = f"{outputs_dir}/detailed_outline.txt"
     if os.path.exists(detail_outlines_file):
         logger.info(f"Detail outline already exists for query {query}: {detail_outlines_file}")
         return
 
-    output_file = f"outputs/{query}/overall_outline.txt"
+    output_file = f"{outputs_dir}/overall_outline.txt"
     with open(output_file, "r", encoding='utf-8') as f:
         global_generated_text = f.read()
 
@@ -430,7 +432,7 @@ Output the complete English questions first, each clearly numbered. Follow this 
 
     ReviewOutline = global_generated_text
     prompt = PaperQuestionsFromParagraphQuestionsForReview + 'ReviewOutline.txt>\n' + ReviewOutline + '\n</file-attachment-contents>'
-    detail_outlines_prompt_file = f"outputs/{query}/detailed_outline_prompt.txt"
+    detail_outlines_prompt_file = f"{outputs_dir}/detailed_outline_prompt.txt"
     with open(detail_outlines_prompt_file, "w", encoding='utf-8') as f:
         f.write(prompt)
     # os.makedirs('PaperQuestionsFromParagraphQuestionsForReview', exist_ok=True)
@@ -455,49 +457,39 @@ Output the complete English questions first, each clearly numbered. Follow this 
     logger.info(f"Detail outline saved to {detail_outlines_file}")
 
 def do_generate_detail_questions(query, TOPIC):
-    detail_outlines_file = f"outputs/{query}/detailed_outline.txt"
+    outputs_dir = f"outputs/{query}/review_outlines"
+    detail_outlines_file = f"{outputs_dir}/detailed_outline.txt"
     with open(detail_outlines_file, "r", encoding='utf-8') as f:
         detail_generated_text = f.read()
 
     questions_text = GetQuestions(detail_generated_text)
 
-    detail_questions_file = f"outputs/{query}/detailed_questions.txt"
+    detail_questions_file = f"{outputs_dir}/detailed_questions.txt"
     with open(detail_questions_file, "w", encoding='utf-8') as f:
         f.write(questions_text)
     logger.info(f"Detail questions saved to {detail_questions_file}")
 
-def get_query_and_topic():
-    query = "损失函数"
-    review_type = "concept"
-
-    # query = "Text2SQL研究现状如何，面临哪些挑战？"
-    # review_type = "status"
-
-    # query = "有哪些方法可以提升大模型的规划能力，各自优劣是什么？"
-    # review_type = "comparison"
-
-    # query = "多模态大模型的技术发展路线是什么样的？"
-    # review_type = "timeline"
-
-    review_type = ReviewType(review_type)
-    review_desc = review_type_descriptions[review_type]
 
 
-    if review_type == ReviewType.CONCEPT:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.STATUS:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.COMPARISON:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    elif review_type == ReviewType.TIMELINE:
-        TOPIC = f"关于“{query}“的{review_desc}"
-    else:
-        raise ValueError(f"Invalid review type {review_type}")
+def get_args():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--query", type=str, required=True, help="User query")
+    parser.add_argument("--review_type", type=str, default="concept", choices=[r.value for r in ReviewType] help="综述类型")
+    args = parser.parse_args()
+    return args
 
-    return query, TOPIC
-    
 if __name__ == '__main__':
-    query, TOPIC = get_query_and_topic()
+    args = get_args()
+
+    query = args.query
+
+    model_name = os.getenv("OPENAI_DEFAULT_MODEL")
+    llm_client = LLMClient(model_name=model_name)
+
+    from intent_recognition import analysis_query
+    TOPIC, review_type = analysis_query(query, llm_client, review_type_for_check=args.review_type)
+
     do_generate_overall_outline(query, TOPIC)
     do_generate_detail_outline(query, TOPIC)
     do_generate_detail_questions(query, TOPIC)
