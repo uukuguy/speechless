@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from knowledge_base import KnowledgeBase 
 kb = KnowledgeBase()
 
-from common_utils import ReviewType, PaperChunk, Citation, review_desciptions, kb_chunk_to_paper_chunk 
+from common_utils import ReviewType, PaperChunk, Citation, review_type_descriptions, kb_chunk_to_paper_chunk 
 from citation_utils import generate_references
 from llm_utils import LLMClient
 
@@ -100,7 +100,7 @@ class QueryExpander:
         """扩展用户查询为多个相关查询"""
         prompt = f"""请基于以下用户查询,生成5-8个相关的检索关键词或短语,以帮助全面检索相关文献:
         用户查询: {query}
-        综述类型: {review_desciptions[review_type]}
+        综述类型: {review_type_descriptions[review_type]}
         要求:
         1. 关键词应该覆盖该主题的不同方面
         2. 包含该领域的专业术语
@@ -618,7 +618,7 @@ class SegmentSummarizerAgent:
         prompt = f"""
 你是一位学术研究助手。以下是一批文献内容片段，请为它们生成一个5000字以上的整合性的摘要。
 摘要内容要保证全面、连贯，尽可能引用文献片段原文，避免使用不存在于文献内容片段的观点。
-只参考有助于回答“{query}”{review_desciptions[review_type]}问题的片断，与问题无关的内容可以忽略。
+只参考有助于回答“{query}”{review_type_descriptions[review_type]}问题的片断，与问题无关的内容可以忽略。
 不需要摘要标题和章节，以列表形式给出符合给出的文献片段观点的描述。
 需要在对应信息后面标注引用，使用文献片段结尾的[paper_id-chunk_id]信息：
 
@@ -664,7 +664,7 @@ class MultiLevelAggregatorAgent:
 重点保留带有引用标注的文本片段的观点，可以直接引用，也可以根据需要进行合并。
 如果有同一观点来自多个来源，可将引用合并在一起。
 不需要摘要标题和章节，以列表形式给出符合给出的文献片段观点的描述。
-只参考有助于回答“{query}”{review_desciptions[review_type]}问题的片断，与问题无关的内容可以忽略。
+只参考有助于回答“{query}”{review_type_descriptions[review_type]}问题的片断，与问题无关的内容可以忽略。
 
 {input_text}
 
@@ -696,7 +696,7 @@ class StructuredWriterAgent:
         # if review_type == "concept":
         if review_type == ReviewType.CONCEPT:
 #             prompt = f"""
-# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术概念的调研综述，包括：
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_type_descriptions[review_type]}提问中技术概念的调研综述，包括：
 # 1) 概念定义
 # 2) 分类或子领域
 # 3) 应用场景
@@ -710,18 +710,18 @@ class StructuredWriterAgent:
 # """
 
 #             prompt = f"""
-# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术概念的调研综述。
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_type_descriptions[review_type]}提问中技术概念的调研综述。
 
 # {common_requirements}
 
 # {final_summary}
 # """
 
-# 根据{review_desciptions[review_type]}类综述的通常结构（合适的综述标题，完整的综述大纲，主要内容控制在5-8个章节，不需要参考文献章节），并结合文献片段的观点，撰写一篇完整的{review_desciptions[review_type]}类综述文章。
+# 根据{review_type_descriptions[review_type]}类综述的通常结构（合适的综述标题，完整的综述大纲，主要内容控制在5-8个章节，不需要参考文献章节），并结合文献片段的观点，撰写一篇完整的{review_type_descriptions[review_type]}类综述文章。
 # 合适的综述标题，主要章节包括：概念定义、分类或子领域、应用场景、主要挑战、未来展望，可根据提供的文献片段内容进行适当扩展,主要内容控制在6-8个章节，不需要参考文献章节。
 
             prompt = f"""
-你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_type_descriptions[review_type]}类综述文章。
 
 - 合适的综述标题，主要章节包括：概念定义、分类或子领域、应用场景、主要挑战、未来展望等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
 - 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
@@ -733,7 +733,7 @@ class StructuredWriterAgent:
         # elif review_type == "status":
         elif review_type == ReviewType.STATUS:
 #             prompt = f"""
-# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中研究方向的综述，包括:
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_type_descriptions[review_type]}提问中研究方向的综述，包括:
 # 1. 研究背景和意义
 # 2. 主要研究问题
 # 3. 目前的研究进展
@@ -747,7 +747,7 @@ class StructuredWriterAgent:
 # """
 
             prompt = f"""
-你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_type_descriptions[review_type]}类综述文章。
 
 - 合适的综述标题，主要章节包括：研究背景和意义、主要研究问题、目前的研究进展、存在的挑战、未来的发展趋势等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
 - 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
@@ -758,7 +758,7 @@ class StructuredWriterAgent:
         # elif review_type == "comparison":
         elif review_type == ReviewType.COMPARISON:
 #             prompt = f"""
-# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中对多种方法进行对比分析的综述，包括
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_type_descriptions[review_type]}提问中对多种方法进行对比分析的综述，包括
 # 1. 主要方法类别
 # 2. 各个方法的核心思想
 # 3. 优势和局限性
@@ -770,7 +770,7 @@ class StructuredWriterAgent:
 # {final_summary}
 # """
             prompt = f"""
-你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_type_descriptions[review_type]}类综述文章。
 
 - 合适的综述标题，主要章节包括：主要方法类别、各个方法的核心思想、优势和局限性、适用场景等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
 - 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
@@ -782,7 +782,7 @@ class StructuredWriterAgent:
         # elif review_type == "timeline":
         elif review_type == ReviewType.TIMELINE:
 #             prompt = f"""
-# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_desciptions[review_type]}提问中技术方法的发展脉络综述，包括
+# 你是一位学术写作者。根据下列综合摘要，写一篇关于“{query}”{review_type_descriptions[review_type]}提问中技术方法的发展脉络综述，包括
 # 1. 发展阶段划分
 # 2. 各阶段的特征
 # 3. 关键技术突破
@@ -794,7 +794,7 @@ class StructuredWriterAgent:
 # {final_summary}
 # """
             prompt = f"""
-你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_type_descriptions[review_type]}类综述文章。
 
 - 合适的综述标题，主要章节包括：发展阶段划分、各阶段的特征、关键技术突破、未来趋势等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
 - 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
@@ -816,7 +816,7 @@ class StructuredWriterAgent:
 # {final_summary}
 # """
             prompt = f"""
-你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_desciptions[review_type]}类综述文章。
+你是一位学术写作者。根据下列综合摘要，结合文献片段的观点，写一篇关于“{query}”{review_type_descriptions[review_type]}类综述文章。
 
 - 合适的综述标题，主要章节包括：引言、主体、相关工作、结论等，可根据提供的文献片段内容进行适当扩展,主要内容控制在8-10个章节，注意调整章节的合理排列顺序，不需要参考文献章节。
 - 将提供的文献片段内容分类归并到合适章节下,润色扩写成逻辑清晰、观点明明确、内容丰富的文字描述。避免只有一句话的章节，尽量保持章节内容的连贯性。
@@ -1335,16 +1335,13 @@ def do_summary(args):
     llm_client = LLMClient(model_name=model_name)
 
     from intent_recognition import classify_intent_with_prompt
-    intent_type = classify_intent_with_prompt(llm_client, query)
-    assert intent_type == args.review_type
-    review_type = intent_type
-    # review_type = args.review_type
+    review_type = classify_intent_with_prompt(llm_client, query)
 
     try:
         review_type = ReviewType(review_type)
     except ValueError:
         raise ValueError(f"Invalid review type: {args.review_type}")
-    print(f"Query: {query}\nReview Type: {review_desciptions[review_type]}\n")
+    print(f"Query: {query}\nReview Type: {review_type_descriptions[review_type]}\n")
 
     orchestrator = ReviewOrchestrator(llm_client=llm_client)
     
