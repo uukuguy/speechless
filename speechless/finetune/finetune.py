@@ -104,6 +104,12 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 @dataclass
 class ModelArguments:
+
+    add_reasoning_tokens: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to add reasoning tokens to the model."},
+    )
+
     model_name_or_path: Optional[str] = field(
         default="EleutherAI/pythia-12b"
     )
@@ -158,6 +164,7 @@ class DataArguments:
 
 @dataclass
 class TrainingArguments(transformers.Seq2SeqTrainingArguments):
+
     task_name: str = field(
         default=None,
         metadata={"help": "The name of the task to train on."},
