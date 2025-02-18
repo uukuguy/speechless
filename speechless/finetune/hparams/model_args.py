@@ -8,6 +8,11 @@ class ModelArguments:
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
     """
 
+    add_reasoning_tokens: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to add reasoning tokens to the model."},
+    )
+
     model_name_or_path: str = field(
         metadata={
             "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
