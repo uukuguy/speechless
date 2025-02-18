@@ -755,7 +755,7 @@ def train():
     )
 
     if args.add_reasoning_tokens:
-        special_tokens_dict = {'bot_token': '<thinking>', 'eot_token': "</thinking>"}
+        special_tokens_dict = {'additional_special_tokens': ["<think>", "</think>"]}
         smart_tokenizer_and_embedding_resize(special_tokens_dict, tokenizer, model)
 
     # Callbacks
