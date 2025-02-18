@@ -747,6 +747,10 @@ def train():
         **{k:v for k,v in data_module.items() if k != 'predict_dataset'},
     )
 
+    if args.add_resized_tokens:
+        special_tokens_dict = {'bot_token': '<thinking>', 'eot_token': "</thinking>"}
+        smart_tokenizer_and_embedding_resize(special_tokens_dict, tokenizer, model)
+
     # Callbacks
     if not args.full_finetune:
         trainer.add_callback(SavePeftModelCallback)
