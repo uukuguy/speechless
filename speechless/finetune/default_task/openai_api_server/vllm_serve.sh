@@ -16,8 +16,8 @@
     # truncate_prompt_tokens: Optional[Annotated[int, Field(ge=1)]] = None
     # prompt_logprobs: Optional[int] = None
 
-MODEL=${OPENAI_DEFAULT_MODEL}
-PORT=16006
+MODEL=${OPENAI_MODEL_NAME}
+PORT=${OPENAI_API_PORT}
 
 vllm serve ${MODEL} \
     --host 0.0.0.0 \
