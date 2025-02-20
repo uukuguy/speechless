@@ -250,11 +250,20 @@ class QwenMultiRoundsDataCollator(object):
             input_ids = input_ids.flip(-1)
             labels = labels.flip(-1)
 
+        
+
+        # return {
+        #     "input_ids": torch.stack(batch["input_ids"]),
+        #     # "attention_mask": torch.stack(batch["attention_mask"]),
+        #     'attention_mask': batch["input_ids"].ne(self.tokenizer.pad_token_id),
+        #     "labels": torch.stack(batch["labels"])
+        # }
+        input_ids = torch.stack(input_ids)
+        labels = torch.stack(labels)
         return {
-            "input_ids": torch.stack(batch["input_ids"]),
-            # "attention_mask": torch.stack(batch["attention_mask"]),
-            'attention_mask': batch["input_ids"].ne(self.tokenizer.pad_token_id),
-            "labels": torch.stack(batch["labels"])
+            "input_ids": input_ids,
+            'attention_mask': input_ids.ne(self.tokenizer.pad_token_id),
+            "labels": labels
         }
 
 
