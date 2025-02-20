@@ -306,9 +306,28 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
         )
         return dataset
 
+    # FIXME
+
     # Load dataset.
     dataset = load_data(args.dataset)
-    dataset = format_dataset(dataset, args.dataset_format)
+    if args.dataset_format == "multi-rounds":
+        if args.prompt_type == "qwen2.5":
+            from .multi_rounds import QwenMultiRoundsDataCollator
+            data_collator = QwenMultiRoundsDataCollator(
+                tokenizer=tokenizer,
+                model_max_length=args.model_max_length,
+                prompt_type=args.prompt_type,
+            )
+        else:
+            raise NotImplementedError(f"Unknown prompt type: {args.prompt_type} with dataset format: {args.dataset_format}")
+    else:
+        # data_collator = DataCollatorForCausalLM(
+        data_collator = DialogDataCollatorForCausalLM(
+            tokenizer=tokenizer,
+            model_max_length=args.model_max_length,
+            prompt_type=args.prompt_type,
+        )
+        dataset = format_dataset(dataset, args.dataset_format)
 
     # Split train/eval, reduce size
     logger.info(f"---------- Splitting dataset into train/eval ----------")
@@ -361,17 +380,56 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
     #     train_dataset = train_dataset.filter(lambda x: _get_data_length(x) < args.model_max_length - 10)
     #     logger.info(f"Filtered out {prev_len - len(train_dataset)} samples. ({len(train_dataset)}/{prev_len})")
 
-    # FIXME
-    # data_collator = DataCollatorForCausalLM(
-    data_collator = DialogDataCollatorForCausalLM(
-        tokenizer=tokenizer,
-        model_max_length=args.model_max_length,
-        prompt_type=args.prompt_type,
-    )
-
     return dict(
         train_dataset=train_dataset if args.do_train else None,
         eval_dataset=eval_dataset if args.do_eval else None,
         predict_dataset=eval_dataset if args.do_predict else None,
         data_collator=data_collator
     )
+
+def load_tokenizer(model_name_or_path):
+    tokenizer_kwargs = {
+        "padding_side": "right",
+        "use_fast": False,
+        "trust_remote_code": True,
+    }
+    # if args.mpt:
+    #     tokenizer_kwargs["padding_side"] = "left"
+    #     tokenizer_kwargs.pop("use_fast")
+    from transformers import AutoTokenizer
+    print(f"---------- Original tokens----------")
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, **tokenizer_kwargs)
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+    # if "qwen" in args.model_name_or_path.lower():
+    if False:
+        tokenizer.eos_token = "<|endoftext|>"
+        # tokenizer.unk_token = "<|extra_3|>"
+        tokenizer.bos_token = "<|extra_2|>"
+        tokenizer.pad_token = "<|extra_1|>"
+    # elif "glm-4" in args.model_name_or_path.lower():
+    #     tokenizer.eos_token = "<sop>"
+    #     tokenizer.unk_token = "<sop>"
+    else:
+        if tokenizer.bos_token_id is None:
+            tokenizer.bos_token_id = 1
+            tokenizer.bos_token = "<s>"
+        if tokenizer.eos_token_id is None:
+            tokenizer.eos_token_id = 2
+            tokenizer.eos_token = "</s>"
+        if tokenizer.unk_token_id is None:
+            tokenizer.unk_token_id = 0
+            tokenizer.unk_token = "<unk>"
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token_id = 0 # tokenizer.eos_token_id
+            tokenizer.pad_token = tokenizer._convert_id_to_token(tokenizer.pad_token_id) #tokenizer.eos_token
+    print(f"---------- Fixed tokens ----------")
+    print(f"{tokenizer.pad_token=},{tokenizer.pad_token_id=}")
+    # print(f"{tokenizer.unk_token=},{tokenizer.unk_token_id=}")
+    print(f"{tokenizer.bos_token=},{tokenizer.bos_token_id=}")
+    print(f"{tokenizer.eos_token=},{tokenizer.eos_token_id=}")
+
+    return tokenizer
