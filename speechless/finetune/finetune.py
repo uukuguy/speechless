@@ -701,7 +701,7 @@ def train():
     logger.info('loaded model')
     set_seed(args.seed)
 
-    from .dataset_utils import load_tokenizer
+    from .dataset_utils.dataset_utils import load_tokenizer
     tokenizer = load_tokenizer(args.model_name_or_path)
 
     data_module = make_data_module(tokenizer=tokenizer, args=args)
