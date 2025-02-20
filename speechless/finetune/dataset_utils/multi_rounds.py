@@ -114,6 +114,7 @@ MESSAGES2 = [
 import json
 from typing import Dict, Sequence
 import torch
+from torch.nn.utils.rnn import pad_sequence
 import transformers
 from dataclasses import dataclass
 
@@ -224,22 +225,35 @@ class QwenMultiRoundsDataCollator(object):
         max_len = min(max(len(ex["input_ids"]) for ex in examples), self.model_max_length)
         # max_len = self.model_max_length
 
-        for ex in examples:
-            pad_len = max_len - len(ex["input_ids"])
-            input_ids = ex["input_ids"] + [self.tokenizer.pad_token_id] * pad_len
-            batch["input_ids"].append(torch.tensor(input_ids))
+        # for ex in examples:
+        #     pad_len = max_len - len(ex["input_ids"])
+        #     input_ids = ex["input_ids"] + [self.tokenizer.pad_token_id] * pad_len
+        #     batch["input_ids"].append(torch.tensor(input_ids))
 
-            # 填充attention_mask
-            attention_mask = ex["attention_mask"] + [0] * pad_len
-            batch["attention_mask"].append(torch.tensor(attention_mask))
+        #     # 填充attention_mask
+        #     attention_mask = ex["attention_mask"] + [0] * pad_len
+        #     batch["attention_mask"].append(torch.tensor(attention_mask))
 
-            # 填充labels
-            labels = ex["labels"] + [-100] * pad_len
-            batch["labels"].append(torch.tensor(labels))
+        #     # 填充labels
+        #     labels = ex["labels"] + [-100] * pad_len
+        #     batch["labels"].append(torch.tensor(labels))
+
+        # Apply padding
+        input_ids = [torch.tensor(ex["input_ids"][:max_len]) for ex in examples]  
+        labels = [torch.tensor(ex["labels"][:max_len]) for ex in examples]
+        if self.tokenizer.padding_side == "left":
+            input_ids = [t.flip(-1) for t in input_ids]
+            labels = [t.flip(-1) for t in labels]
+        input_ids = pad_sequence(input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id)
+        labels = pad_sequence(labels, batch_first=True, padding_value=-100)
+        if self.tokenizer.padding_side == "left":
+            input_ids = input_ids.flip(-1)
+            labels = labels.flip(-1)
 
         return {
             "input_ids": torch.stack(batch["input_ids"]),
-            "attention_mask": torch.stack(batch["attention_mask"]),
+            # "attention_mask": torch.stack(batch["attention_mask"]),
+            'attention_mask': batch["input_ids"].ne(self.tokenizer.pad_token_id),
             "labels": torch.stack(batch["labels"])
         }
 
