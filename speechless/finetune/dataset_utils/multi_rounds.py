@@ -162,7 +162,7 @@ def format_chat(messages):
             formatted.append(f"<|im_start|>user\n<tool_response>\n{content}\n</tool_response><|im_end|>")
 
     result = "\n".join(formatted)
-    print(f"{result}")
+    # print(f"{result}")
     return result
 
 
@@ -183,8 +183,8 @@ class QwenMultiRoundsDataCollator(object):
         current_role = None
         for token_id in tokenized["input_ids"]:
             token = self.tokenizer.decode([token_id])
-            print(f"{token=},{current_role=}")
-            print(token, flush=True)
+            # print(f"{token=},{current_role=}")
+            # print(token, flush=True)
             if token == "<|im_start|>":
                 current_role = None
             elif current_role is None:
