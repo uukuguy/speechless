@@ -213,7 +213,14 @@ class QwenMultiRoundsDataCollator(object):
             "labels": []
         }
 
-        examples = [ self.preprocess(ex["messages"]) for ex in examples]
+        new_examples = []
+        for ex in examples:
+            messages = ex['messages']
+            if isinstance(messages, str):
+                messages = json.loads(messages)
+            new_examples.append(self.preprocess(messages))
+        examples = new_examples
+        # examples = [ self.preprocess(ex["messages"]) for ex in examples]
         max_len = min(max(len(ex["input_ids"]) for ex in examples), self.model_max_length)
         # max_len = self.model_max_length
 
@@ -251,8 +258,10 @@ def test(args):
     # dataset = load_dataset("jsonl", data_files=args.data_file)
     dataset = Dataset.from_dict(
         {"train": [
-            {"messages": MESSAGES1},
-            {"messages": MESSAGES2},
+            # {"messages": MESSAGES1},
+            # {"messages": MESSAGES2},
+            {"messages": json.dumps(MESSAGES1, ensure_ascii=False)},
+            {"messages": json.dumps(MESSAGES2, ensure_ascii=False)},
             ]}
         )
 
