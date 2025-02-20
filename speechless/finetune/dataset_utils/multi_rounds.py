@@ -186,6 +186,7 @@ class QwenMultiRoundsDataCollator(object):
             # print(f"{token=},{current_role=}")
             # print(token, flush=True)
             if token == "<|im_start|>":
+                labels.append(-100)
                 current_role = None
             elif current_role is None:
                 current_role = token.strip()
@@ -258,8 +259,6 @@ class QwenMultiRoundsDataCollator(object):
         #     'attention_mask': batch["input_ids"].ne(self.tokenizer.pad_token_id),
         #     "labels": torch.stack(batch["labels"])
         # }
-        input_ids = torch.stack(input_ids)
-        labels = torch.stack(labels)
         return {
             "input_ids": input_ids,
             'attention_mask': input_ids.ne(self.tokenizer.pad_token_id),
