@@ -231,6 +231,10 @@ Infinity-Instruct-1M
 Infinity-Instruct-3M
 9000 steps: 0.441746
 
+Infinity-Instruct-9M
+18000 steps: 0.445283
+27000 steps: 0.429
+
 TPxPP
 1x1 out of memory
 1x4 out of memory
