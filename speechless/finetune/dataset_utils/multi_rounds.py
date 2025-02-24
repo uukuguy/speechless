@@ -135,7 +135,16 @@ def format_chat(messages):
                 system_parts.append("<tools>")
                 for tool in msg["tools"]:
                     system_parts.append(json.dumps(tool, ensure_ascii=False))
+
                 system_parts.append("</tools>")
+
+                system_parts.append("")
+                system_parts.append("For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:")
+                system_parts.append("<tool_call>")
+                system_parts.append("{\"name\": <function-name>, \"arguments\": <args-json-object>}")
+                system_parts.append("</tool_call>")
+                system_parts.append("")
+
             formatted.append(f"<|im_start|>system\n{'\n'.join(system_parts)}<|im_end|>")
 
         elif role == "user":
