@@ -23,4 +23,6 @@ vllm serve ${MODEL} \
     --host 0.0.0.0 \
     --port ${PORT} \
     --dtype auto \
+    --enable-auto-tool-choice \
+    --tool-call-parser llama3_json \
     --tensor-parallel-size 8
