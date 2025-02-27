@@ -40,13 +40,13 @@ def tiktoken_count_tokens(model_name: str = "gpt-3.5-turbo-0613", messages: List
 
     return num_tokens
 
-OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"), 
+OPENAI_API_KEY=os.getenv("OPENAI_API_KEY") 
 OPENAI_BASE_URL=os.getenv("OPENAI_BASE_URL")
-OPENAI_DEFAULT_MODEL=os.getenv("OPENAI_DEFAULT_MODEL")
+OPENAI_MODEL_NAME=os.getenv("OPENAI_MODEL_NAME")
 
 logger.debug(f"{OPENAI_BASE_URL=}")
 logger.debug(f"{OPENAI_API_KEY=}")
-logger.debug(f"{OPENAI_DEFAULT_MODEL=}")
+logger.debug(f"{OPENAI_MODEL_NAME=}")
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
@@ -59,7 +59,7 @@ def get_response(prompt, stream: bool = True, verbose: bool = False):
         logger.info(f"Prompt: {PROMPT}")
     try:
         response = client.chat.completions.create(
-            model=OPENAI_DEFAULT_MODEL,
+            model=OPENAI_MODEL_NAME,
             messages=[
                 {'role': 'system', 'content': 'You are a helpful assistant.'},
                 {'role': 'user', 'content': PROMPT}
