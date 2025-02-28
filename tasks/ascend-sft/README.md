@@ -239,6 +239,9 @@ Infinity-Instruct-9M
 18000 steps: 0.391540
 27000 steps: 0.420310
 
+MindSpeed-Inifinity-Istruct-7M
+21000 steps: 0.555761
+
 TPxPP
 1x1 out of memory
 1x4 out of memory
