@@ -347,12 +347,13 @@ def clean_memory():
 # -------------------- Train --------------------
 def train():
     dataset_path = "./data/rft_train_data_v6_0228.jsonl"
-    dataset = load_dataset("json", data_files=dataset_path, split="train")
-    print(f"{dataset=}, {dataset[:1]=}")
-    dataset = dataset.shuffle(seed=10042)
+    dataset = load_dataset("json", data_files=dataset_path)
+    print(f"{dataset=}") 
+
     eval_size = 200
-    eval_dataset = dataset[:eval_size]
-    train_dataset = dataset[eval_size:]
+    dataset = dataset.train_test_split(test_size=eval_size)
+    train_dataset = dataset['train']
+    eval_dataset = dataset['test']
 
     model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     model, tokenizer = load_model_and_tokenizer(model_path)
