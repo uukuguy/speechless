@@ -304,8 +304,8 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
 
                     func_name = func['name']
                     func_arguments = func['arguments']
-                    true_name = true_target['name']
-                    true_arguments = true_target['arguments']
+                    true_name = true_target[-1][0]['name']
+                    true_arguments = true_target[-1][0]['arguments']
                     if func_name == true_name:
                         score += 1.0 # 函数名正确，
                         logger.info(f"函数名{func_name}正确，奖励1.0")
@@ -316,12 +316,15 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             score += 1.0 # 参数名完全一致，奖励
                             logger.info(f"参数名完全一致，奖励1.0")
                         else:
-                            tp = func_argument_keys & true_argument_keys
-                            fp = func_argument_keys - true_argument_keys
-                            fn = true_argument_keys - func_argument_keys
-                            p = tp / (tp+fp)
-                            r = tp / (tp+fn)
-                            f1 = 2 * p * r / (p+r)
+                            tp = len(func_argument_keys & true_argument_keys)
+                            fp = len(func_argument_keys - true_argument_keys)
+                            fn = len(true_argument_keys - func_argument_keys)
+                            if (tp+fp) > 0 and (tp+fn) > 0:
+                                p = tp / (tp+fp)
+                                r = tp / (tp+fn)
+                                f1 = 2 * p * r / (p+r)
+                            else:
+                                f1 = 0.0
                             score += f1 # 参数名命中f1, 奖励    
                             logger.info(f"参数名命中f1, 奖励{f1:.3f}")
                         # 参数值正确性先不处理
