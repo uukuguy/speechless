@@ -151,35 +151,86 @@ def get_function_calling_dialogs(dataset_path):
     for example in tqdm(ds, desc="Building examples"):
         messages = json.loads(example['messages'])
         targets = json.loads(example['targets'])
+        if isinstance(targets, str):
+            targets = json_loads(targets)
         assert len(messages) == len(targets) * 2 + 1, f"{len(messages)=}, {len(targets)=}"
         system_message = deepcopy(messages[0])
         messages = messages[1:]
 
         sub_examples = []
-        for i in range(1, len(targets) - 1):
+        for i in range(0, len(targets)):
             sub_messages = deepcopy(messages[:i*2-1])
-            sub_targets = deepcopy(targets[:i])
+            sub_targets = deepcopy(targets[:i+1])
             sub_example = {
-                "messages": json.dumps([system_message] + sub_messages, ensure_ascii=False),
-                "targets": json.dumps(sub_targets, ensure_ascii=False),
+                "messages": [system_message] + sub_messages,
+                "targets": sub_targets,
             }
             sub_examples.append(sub_example)
 
-        if len(sub_examples) >= 1:
+        assert len(sub_examples) == len(targets), f"{len(sub_examples)=}, {len(targets)=}"
+
+        # example['messages'] = [system_message] + messages[:-1]
+        # example['targets'] = targets
+        # sub_examples.append(example)
+
+        selected_examples = []
+        if len(sub_examples) > 1:
             random.shuffle(sub_examples)
-            sub_example = sub_examples[0]
-            expanded_examples.append(sub_example)
+            for e in sub_examples:
+                targets = e['targets']
+                if isinstance(targets, str):
+                    targets = json_loads(targets)
+                # logger.debug(f"{targets=}")
+                if len(targets[-1]) == 0:
+                    logger.debug(f"{targets=}")
+                    # logger.debug(f"{e=}")
+                    # logger.debug(f"e['targets'][-1] == [] found")
+                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+                    selected_examples.append(e)
+                    break
+            assert len(selected_examples) == 1, f"{sub_examples=}"
+            for e in sub_examples:
+                targets = e['targets']
+                if isinstance(targets, str):
+                    targets = json_loads(targets)
+                # logger.debug(f"{targets=}")
+                if len(targets[-1]) > 0:
+                    _targets=e['targets']
+                    logger.debug(f"{targets=}")
+                    # logger.debug(f"{e=}")
+                    # logger.debug(f"e['targets'][-1] != [] found")
+                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+                    selected_examples.append(e)
+                    break
+            assert len(selected_examples) == 2, f"{sub_examples=}"
+            # print(f"{len(sub_examples)}, {sub_examples=}")
+            assert len(selected_examples) == 2, f"{len(selected_examples)}, {selected_examples=}"
+        else:
+            # e = sub_examples[0]
+            # e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+            # e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+            # selected_examples.append(e)
+            pass
+        expanded_examples.extend(selected_examples)
+
+        # if len(sub_examples) >= 1:
+        #     
+        #     sub_example = sub_examples[0]
+        #     expanded_examples.append(sub_example)
         
         
-        example['messages'] = json.dumps([system_message] + messages[:-1], ensure_ascii=False)
-        example['targets'] = json.dumps(targets, ensure_ascii=False)
-        expanded_examples.append(example)
 
     ds = Dataset.from_list(expanded_examples)
     print(f"{ds=}, {ds[0]=}")
 
     def format_chat_func(example):
+        # print(f"{example=}")
         messages = json.loads(example['messages'])
+        # print(f"{type(messages)=}, {messages=}")
+        if isinstance(messages, str):
+            messages = json.loads(messages)
         prompt = format_chat(messages)
 
         return {
@@ -510,14 +561,14 @@ def inference():
 #     )
 
 def geneate_train_data():
-    dataset_path = "/Users/sujiangwen/sandbox/LLM/speechless.ai/speechless/tasks/synthesize_tools_sft/data/function_calling_dialogs_v6_0228_1.jsonl"
+    dataset_path = "/Users/sujiangwen/sandbox/LLM/speechless.ai/speechless/tasks/synthesize_tools_sft/data/function_calling_dialogs_v6_0228.jsonl"
     dataset = get_function_calling_dialogs(dataset_path)
     dataset.to_json("./rft_train_data_v6_0228_1.jsonl", force_ascii=False)
     
 
 def main():
-    train()
-    # geneate_train_data()
+    # train()
+    geneate_train_data()
     
 if __name__ == '__main__':
     main()
