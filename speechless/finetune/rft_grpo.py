@@ -204,20 +204,24 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
         logger.debug(f"{prompt=}")
         logger.debug(f"{generated_text=}")
         score = 0.0
-        if target == []:
+        true_target = json_loads(target[0])
+        logger.info(f"{true_target=}")
+        if true_target == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在不应调用api的轮次，调用api，重点惩罚
+                logger.warning(f"在不应调用api的轮次，调用api，重点惩罚")
                 score = -1
             else:
                 # 在不应调用api的轮次，没有调用api，正常奖励
+                logger.info(f"在不应调用api的轮次，没有调用api，正常奖励")
                 score = 1
         else:
-            true_target = json_loads(target[0])
-            logger.info(f"{true_target=}")
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在应该调用api的轮次，触发调用api，奖励
+                logger.info(f"在应该调用api的轮次，触发调用api，奖励")
                 # if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
                 if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
+                    logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
                     score += 0.5
                 tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
                 try:
@@ -225,6 +229,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                     func = json_loads(tool_call_text)
                     if "name" in func and "arguments" in func:
                         score += 0.5 # api 的json格式正确，格式奖励
+                        logger.info(f"api 的json格式正确，格式奖励0.5")
 
                     func_name = func['name']
                     func_arguments = func['arguments']
@@ -232,11 +237,13 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                     true_arguments = true_target['arguments']
                     if func_name == true_name:
                         score += 1.0 # 函数名正确，
+                        logger.info(f"函数名{func_name}正确，奖励1.0")
 
                         func_argument_keys = set(func_arguments.keys())
                         true_argument_keys = set(true_arguments.keys())
                         if func_argument_keys == true_argument_keys:
                             score += 1.0 # 参数名完全一致，奖励
+                            logger.info(f"参数名完全一致，奖励1.0")
                         else:
                             tp = func_argument_keys & true_argument_keys
                             fp = func_argument_keys - true_argument_keys
@@ -245,6 +252,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             r = tp / (tp+fn)
                             f1 = 2 * p * r / (p+r)
                             score += f1 # 参数名命中f1, 奖励    
+                            logger.info(f"参数名命中f1, 奖励{f1:.3f}")
                         # 参数值正确性先不处理
 
                 except Exception as e:
@@ -253,6 +261,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
             else:
                 # 在应该调用api的轮次没有调用api，重点惩罚
                 score = -1
+                logger.warning(f"在应该调用api的轮次没有调用api，重点惩罚")
         logger.debug(f"{score=}")
         scores.append(score)
 
@@ -347,13 +356,15 @@ def clean_memory():
 # -------------------- Train --------------------
 def train():
     dataset_path = "./data/rft_train_data_v6_0228.jsonl"
-    dataset = load_dataset("json", data_files=dataset_path)
+    dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"{dataset=}") 
 
     eval_size = 200
     dataset = dataset.train_test_split(test_size=eval_size)
     train_dataset = dataset['train']
     eval_dataset = dataset['test']
+    print(f"{train_dataset=}") 
+    print(f"{eval_dataset=}") 
 
     model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     model, tokenizer = load_model_and_tokenizer(model_path)
@@ -398,13 +409,14 @@ def train():
         fp16 = not is_bfloat16_supported(),
         per_device_train_batch_size = 1,
         gradient_accumulation_steps = 4, # Increase to 4 for smoother training
-        num_generations = 8, # Decrease if out of memory
-        max_prompt_length = 512,
-        max_completion_length = 256,
+        num_generations = 4, # Decrease if out of memory
+        max_prompt_length = 256,
+        max_completion_length = 128,
         num_train_epochs = 1, # Set to 1 for a full training run
         # max_steps = 250,
-        # save_steps = 250,
-        save_strategy = "epoch",
+        eval_steps=10,
+        save_steps = 100,
+        # save_strategy = "epoch",
         max_grad_norm = 0.1,
         report_to = "tensorboard", # Can use Weights & Biases, tensorboard, none
         output_dir = "outputs_grpo",
