@@ -331,7 +331,10 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             if (tp+fp) > 0 and (tp+fn) > 0:
                                 p = tp / (tp+fp)
                                 r = tp / (tp+fn)
-                                f1 = 2 * p * r / (p+r)
+                                if (p+r) > 0:
+                                    f1 = 2 * p * r / (p+r)
+                                else:
+                                    f1 = 0.0
                             else:
                                 f1 = 0.0
                             score += f1 # 参数名命中f1, 奖励    
