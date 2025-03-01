@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, json
+import random
 import torch
 from copy import deepcopy
 from loguru import logger
@@ -7,6 +8,8 @@ from tqdm import tqdm
 from typing import Any
 from transformers.trainer_callback import TrainerCallback
 from transformers import TrainingArguments, TrainerState, TrainerControl
+
+random.seed(10042)
 
 SUPPORTS_BFLOAT16 = False
 if torch.cuda.is_available():
@@ -151,6 +154,8 @@ def get_function_calling_dialogs(dataset_path):
         assert len(messages) == len(targets) * 2 + 1, f"{len(messages)=}, {len(targets)=}"
         system_message = deepcopy(messages[0])
         messages = messages[1:]
+
+        sub_examples = []
         for i in range(1, len(targets) - 1):
             sub_messages = deepcopy(messages[:i*2-1])
             sub_targets = deepcopy(targets[:i])
@@ -158,7 +163,13 @@ def get_function_calling_dialogs(dataset_path):
                 "messages": json.dumps([system_message] + sub_messages, ensure_ascii=False),
                 "targets": json.dumps(sub_targets, ensure_ascii=False),
             }
+            sub_examples.append(sub_example)
+
+        if len(sub_examples) >= 1:
+            random.shuffle(sub_examples)
+            sub_example = sub_examples[0]
             expanded_examples.append(sub_example)
+        
         
         example['messages'] = json.dumps([system_message] + messages[:-1], ensure_ascii=False)
         example['targets'] = json.dumps(targets, ensure_ascii=False)
@@ -355,7 +366,7 @@ def clean_memory():
 
 # -------------------- Train --------------------
 def train():
-    dataset_path = "./data/rft_train_data_v6_0228.jsonl"
+    dataset_path = "./data/rft_train_data_v6_0228_1.jsonl"
     dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"{dataset=}") 
 
@@ -498,8 +509,15 @@ def inference():
 #         token = "",
 #     )
 
+def geneate_train_data():
+    dataset_path = "/Users/sujiangwen/sandbox/LLM/speechless.ai/speechless/tasks/synthesize_tools_sft/data/function_calling_dialogs_v6_0228_1.jsonl"
+    dataset = get_function_calling_dialogs(dataset_path)
+    dataset.to_json("./rft_train_data_v6_0228_1.jsonl", force_ascii=False)
+    
+
 def main():
     train()
+    # geneate_train_data()
     
 if __name__ == '__main__':
     main()
