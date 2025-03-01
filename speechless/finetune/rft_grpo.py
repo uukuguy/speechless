@@ -196,7 +196,8 @@ def json_loads(json_str: str, ensure_ascii: bool = False, use_json_repair: bool 
             return None
 
 def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[float]:
-    responses = [completion[0]['content'] for completion in completions]
+    # responses = [completion[0]['content'] for completion in completions]
+    responses = [completion[0] for completion in completions]
 
     scores = []
     for generated_text, target in zip(responses, targets):
@@ -212,6 +213,8 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
             true_target = json_loads(target[0])
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在应该调用api的轮次，触发调用api，奖励
+                if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
+                    score += 0.5
                 tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
                 try:
                     # func = json.loads(tool_call_text)
@@ -248,6 +251,8 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                 score = -1
         scores.append(score)
 
+    logger.debug(f"{responses=}")
+    logger.debug(f"{score=}")
     return scores
 
 reward_funcs = [
@@ -384,8 +389,8 @@ def train():
         per_device_train_batch_size = 1,
         gradient_accumulation_steps = 4, # Increase to 4 for smoother training
         num_generations = 8, # Decrease if out of memory
-        max_prompt_length = 1024,
-        max_completion_length = 512,
+        max_prompt_length = 512,
+        max_completion_length = 256,
         num_train_epochs = 1, # Set to 1 for a full training run
         # max_steps = 250,
         # save_steps = 250,
