@@ -197,10 +197,12 @@ def json_loads(json_str: str, ensure_ascii: bool = False, use_json_repair: bool 
 
 def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[float]:
     # responses = [completion[0]['content'] for completion in completions]
-    responses = [completion[0] for completion in completions]
+    responses = [completion.strip() for completion in completions]
 
     scores = []
-    for generated_text, target in zip(responses, targets):
+    for prompt, generated_text, target in zip(prompts, responses, targets):
+        logger.debug(f"{prompt=}")
+        logger.debug(f"{generated_text=}")
         score = 0.0
         if target == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
@@ -211,9 +213,11 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                 score = 1
         else:
             true_target = json_loads(target[0])
+            logger.info(f"{true_target=}")
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在应该调用api的轮次，触发调用api，奖励
-                if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
+                # if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
+                if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
                     score += 0.5
                 tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
                 try:
@@ -249,10 +253,11 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
             else:
                 # 在应该调用api的轮次没有调用api，重点惩罚
                 score = -1
+        logger.debug(f"{score=}")
         scores.append(score)
 
-    logger.debug(f"{responses=}")
-    logger.debug(f"{score=}")
+    # logger.debug(f"{responses=}")
+    logger.info(f"{scores=}")
     return scores
 
 reward_funcs = [
@@ -335,7 +340,7 @@ def clean_memory():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     # mps backend
-    if torch.backends.mps.is_initialized():
+    if torch.backends.mps.is_available():
         torch.backends.mps.rc.reset()
 
 
@@ -343,7 +348,11 @@ def clean_memory():
 def train():
     dataset_path = "./data/rft_train_data_v6_0228.jsonl"
     dataset = load_dataset("json", data_files=dataset_path, split="train")
-    print(f"{dataset=}, {dataset[:10]=}")
+    print(f"{dataset=}, {dataset[:1]=}")
+    dataset = dataset.shuffle(seed=10042)
+    eval_size = 200
+    eval_dataset = dataset[:eval_size]
+    train_dataset = dataset[eval_size:]
 
     model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     model, tokenizer = load_model_and_tokenizer(model_path)
@@ -406,7 +415,8 @@ def train():
         processing_class = tokenizer,
         reward_funcs = reward_funcs,
         args = training_args,
-        train_dataset = dataset,
+        train_dataset = train_dataset,
+        eval_dataset = eval_dataset,
         callbacks=[cache_flush_callback, save_model_callback]
     )
 
