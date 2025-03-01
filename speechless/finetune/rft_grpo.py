@@ -160,7 +160,7 @@ def get_function_calling_dialogs(dataset_path):
 
         sub_examples = []
         for i in range(0, len(targets)):
-            sub_messages = deepcopy(messages[:i*2-1])
+            sub_messages = deepcopy(messages[:i*2+1])
             sub_targets = deepcopy(targets[:i+1])
             sub_example = {
                 "messages": [system_message] + sub_messages,
@@ -438,7 +438,7 @@ def clean_memory():
 
 # -------------------- Train --------------------
 def train():
-    dataset_path = "./data/rft_train_data_v6_0228_1.jsonl"
+    dataset_path = "./data/rft_train_data_v6_0228_2.jsonl"
     dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"{dataset=}") 
 
@@ -585,12 +585,12 @@ def inference():
 def geneate_train_data():
     dataset_path = "/Users/sujiangwen/sandbox/LLM/speechless.ai/speechless/tasks/synthesize_tools_sft/data/function_calling_dialogs_v6_0228.jsonl"
     dataset = get_function_calling_dialogs(dataset_path)
-    dataset.to_json("./rft_train_data_v6_0228_1.jsonl", force_ascii=False)
+    dataset.to_json("./rft_train_data_v6_0228_2.jsonl", force_ascii=False)
     
 
 def main():
-    train()
-    # geneate_train_data()
+    # train()
+    geneate_train_data()
     
 if __name__ == '__main__':
     main()
