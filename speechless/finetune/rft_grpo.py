@@ -266,7 +266,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
         logger.debug(f"{prompt=}")
         logger.debug(f"{generated_text=}")
         score = 0.0
-        true_target = json_loads(target[0])
+        true_target = json_loads(target)
         logger.info(f"{true_target=}")
         if true_target == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
@@ -282,13 +282,22 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                 # 在应该调用api的轮次，触发调用api，奖励
                 logger.info(f"在应该调用api的轮次，触发调用api，奖励")
                 # if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
-                if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
-                    logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
-                    score += 0.5
                 tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
+                bad_tool_call_text = False
                 try:
                     # func = json.loads(tool_call_text)
                     func = json_loads(tool_call_text)
+                except Exception as e:
+                    # api 不是正确的json格式，虽然触发时机正确，但不得分 
+                    bad_tool_call_text = True
+                    logger.error(f"api 不是正确的json格式，虽然触发时机正确，但不得分 0.0")
+                    score = 0.0
+
+                if not bad_tool_call_text:
+                    if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
+                        logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
+                        score += 0.5
+
                     if "name" in func and "arguments" in func:
                         score += 0.5 # api 的json格式正确，格式奖励
                         logger.info(f"api 的json格式正确，格式奖励0.5")
@@ -317,9 +326,6 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             logger.info(f"参数名命中f1, 奖励{f1:.3f}")
                         # 参数值正确性先不处理
 
-                except Exception as e:
-                    # api 不是正确的json格式，虽然触发时机正确，但不得分 
-                    score = 0.0
             else:
                 # 在应该调用api的轮次没有调用api，重点惩罚
                 score = -1
@@ -567,8 +573,8 @@ def geneate_train_data():
     
 
 def main():
-    # train()
-    geneate_train_data()
+    train()
+    # geneate_train_data()
     
 if __name__ == '__main__':
     main()
