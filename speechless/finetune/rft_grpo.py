@@ -501,13 +501,14 @@ def train():
         callbacks=[cache_flush_callback, save_model_callback]
     )
 
-    import torch.distributed as dist
-    try:
-        trainer.train()
-    except Exception as e:
-        logger.error(f"Training failed: {e}")
-    finally:
-        dist.destroy_process_group()
+    trainer.train()
+    # import torch.distributed as dist
+    # try:
+    #     trainer.train()
+    # except Exception as e:
+    #     logger.error(f"Training failed: {e}")
+    # finally:
+    #     dist.destroy_process_group()
 
     # saved_lora_dir = "grpo_saved_lora"
     # model.save_lora(saved_lora_dir)
