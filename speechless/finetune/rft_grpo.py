@@ -10,6 +10,7 @@ from transformers.trainer_callback import TrainerCallback
 from transformers import TrainingArguments, TrainerState, TrainerControl
 
 random.seed(10042)
+logger.add("grpo.log")
 
 SUPPORTS_BFLOAT16 = False
 if torch.cuda.is_available():
@@ -268,7 +269,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
         score = 0.0
         true_target = json_loads(target)
         logger.info(f"{true_target=}")
-        if true_target == []:
+        if true_target[-1] == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在不应调用api的轮次，调用api，重点惩罚
                 logger.warning(f"在不应调用api的轮次，调用api，重点惩罚")
@@ -293,14 +294,22 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                     logger.error(f"api 不是正确的json格式，虽然触发时机正确，但不得分 0.0")
                     score = 0.0
 
-                if not bad_tool_call_text:
-                    if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
-                        logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
-                        score += 0.5
+                if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
+                    logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
+                    score += 0.5
+                else:
+                    logger.error(f"<tool_call>对只能出现一次，不符合限制条件，虽然触发时机正确，但无特别奖励0.0")
+                    bad_tool_call_text = True
 
-                    if "name" in func and "arguments" in func:
-                        score += 0.5 # api 的json格式正确，格式奖励
-                        logger.info(f"api 的json格式正确，格式奖励0.5")
+                if "name" in func and "arguments" in func:
+                    score += 0.5 # api 的json格式正确，格式奖励
+                    logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
+                else:
+                    logger.error(f"api 的json格式keys('name, 'arguments)错误，虽然触发时机正确，但无特别奖励0.0")
+                    bad_tool_call_text = True
+
+                if not bad_tool_call_text:
+
 
                     func_name = func['name']
                     func_arguments = func['arguments']
