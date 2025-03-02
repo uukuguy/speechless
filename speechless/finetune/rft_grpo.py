@@ -497,6 +497,7 @@ def train():
         max_completion_length = 128,
         num_train_epochs = 1, # Set to 1 for a full training run
         # max_steps = 250,
+        do_eval = True,
         eval_steps=10,
         save_steps = 100,
         # save_strategy = "epoch",
@@ -589,8 +590,8 @@ def geneate_train_data():
     
 
 def main():
-    # train()
-    geneate_train_data()
+    train()
+    # geneate_train_data()
     
 if __name__ == '__main__':
     main()
