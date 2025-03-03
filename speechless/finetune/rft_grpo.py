@@ -243,6 +243,151 @@ def get_function_calling_dialogs(dataset_path):
     ds = ds.remove_columns(["messages"])
     return ds
 
+def get_function_calling_dialogs_sft_dataset(dataset_path):
+    ds = load_dataset("json", data_files=dataset_path, split="train")
+
+    def filter_func(example):
+        messages_str = example['messages']
+        # logger.debug(f"{messages_str=}")
+        messages = json.loads(messages_str)
+        if (len(messages) - 1) % 2 != 0:
+            return False
+        
+        if messages[-1]['role'] != 'assistant':
+            return False
+
+        return True
+
+    ds = ds.filter(filter_func)
+
+    def add_targets_func(example):
+        messages_str = example['messages']
+        # logger.debug(f"{messages_str=}")
+        messages = json.loads(messages_str)
+        assert messages[-1]['role'] == 'assistant', f"{messages=}"
+        # if messages[-1]['role'] == 'user':
+        #     messages = messages[:-1]
+
+        # logger.debug(f"{messages=}")
+        assert messages[0]['role'] == "system"
+        targets = []
+        assert (len(messages) - 1) % 2 == 0, f"(len(messages) - 1) % 2 != 0. {len(messages)=}, {messages=}"
+
+        for i in range(0, (len(messages) - 1) // 2):
+            conv = messages[1 + i*2 + 1]
+            tool_calls = conv.get("tool_calls", None)
+            if tool_calls:
+                target = [tool_calls[0]['function']]
+            else:
+                target = []
+            targets.append(target)
+                
+        messages = json.dumps(messages, ensure_ascii=False)
+        targets = json.dumps(targets, ensure_ascii=False)
+        # logger.info(f"{messages=}, {targets=}")
+        return {
+            "messages": messages,
+            "targets": targets,
+        }
+
+    ds = ds.map(add_targets_func)
+    print(f"{ds=}, {ds[0]=}")
+
+    expanded_examples = []
+    for example in tqdm(ds, desc="Building examples"):
+        messages = json.loads(example['messages'])
+        targets = json.loads(example['targets'])
+        if isinstance(targets, str):
+            targets = json_loads(targets)
+        assert len(messages) == len(targets) * 2 + 1, f"{len(messages)=}, {len(targets)=}"
+        system_message = deepcopy(messages[0])
+        messages = messages[1:]
+
+        sub_examples = []
+        for i in range(0, len(targets)):
+            sub_messages = deepcopy(messages[:i*2+1])
+            sub_targets = deepcopy(targets[:i+1])
+            sub_example = {
+                "messages": [system_message] + sub_messages,
+                "targets": sub_targets,
+            }
+            sub_examples.append(sub_example)
+
+        assert len(sub_examples) == len(targets), f"{len(sub_examples)=}, {len(targets)=}"
+
+        # example['messages'] = [system_message] + messages[:-1]
+        # example['targets'] = targets
+        # sub_examples.append(example)
+
+        selected_examples = []
+        if len(sub_examples) > 1:
+            random.shuffle(sub_examples)
+            for e in sub_examples:
+                targets = e['targets']
+                if isinstance(targets, str):
+                    targets = json_loads(targets)
+                # logger.debug(f"{targets=}")
+                if len(targets[-1]) == 0:
+                    logger.debug(f"{targets=}")
+                    # logger.debug(f"{e=}")
+                    # logger.debug(f"e['targets'][-1] == [] found")
+                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+                    selected_examples.append(e)
+                    break
+            assert len(selected_examples) == 1, f"{sub_examples=}"
+            for e in sub_examples:
+                targets = e['targets']
+                if isinstance(targets, str):
+                    targets = json_loads(targets)
+                # logger.debug(f"{targets=}")
+                if len(targets[-1]) > 0:
+                    _targets=e['targets']
+                    logger.debug(f"{targets=}")
+                    # logger.debug(f"{e=}")
+                    # logger.debug(f"e['targets'][-1] != [] found")
+                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+                    selected_examples.append(e)
+                    break
+            assert len(selected_examples) == 2, f"{sub_examples=}"
+            # print(f"{len(sub_examples)}, {sub_examples=}")
+            assert len(selected_examples) == 2, f"{len(selected_examples)}, {selected_examples=}"
+        else:
+            # e = sub_examples[0]
+            # e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
+            # e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
+            # selected_examples.append(e)
+            pass
+        expanded_examples.extend(selected_examples)
+
+        # if len(sub_examples) >= 1:
+        #     
+        #     sub_example = sub_examples[0]
+        #     expanded_examples.append(sub_example)
+        
+        
+
+    ds = Dataset.from_list(expanded_examples)
+    print(f"{ds=}, {ds[0]=}")
+
+    def format_chat_func(example):
+        # print(f"{example=}")
+        messages = json.loads(example['messages'])
+        # print(f"{type(messages)=}, {messages=}")
+        if isinstance(messages, str):
+            messages = json.loads(messages)
+        prompt = format_chat(messages)
+
+        return {
+            "prompt": prompt
+        }
+        
+
+    ds = ds.map(format_chat_func)
+    ds = ds.remove_columns(["messages"])
+    return ds
+
 
 # -------------------- Reward Functions --------------------
 reward_funcs = []
