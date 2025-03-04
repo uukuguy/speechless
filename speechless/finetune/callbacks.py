@@ -1,5 +1,7 @@
-import os, json, time
+import os, sys, json, time
 from datetime import timedelta
+
+import torch
 
 from transformers import TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
@@ -163,12 +165,16 @@ class LoggingCallback(TrainerCallback):
             self.cur_steps += 1
             self.timing()
 
-import torch
+
 import gc, ctypes
 def clean_memory():
-    gc.collect()
-    ctypes.CDLL("libc.so.6").malloc_trim(0)
-    torch.cuda.empty_cache()
+    for _ in range(3):
+        gc.collect()
+        if sys.platform == 'linux':
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        # mps backend
+        if torch.backends.mps.is_available():
+            torch.cuda.empty_cache()
 
 class CleanMemoryCallback(TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):

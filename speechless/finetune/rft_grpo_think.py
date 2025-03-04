@@ -23,12 +23,13 @@ def is_bfloat16_supported():
 
 import gc, ctypes
 def clean_memory():
-    gc.collect()
-    if sys.platform == 'linux':
-        ctypes.CDLL("libc.so.6").malloc_trim(0)
-    # mps backend
-    if torch.backends.mps.is_initialized():
-    	torch.cuda.empty_cache()
+    for _ in range(3):
+        gc.collect()
+        if sys.platform == 'linux':
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        # mps backend
+        if torch.backends.mps.is_available():
+            torch.cuda.empty_cache()
 
 
 # -------------------- Model --------------------
