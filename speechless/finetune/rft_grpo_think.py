@@ -20,6 +20,17 @@ if torch.cuda.is_available():
 def is_bfloat16_supported():
     return SUPPORTS_BFLOAT16
 
+
+import gc, ctypes
+def clean_memory():
+    gc.collect()
+    if sys.platform == 'linux':
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    # mps backend
+    if torch.backends.mps.is_initialized():
+    	torch.cuda.empty_cache()
+
+
 # -------------------- Model --------------------
 def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_rank: int = 64):
     from unsloth import FastLanguageModel, PatchFastRL
@@ -33,7 +44,6 @@ def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_r
         max_lora_rank = lora_rank,
         gpu_memory_utilization = 0.85, # Reduce if out of memory
     )
-
     model = FastLanguageModel.get_peft_model(
         model,
         r = lora_rank, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
@@ -45,6 +55,11 @@ def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_r
         use_gradient_checkpointing = "unsloth", # Enable long context finetuning
         random_state = 10042,
     )
+
+    model.config.use_cache = False # Disables KV caching to save memory.
+    # Then enable gradient checkpointing
+    model.gradient_checkpointing_enable()
+
 
     return model, tokenizer
 
@@ -403,6 +418,61 @@ def json_loads(json_str: str, ensure_ascii: bool = False, use_json_repair: bool 
             logger.error(f"Error: {e}")
             return None
 
+def format_reward_func(prompts, completions, targets, **kwargs):
+    """
+    Format: <think>...</think><answer>...</answer>
+    Args:
+        completions (list[str]): Generated outputs
+        target (list[str]): Expected answers
+      
+      Returns:
+          list[float]: Reward scores
+    """
+    rewards = []
+
+    for completion, gt in zip(completions, targets):
+
+        try:
+            # add synthetic <think> as its already part of the prompt and prefilled for the assistant to more easily match the regex
+            completion = "<think>" + completion
+            # if random.random() < 0.1:  # 1% chance to write samples into a file
+            #     os.makedirs("completion_samples", exist_ok=True)
+            #     log_file = os.path.join("completion_samples", "completion_samples.txt")
+            #     with open(log_file, "a") as f:
+            #         f.write(f"\n\n==============\n")
+            #         f.write(completion)
+            score = 0.0
+            if "<think>" in completion: score += 0.5
+            if "</think>" in completion: score += 0.5
+            # if "<answer>" in completion: score += 0.25
+            # if "</answer>" in completion: score += 0.25
+
+            # Check if the format is correct
+            # regex = r"^<think>([^<]*(?:<(?!/?think>)[^<]*)*)<\/think>\n<answer>([\s\S]*?)<\/answer>$"
+
+            # match = re.search(regex, completion, re.DOTALL)
+            # # if the format is not correct, reward is 0
+            # if match is None or len(match.groups()) != 2:
+            #     score += 0.0
+            #     # rewards.append(0.0)
+            #     # logger.warning(f"严格匹配<think><answer>, 奖励0.0")
+            # else:
+            #     score += 1.0
+            #     # rewards.append(1.0)
+                # logger.info(f"严格匹配<think><answer>, 奖励1.0")
+
+            if score < 1: 
+                logger.warning(f"格式匹配<think>奖励: {score:.2f}")
+            else:
+                logger.info(f"格式匹配<think>奖励: {score:.2f}")
+
+            rewards.append(score)
+        except Exception:
+            rewards.append(0.0)
+
+    logger.info(f"{rewards=}")
+    return rewards
+
 def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[float]:
     # responses = [completion[0]['content'] for completion in completions]
     responses = [completion.strip() for completion in completions]
@@ -410,52 +480,58 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
     scores = []
     for prompt, generated_text, target in zip(prompts, responses, targets):
         logger.debug(f"{prompt=}")
-        logger.debug(f"{generated_text=}")
+        logger.debug(f"generated_text=<think>{generated_text}")
         score = 0.0
         true_target = json_loads(target)
         logger.info(f"{true_target=}")
         if true_target[-1] == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
                 # 在不应调用api的轮次，调用api，重点惩罚
-                logger.warning(f"在不应调用api的轮次，调用api，重点惩罚")
                 score = -1
+                logger.warning(f"在不应调用api的轮次，调用api，重点惩罚！{score:.2f}")
             else:
                 # 在不应调用api的轮次，没有调用api，正常奖励
-                logger.info(f"在不应调用api的轮次，没有调用api，正常奖励")
                 score = 1
+                logger.info(f"在不应调用api的轮次，没有调用api，正常奖励. {score:.2f}")
         else:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
+                score = 0.0
                 # 在应该调用api的轮次，触发调用api，奖励
                 logger.info(f"在应该调用api的轮次，触发调用api，奖励")
                 # if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
                 tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
                 bad_tool_call_text = False
+
                 try:
                     # func = json.loads(tool_call_text)
                     func = json_loads(tool_call_text)
                 except Exception as e:
                     # api 不是正确的json格式，虽然触发时机正确，但不得分 
                     bad_tool_call_text = True
-                    logger.error(f"api 不是正确的json格式，虽然触发时机正确，但不得分 0.0")
-                    score = 0.0
+                    score = -2.0
+                    logger.error(f"<tool_call> api json 解释失败，重点惩罚！{score:.2f}")
 
-                if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
-                    logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
-                    score += 0.5
-                else:
-                    logger.error(f"<tool_call>对只能出现一次，不符合限制条件，虽然触发时机正确，但无特别奖励0.0")
-                    bad_tool_call_text = True
-
-                if "name" in func and "arguments" in func:
-                    score += 0.5 # api 的json格式正确，格式奖励
-                    logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
-                else:
-                    logger.error(f"api 的json格式keys('name, 'arguments)错误，虽然触发时机正确，但无特别奖励0.0")
-                    bad_tool_call_text = True
 
                 if not bad_tool_call_text:
+                    if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
+                        logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
+                        score += 0.5
+                    else:
+                        score += -0.5
+                        logger.warning(f"<tool_call>对只能出现一次，不符合限制条件，重点惩罚！{score:.2f}")
+                        bad_tool_call_text = True
+
+                if not bad_tool_call_text:
+                    if "name" in func and "arguments" in func:
+                        score += 0.5 # api 的json格式正确，格式奖励
+                        logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
+                    else:
+                        score += -0.5
+                        logger.warning(f"api 的json格式keys('name, 'arguments)错误，重点惩罚！{score:.2f}")
+                        bad_tool_call_text = True
 
 
+                if not bad_tool_call_text:
                     func_name = func['name']
                     func_arguments = func['arguments']
                     true_name = true_target[-1][0]['name']
@@ -483,7 +559,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             else:
                                 f1 = 0.0
                             score += f1 # 参数名命中f1, 奖励    
-                            logger.info(f"参数名命中f1, 奖励{f1:.3f}")
+                            logger.info(f"参数名命中f1, 奖励{f1:.2f}")
 
                         num_value_exist = 0
                         for k, v in func_arguments.items():
@@ -493,23 +569,65 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                         if len(func_arguments) > 0:
                             value_exist_acc = num_value_exist / len(func_arguments)
                             score += value_exist_acc
-                            logger.info(f"参数值命中率, 奖励{value_exist_acc:.3f}")
-                               
-                        # 参数值正确性先不处理
+                            logger.info(f"参数值在用户对话内容中命中率, 奖励{value_exist_acc:.2f}")
+
+                        num_not_null_values = 0
+                        num_str_values = 0
+                        for k, v in func_arguments.items():
+                            if isinstance(v, str):
+                                num_str_values += 1
+                                if v:
+                                    num_not_null_values += 1
+                        null_str_score = 0.0
+                        if num_str_values > 0 and num_not_null_values < num_str_values:
+                            null_str_score = -(num_str_values - num_not_null_values) / num_str_values
+                            score += null_str_score
+                            logger.warning(f"空串惩罚：{null_str_score:.2f}")
+
+                        same_keys = func_argument_keys & true_argument_keys
+                        tp = 0
+                        for k in same_keys:
+                            func_value = func_arguments[k]
+                            true_value = true_arguments[k]
+                            if f"{func_value}" == f"{true_value}":
+                                tp += 1
+                        if len(func_argument_keys) > 0 and len(true_argument_keys) > 0:
+                            p = tp / len(func_argument_keys)
+                            r = tp / len(true_argument_keys)
+
+                            if (p+r) > 0:
+                                f1 = 2 * p * r / (p+r)
+                            else:
+                                f1 = 0.0
+                            if f1 > 0:
+                                logger.info(f"参数值完全相同f1, 奖励{f1:.2f}")
+                            else:
+                                logger.info(f"没有参数值完全相同, 惩罚-0.5")
+                                f1 = -0.5
+                        else:
+                            f1 = 0.0
+                        score += f1 
 
             else:
                 # 在应该调用api的轮次没有调用api，重点惩罚
                 score = -1
-                logger.warning(f"在应该调用api的轮次没有调用api，重点惩罚")
+                logger.warning(f"在应该调用api的轮次没有调用api，重点惩罚！ {score:.2f}")
+
+
         logger.debug(f"{score=}")
         scores.append(score)
+
+    # format_scores = format_reward_func(prompts, completions, targets, **kwargs)
+    # scores = [ s0 + s1 for s0, s1 in zip(scores, format_scores)]
 
     # logger.debug(f"{responses=}")
     logger.info(f"{scores=}")
     return scores
 
+
 reward_funcs = [
     correctness_reward_func,
+    format_reward_func,
 ]
         
 
@@ -598,6 +716,36 @@ def train():
     dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"{dataset=}") 
 
+# Show your work in <think> </think> tags. And return the final answer in <answer> </answer> tags.
+# Think step by step inside <think> tags.
+    def r1_func(example):
+        prompt = example['prompt']
+        r1_prefix = """You are a helpful assistant. You first thinks about the reasoning process in the mind and then provides the user with the answer.
+
+Show your work in <think> </think> tags. 
+Think step by step inside <think> tags.
+
+- 用户对话列表user_messages是用户的多轮对话内容，你需要判断在哪个轮次需要调用工具函数。整个对话轮次最多只有一个api调用，通常在用户关于工具函数参数的描述结束的那一轮。
+- 你需要通过用户对话列表的内容准确判断工具函数的函数名，并从对话列表内容中抽取函数的参数值，同时参考 API Schema 中函数参数的说明，保证参数值的格式正确。
+- 参数值尽量直接从对话内容中抽取，同时要重点关注日期、数字的正确格式。
+- 不要对任何参数使用假设值、猜测值。
+- 值为空的参数不要放入 api 调用中。
+- 仔细检查 API Schema 中函数的参数定义，当必填参数没有全部被用户明确提到时，明确告知用户缺少哪些必填参数，此轮次不要生成 api 调用。
+- 请使用中文回复。
+
+        """
+        prompt = prompt.replace("<|im_start|>system\n\n",  "")
+        prompt = "<|im_start|>system\n\n" + r1_prefix + prompt
+        prompt += "<|im_start|>assistant\nLet me solve this step by step.\n<think>"
+
+        targets = example['targets']
+        return {
+            "prompt": prompt,
+            "targets": targets,
+        }
+
+    dataset = dataset.map(r1_func)
+
     eval_size = 200
     dataset = dataset.train_test_split(test_size=eval_size)
     train_dataset = dataset['train']
@@ -631,7 +779,7 @@ def train():
 
     class SaveModelCallback(TrainerCallback):  # Inherit from a base Callback class
         def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-            model_weights_dir = f"./output_grpo/ckpt/iter-{state.global_step:05d}"
+            model_weights_dir = f"./outputs_grpo_think/ckpt/iter-{state.global_step:05d}"
             save_model(model_weights_dir=model_weights_dir, model=model, tokenizer=tokenizer)
     save_model_callback = SaveModelCallback()
 
@@ -652,8 +800,8 @@ def train():
         per_device_train_batch_size = 1,
         gradient_accumulation_steps = 4, # Increase to 4 for smoother training
         num_generations = 4, # Decrease if out of memory
-        max_prompt_length = 256,
-        max_completion_length = 128,
+        max_prompt_length = 128,
+        max_completion_length = 384,
         num_train_epochs = 1, # Set to 1 for a full training run
         # max_steps = 250,
         do_eval = True,
@@ -662,7 +810,7 @@ def train():
         # save_strategy = "epoch",
         max_grad_norm = 0.1,
         report_to = "tensorboard", # Can use Weights & Biases, tensorboard, none
-        output_dir = "outputs_grpo",
+        output_dir = "outputs_grpo_think",
     )
 
 
