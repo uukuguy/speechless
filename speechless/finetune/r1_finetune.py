@@ -162,7 +162,7 @@ def load_model_huggingface(model_path: str, lora_path: str = None, lora_config: 
             )
         if lora_config.target_modules is None:
             logger.info(f'adding LoRA modules...')
-            all_modules = find_all_linear_names(args, model)
+            all_modules = find_all_linear_names(model)
             print(f"LoRA modules: {all_modules}")
             # target_modules=[
             #     "q_proj",
