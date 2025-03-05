@@ -57,6 +57,7 @@ def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_r
         random_state = 10042,
     )
 
+
     model.config.use_cache = False # Disables KV caching to save memory.
     # Then enable gradient checkpointing
     model.gradient_checkpointing_enable()
