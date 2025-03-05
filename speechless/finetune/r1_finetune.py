@@ -147,7 +147,7 @@ def is_bfloat16_supported():
 # Load model by using Huggingface
 def load_model_huggingface(model_path: str, lora_path: str = None, lora_config: LoraConfig = None):
 
-    compute_dtype = torch.bfloat16 if is_bfloat16_supported or torch.float16
+    compute_dtype = torch.bfloat16 if is_bfloat16_supported() else torch.float16
     bnb_config = None
     if torch.cuda.is_available():
         bnb_config = BitsAndBytesConfig(
