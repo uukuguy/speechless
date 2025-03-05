@@ -23,6 +23,12 @@ from typing import Union, List, Dict, Any
 import torch
 from transformers.trainer_utils import get_last_checkpoint
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from transformers import (
+    set_seed,
+    BitsAndBytesConfig,
+)
+
 from peft import (
     prepare_model_for_kbit_training,
     LoraConfig,
@@ -130,12 +136,52 @@ def load_tokenizer(model_path):
     return tokenizer
 
 
+SUPPORTS_BFLOAT16 = False
+if torch.cuda.is_available():
+    major_version, minor_version = torch.cuda.get_device_capability()
+    if major_version >= 8:
+        SUPPORTS_BFLOAT16 = True
+def is_bfloat16_supported():
+    return SUPPORTS_BFLOAT16
+
 # Load model by using Huggingface
 def load_model_huggingface(model_path: str, lora_path: str = None, lora_config: LoraConfig = None):
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        trust_remote_code=True,
-    )
+
+    compute_dtype = torch.bfloat16 if is_bfloat16_supported or torch.float16
+    bnb_config = None
+    if torch.cuda.is_available():
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            load_in_8bit=False,
+            llm_int8_threshold=6.0,
+            llm_int8_has_fp16_weight=False,
+            bnb_4bit_compute_dtype=compute_dtype,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        ) 
+    model_kwargs = {
+        # "cache_dir": args.cache_dir,
+        # transformers-4.39.0.dev0
+        # ValueError: You can't pass `load_in_4bit`or `load_in_8bit` as a kwarg when passing `quantization_config` argument at the same time.
+        # "load_in_4bit": args.bits == 4,
+        # "load_in_8bit": args.bits == 8,
+        "device_map": device_map if not args.deepspeed else None,
+        "max_memory": max_memory if not args.deepspeed else None,
+        "quantization_config": bnb_config,
+        "torch_dtype": compute_dtype,
+        "trust_remote_code": True,
+        # "use_flash_attention_2": args.flash_attention,
+        # "use_auth_token": args.use_auth_token
+    }
+
+    if torch.cuda.is_available():
+        model_kwargs["attn_implementation"] = "flash_attention_2"
+
+    # if args.mpt:
+    #     model_kwargs["attn_config"] = {"attn_impl": "triton"}
+
+    logger.info(f"{model_kwargs=}")
+    model = AutoModelForCausalLM.from_pretrained(model_path, **model_kwargs)
 
     def find_all_linear_names(model, bits: int = 4):
         cls = bnb.nn.Linear4bit if bits == 4 else (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear)
