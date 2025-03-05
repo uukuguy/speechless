@@ -165,7 +165,7 @@ def load_model_huggingface(model_path: str, lora_path: str = None, lora_config: 
         # ValueError: You can't pass `load_in_4bit`or `load_in_8bit` as a kwarg when passing `quantization_config` argument at the same time.
         # "load_in_4bit": args.bits == 4,
         # "load_in_8bit": args.bits == 8,
-        "device_map": "auto",
+        # "device_map": "auto", # deepspeed  not use "auto"
         "quantization_config": bnb_config,
         "torch_dtype": compute_dtype,
         "trust_remote_code": True,
