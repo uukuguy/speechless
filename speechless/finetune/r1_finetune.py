@@ -222,7 +222,6 @@ def load_model_and_tokenizer(
             model_path,
             lora_path=lora_path,
             lora_config=lora_config,
-            tokenizer_name_or_path=tokenizer_name_or_path,
             max_seq_length=max_seq_length,
         )
     elif loader_type == "huggingface":
@@ -231,7 +230,6 @@ def load_model_and_tokenizer(
             lora_path=lora_path,
             lora_config=lora_config,
             tokenizer_name_or_path=tokenizer_name_or_path,
-            max_seq_length=max_seq_length,
         )
     else:
         raise Exception(f"Unknown loader_type: {loader_type} in load_model_and_tokenizer.")
