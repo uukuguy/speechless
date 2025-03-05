@@ -293,11 +293,11 @@ def build_datasets(
     if isinstance(dataset_id_or_path, str):
         datasets_list = dataset_id_or_path.split(",")
     elif isinstance(dataset_id_or_path, list):
-        datasets_list = dataset_id_or_path
+        datasets_list = [dataset_id_or_path]
     else:
         raise ValueError(f"dataset_id_or_path must be a string or a list of strings, got {dataset_id_or_path}")
 
-    dataset = load_dataset(dataset_id_or_path[0], split=dataset_splits)
+    dataset = load_dataset(datasets_list[0], split=dataset_splits)
     for dataset_id in dataset_id_or_path[1:]:
         dataset = dataset.concatenate(load_dataset(dataset_id, split=dataset_splits))
 
