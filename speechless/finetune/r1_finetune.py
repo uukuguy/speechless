@@ -16,7 +16,7 @@ train:
 import os, sys
 import re
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Union, List, Dict, Any
 
@@ -47,8 +47,8 @@ class CustomArguments:
     test_size: Union[int, float] = 100
     shuffle_seed: int = 10042
 
-    reward_functions: list = []
-    dataset_map_functions: list = []
+    reward_functions: list = field(default_factory=list)
+    dataset_map_functions: list = field(default_factory=list)
 
 
 import gc, ctypes
