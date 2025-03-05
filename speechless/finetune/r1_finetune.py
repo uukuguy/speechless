@@ -297,9 +297,10 @@ def build_datasets(
     else:
         raise ValueError(f"dataset_id_or_path must be a string or a list of strings, got {dataset_id_or_path}")
 
-    dataset = load_dataset(datasets_list[0], split=dataset_splits)
-    for dataset_id in dataset_id_or_path[1:]:
-        dataset = dataset.concatenate(load_dataset(dataset_id, split=dataset_splits))
+    dataset = load_dataset("json", data_files=datasets_list, split=dataset_splits)
+    # dataset = load_dataset(datasets_list[0], split=dataset_splits)
+    # for dataset_id in dataset_id_or_path[1:]:
+    #     dataset = dataset.concatenate(load_dataset(dataset_id, split=dataset_splits))
 
     dataset = dataset.shuffle(seed=shuffle_seed)
 
