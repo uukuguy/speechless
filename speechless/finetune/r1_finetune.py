@@ -44,7 +44,7 @@ class CustomArguments:
     dataset_splits: str = "train"
     tokenizer_name_or_path: str = None
     loader_type: str = "huggingface"  # unsloth or huggingface
-    test_size: Union[int, float] = 100
+    test_size: float = 100
     shuffle_seed: int = 10042
 
     reward_functions: list = field(default_factory=list)
