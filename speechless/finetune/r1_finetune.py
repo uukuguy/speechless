@@ -53,9 +53,6 @@ class CustomArguments:
     test_size: float = 100
     shuffle_seed: int = 10042
 
-    reward_functions: str = ""
-    dataset_map_functions: str = ""
-
 
 import gc, ctypes
 
