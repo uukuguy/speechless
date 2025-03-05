@@ -284,7 +284,7 @@ def build_datasets(
     dataset_id_or_path,
     tokenizer,
     dataset_splits="train",
-    dataset_map_function=None,
+    dataset_map_functions=None,
     test_size=100,
     shuffle_seed=10042
 ):
@@ -304,8 +304,9 @@ def build_datasets(
 
     dataset = dataset.shuffle(seed=shuffle_seed)
 
-    if dataset_map_function is not None:
-        dataset = dataset_map_function(dataset, tokenizer=tokenizer)
+    if dataset_map_functions:
+        for dataset_map_function in dataset_map_functions:
+            dataset = dataset_map_function(dataset, tokenizer=tokenizer)
 
     train_test_split = dataset.train_test_split(test_size=test_size)
     train_dataset = train_test_split["train"]
@@ -341,7 +342,7 @@ def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args:
 
     # -------------------- Dataset --------------------
     train_dataset, eval_dataset = build_datasets(
-        dataset_id_or_path, tokenizer=tokenizer, dataset_map_function=dataset_map_functions, test_size=test_size, shuffle_seed=shuffle_seed
+        dataset_id_or_path, tokenizer=tokenizer, dataset_map_functions=dataset_map_functions, test_size=test_size, shuffle_seed=shuffle_seed
     )
 
     # -------------------- Training loop --------------------
