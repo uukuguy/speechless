@@ -47,8 +47,8 @@ class CustomArguments:
     test_size: float = 100
     shuffle_seed: int = 10042
 
-    reward_functions: list = field(default_factory=list)
-    dataset_map_functions: list = field(default_factory=list)
+    reward_functions: str = ""
+    dataset_map_functions: str = ""
 
 
 import gc, ctypes
@@ -273,13 +273,13 @@ def build_datasets(
 
 # -------------------- Training Callbacks --------------------
 
-def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args: CustomArguments):
+def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args: CustomArguments, r1_params: dict):
     logger.info(f"Training parameters: {training_args}")
     logger.info(f"Model parameters: {model_args}")
     logger.info(f"Custom parameters: {custom_args}")
 
-    reward_functions = custom_args.reward_functions
-    dataset_map_functions = custom_args.dataset_map_functions
+    reward_functions = r1_params["reward_functions"]
+    dataset_map_functions = r1_params["dataset_map_functions"]
 
     model_path = model_args.model_name_or_path
     dataset_id_or_path = custom_args.dataset_id_or_path
@@ -367,8 +367,12 @@ def main():
     parser = TrlParser((GRPOConfig, ModelConfig, CustomArguments))
     training_args, model_args, custom_args  = parser.parse_args_and_config()
 
+    r1_params = {
+        "reward_functions": [],
+        "dataset_map_functions": []
+    }
     # Run the main training loop
-    r1_finetune(training_args, model_args, custom_args)
+    r1_finetune(training_args, model_args, custom_args, r1_params=r1_params)
 
 
 if __name__ == "__main__":
