@@ -335,7 +335,8 @@ def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args:
         "lora_alpha": model_args.lora_alpha,
         "target_modules": model_args.lora_target_modules,
     }
-    model, tokenizer = load_model_and_tokenizer(model_path, loader_type=loader_type, lora_params=lora_params)
+    # model, tokenizer = load_model_and_tokenizer(model_path, loader_type=loader_type, lora_params=lora_params)
+    tokenizer = load_tokenizer(model_path)
 
     # -------------------- Dataset --------------------
     train_dataset, eval_dataset = build_datasets(
@@ -344,7 +345,8 @@ def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args:
 
     # -------------------- Training loop --------------------
     trainer = GRPOTrainer(
-        model=model,
+        # model=model,
+        model=model_path,
         reward_funcs=reward_functions,
         args=training_args,
         train_dataset=train_dataset,
