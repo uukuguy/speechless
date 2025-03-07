@@ -41,8 +41,8 @@ from trl import get_peft_config, ModelConfig, TrlParser
 from tqdm import tqdm
 from loguru import logger
 
-from trl import GRPOConfig, GRPOTrainer
-# from speechless.finetune.grpo_trainer_vllm_multi_gpus import GRPOTrainer
+from trl import GRPOConfig #, GRPOTrainer
+from speechless.finetune.grpo_trainer_vllm_multi_gpus import GRPOTrainer
 
 from speechless.finetune.callbacks import LoggingCallback, CleanMemoryCallback, SavePeftModelCallback
 
