@@ -37,7 +37,7 @@ from peft import (
 )
 import bitsandbytes as bnb
 from datasets import load_dataset
-from trl import get_peft_config, ModelConfig, TrlParser, GRPOConfig
+from trl import get_peft_config, ModelConfig, TrlParser 
 from tqdm import tqdm
 from loguru import logger
 
