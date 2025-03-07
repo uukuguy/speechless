@@ -192,7 +192,8 @@ class GRPOTrainer(TrlGRPOTrainer):
         self._metrics = defaultdict(list)
         self.log_completions = args.log_completions
 
-        super().__init__(
+        # super().__init__(
+        Trainer().__init__(
             model=model,
             args=args,
             data_collator=data_collator,
