@@ -47,17 +47,18 @@ if is_wandb_available():
 
 from trl.trainer.grpo_trainer import RewardFunc
 
+from trl import GRPOConfig
 
-from trl import GRPOConfig as TrlGRPOConfig
-@dataclass
-class GRPOConfig(TrlGRPOConfig):
-    tensor_parallel_size: int = field(
-        default=1,
-        metadata={
-            "help": "Number of GPUs used for tensor parallelism. If greater than 1, the model will be split across "
-            "multiple GPUs. This is useful when using vLLM to generate completions with a large model."
-        },
-    )
+# from trl import GRPOConfig as TrlGRPOConfig
+# @dataclass
+# class GRPOConfig(TrlGRPOConfig):
+#     tensor_parallel_size: int = field(
+#         default=1,
+#         metadata={
+#             "help": "Number of GPUs used for tensor parallelism. If greater than 1, the model will be split across "
+#             "multiple GPUs. This is useful when using vLLM to generate completions with a large model."
+#         },
+#     )
 
 class GRPOTrainer(TrlGRPOTrainer):
     def __init__(
@@ -193,7 +194,7 @@ class GRPOTrainer(TrlGRPOTrainer):
         self.log_completions = args.log_completions
 
         # super().__init__(
-        Trainer().__init__(
+        super(Trainer).__init__(
             model=model,
             args=args,
             data_collator=data_collator,
