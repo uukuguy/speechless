@@ -66,6 +66,18 @@ def clean_memory(num_refresh=3):
         if torch.backends.mps.is_available():
             torch.cuda.empty_cache()
 
+def find_all_linear_names(model, bits: int = 4):
+    cls = bnb.nn.Linear4bit if bits == 4 else (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear)
+    lora_module_names = set()
+    for name, module in model.named_modules():
+        if isinstance(module, cls):
+            names = name.split('.')
+            lora_module_names.add(names[0] if len(names) == 1 else names[-1])
+
+    if 'lm_head' in lora_module_names:  # needed for 16-bit
+        lora_module_names.remove('lm_head')
+    return list(lora_module_names)
+
 
 # -------------------- Model --------------------
 # Load model by using unsloth
@@ -178,18 +190,6 @@ def load_model_huggingface(model_path: str, lora_path: str = None, lora_config: 
 
     logger.info(f"{model_kwargs=}")
     model = AutoModelForCausalLM.from_pretrained(model_path, **model_kwargs)
-
-    def find_all_linear_names(model, bits: int = 4):
-        cls = bnb.nn.Linear4bit if bits == 4 else (bnb.nn.Linear8bitLt if bits == 8 else torch.nn.Linear)
-        lora_module_names = set()
-        for name, module in model.named_modules():
-            if isinstance(module, cls):
-                names = name.split('.')
-                lora_module_names.add(names[0] if len(names) == 1 else names[-1])
-
-        if 'lm_head' in lora_module_names:  # needed for 16-bit
-            lora_module_names.remove('lm_head')
-        return list(lora_module_names)
 
 
     if lora_path is not None:
@@ -335,6 +335,25 @@ def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args:
         "lora_alpha": model_args.lora_alpha,
         "target_modules": model_args.lora_target_modules,
     }
+    lora_config = LoraConfig(**lora_params)
+
+    if lora_config.target_modules is None:
+        logger.info(f'adding LoRA modules...')
+        # all_modules = find_all_linear_names(model)
+        # print(f"LoRA modules: {all_modules}")
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ]
+        # target_modules = all_modules
+        # Remove QKVO if out of memory
+        lora_config.target_modules = target_modules
+
     # model, tokenizer = load_model_and_tokenizer(model_path, loader_type=loader_type, lora_params=lora_params)
     tokenizer = load_tokenizer(model_path)
 
@@ -347,6 +366,7 @@ def r1_finetune(training_args: GRPOConfig, model_args: ModelConfig, custom_args:
     trainer = GRPOTrainer(
         # model=model,
         model=model_path,
+        peft_config=lora_config,
         reward_funcs=reward_functions,
         args=training_args,
         train_dataset=train_dataset,
