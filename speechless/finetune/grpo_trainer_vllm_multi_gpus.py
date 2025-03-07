@@ -45,8 +45,6 @@ if is_vllm_available():
 if is_wandb_available():
     import wandb
 
-from vllm.worker import SamplingParams
-
 from trl.trainer.grpo_trainer import RewardFunc
 
 
@@ -276,7 +274,10 @@ class GRPOTrainer(TrlGRPOTrainer):
                         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(
                             str(idx) for idx in range(self.accelerator.num_processes, torch.cuda.device_count())
                         )
-                        tensor_parallel_size = num_gpus_vllm
+                        if self.args.tensor_parallel_size > 1:
+                            tensor_parallel_size = self.args.tensor_parallel_size
+                        else:
+                            tensor_parallel_size = num_gpus_vllm
                     self.llm = LLM(
                         model=model.name_or_path,
                         device=vllm_device,
