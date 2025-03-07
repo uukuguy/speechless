@@ -293,7 +293,7 @@ def build_datasets(
     if isinstance(dataset_id_or_path, str):
         datasets_list = dataset_id_or_path.split(",")
     elif isinstance(dataset_id_or_path, list):
-        datasets_list = [dataset_id_or_path]
+        datasets_list = dataset_id_or_path
     else:
         raise ValueError(f"dataset_id_or_path must be a string or a list of strings, got {dataset_id_or_path}")
 
