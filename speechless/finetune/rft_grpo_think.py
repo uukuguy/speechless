@@ -719,11 +719,11 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
         if true_target[-1] == []:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text:
                 # 在不应调用api的轮次，调用api，重点惩罚
-                score = 0
-                logger.warning(f"在不应调用api的轮次，调用api，重点惩罚！{score:.2f}")
+                score = 0.0
+                logger.debug(f"在不应调用api的轮次，调用api，{score:.2f}")
             else:
                 # 在不应调用api的轮次，没有调用api，正常奖励
-                score = 5.0
+                score = 1.0
                 logger.info(f"在不应调用api的轮次，没有调用api，正常奖励. {score:.2f}")
         else:
             if "<tool_call>" in generated_text and "</tool_call>" in generated_text:
@@ -740,47 +740,55 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                 except Exception as e:
                     # api 不是正确的json格式，虽然触发时机正确，但不得分
                     bad_tool_call_text = True
-                    score = 0.0
-                    logger.error(f"<tool_call> api json 解释失败，不再计算API调用细项得分！{score:.2f}")
+                    score = -1
+                    logger.error(f"<tool_call> api json 解释失败，{score:.2f}")
 
                 # ---------- API 调用细项得分 ----------
                 # ----- <tool_call>对只能出现一次，0.5
                 if not bad_tool_call_text:
                     if len(re.findall(r"<tool_call>", generated_text)
                            ) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
-                        logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
-                        score += 0.5
+                        # logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
+                        # score += 0.5
+                        pass
                     else:
-                        score += 0.0
-                        logger.warning(f"<tool_call>对只能出现一次，不符合限制条件，重点惩罚！{score:.2f}")
+                        score = -1
+                        logger.warning(f"<tool_call>对只能出现一次，不符合限制条件。{score:.2f}")
                         bad_tool_call_text = True
 
                 # ----- api 的json格式keys('name, 'arguments)正确，0.5
                 if not bad_tool_call_text:
+                    ok = False
                     if "name" in func and "arguments" in func:
-                        score += 0.5  # api 的json格式正确，格式奖励
-                        logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
-                    else:
-                        score += 0.0
-                        logger.warning(f"api 的json格式keys('name, 'arguments)错误，重点惩罚！{score:.2f}")
+                        func_name = func["name"]
+                        func_arguments = func["arguments"]
+                        if func_name is not None and func_arguments is not None:
+                            if isinstance(func_name, str) and isinstance(func_arguments, dict):
+                                score += 0.5  # api 的json格式正确，格式奖励
+                                logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
+                                ok = True
+                    if not ok:
+                        score = -1
+                        logger.warning(f"api 的json格式keys('name, 'arguments)错误。{score:.2f}")
                         bad_tool_call_text = True
 
                 if not bad_tool_call_text:
+                    score = 0.0
                     func_name = func['name']
                     func_arguments = func['arguments']
                     true_name = true_target[-1][0]['name']
                     true_arguments = true_target[-1][0]['arguments']
                     ## ----- 函数名正确，1.0
                     if func_name == true_name:
-                        score += 1.0  # 函数名正确，
-                        logger.info(f"函数名{func_name}正确，奖励1.0")
+                        score += 0.25  # 函数名正确，
+                        logger.info(f"函数名{func_name}正确，奖励0.25")
 
                         # ----- 参数名完全一致，1.0
                         func_argument_keys = set(func_arguments.keys())
                         true_argument_keys = set(true_arguments.keys())
                         if func_argument_keys == true_argument_keys:
-                            score += 1.0  # 参数名完全一致，奖励
-                            logger.info(f"参数名完全一致，奖励1.0")
+                            score += 0.25  # 参数名完全一致，奖励
+                            logger.info(f"参数名完全一致，奖励0.25")
                         else:
                             tp = len(func_argument_keys & true_argument_keys)
                             fp = len(func_argument_keys - true_argument_keys)
@@ -794,6 +802,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                                     f1 = 0.0
                             else:
                                 f1 = 0.0
+                            f1 *= 0.25
                             score += f1  # 参数名命中f1, 奖励
                             logger.info(f"参数名命中f1, 奖励{f1:.2f}")
 
@@ -804,7 +813,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                                 num_value_exist += 1
                         value_exist_acc = 0.0
                         if len(func_arguments) > 0:
-                            value_exist_acc = num_value_exist / len(func_arguments)
+                            value_exist_acc = num_value_exist / len(func_arguments) * 0.25
                             score += value_exist_acc
                             logger.info(f"参数值在用户对话内容中命中率, 奖励{value_exist_acc:.2f}")
 
@@ -818,7 +827,7 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                                     num_not_null_values += 1
                         null_str_score = 0.0
                         if num_str_values > 0 and num_not_null_values < num_str_values:
-                            null_str_score = -(num_str_values - num_not_null_values) / num_str_values
+                            null_str_score = -(num_str_values - num_not_null_values) / num_str_values *.25
                             score += null_str_score
                             logger.warning(f"空串惩罚：{null_str_score:.2f}")
 
@@ -839,20 +848,22 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
                             else:
                                 f1 = 0.0
                             if f1 > 0:
+                                f1 *= 0.25
                                 logger.info(f"参数值完全相同f1, 奖励{f1:.2f}")
                             else:
                                 logger.info(f"没有参数值完全相同, 惩罚0.0")
                                 f1 = 0
                         else:
                             f1 = 0.0
-                        score += f1
+                        score += f1 
 
             else:
                 # 在应该调用api的轮次没有调用api，重点惩罚
-                score = 0 
-                logger.warning(f"在应该调用api的轮次没有调用api，重点惩罚！ {score:.2f}")
+                score = -1.0
+                logger.warning(f"在应该调用api的轮次没有调用api。 {score:.2f}")
 
-        score = score * 2 / 5
+        if score > 0:
+            score = score * 2 
         logger.debug(f"score: {round(score, 3)}")
         scores.append(score)
 
@@ -958,6 +969,7 @@ def train():
 
 # Show your work in <think> </think> tags. And return the final answer in <answer> </answer> tags.
 # Think step by step inside <think> tags.
+# - 仔细检查 API Schema 中函数的参数定义，当必填参数没有全部被用户明确提到时，明确告知用户缺少哪些必填参数，此轮次不要生成 api 调用。
     def r1_func(example):
         prompt = example['prompt']
         r1_prefix = """You are a helpful assistant. You first thinks about the reasoning process in the mind and then provides the user with the answer.
@@ -970,7 +982,7 @@ Think step by step inside <think> tags.
 - 参数值尽量直接从对话内容中抽取，同时要重点关注日期、数字的正确格式。
 - 不要对任何参数使用假设值、猜测值。
 - 值为空的参数不要放入 api 调用中。
-- 仔细检查 API Schema 中函数的参数定义，当必填参数没有全部被用户明确提到时，明确告知用户缺少哪些必填参数，此轮次不要生成 api 调用。
+- 仔细检查 API Schema 中函数的参数定义，当必填参数没有全部被用户明确提到时，明确告知用户缺少哪些必填参数，此轮次用所有已知参数生成 api 调用。
 - 请使用中文回复。
 
         """
@@ -996,7 +1008,9 @@ Think step by step inside <think> tags.
     # 20250302
     # model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     # 20250303
-    model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct-unsloth"
+    # model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct-unsloth"
+    # 20250309
+    model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     model, tokenizer = load_model_and_tokenizer(model_path)
 
     class CacheFlushCallback(TrainerCallback):  # Inherit from a base Callback class
@@ -1024,15 +1038,15 @@ Think step by step inside <think> tags.
     save_model_callback = SaveModelCallback()
 
     from datetime import datetime
-    run_name = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_name = "think-" + datetime.now().strftime("%Y%m%d_%H%M%S")
     from trl import GRPOConfig, GRPOTrainer
     training_args = GRPOConfig(
         use_vllm = True, # use vLLM for fast inference!
-        learning_rate = 5e-7, #5e-6,
+        learning_rate = 5e-6, #5e-7,
         adam_beta1 = 0.9,
         adam_beta2 = 0.99,
         weight_decay = 0.1,
-        warmup_ratio = 0.1,
+        warmup_ratio = 0.03,
         lr_scheduler_type = "cosine",
         optim = "adamw_8bit",
         logging_steps = 1,
