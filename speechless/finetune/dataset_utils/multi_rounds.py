@@ -119,7 +119,7 @@ import transformers
 from dataclasses import dataclass
 
 
-def format_chat(messages):
+def format_chat(messages, add_generation_prompt=False):
     formatted = []
     for msg in messages:
         role = msg["role"]
@@ -171,6 +171,8 @@ def format_chat(messages):
             formatted.append(f"<|im_start|>user\n<tool_response>\n{content}\n</tool_response><|im_end|>")
 
     result = "\n".join(formatted)
+    if add_generation_prompt:
+        result += "<|im_start|>assistant\n"
     # print(f"{result}")
     return result
 
