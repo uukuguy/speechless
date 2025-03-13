@@ -179,7 +179,8 @@ def clean_memory():
 class CleanMemoryCallback(TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):
         clean_memory()
-        print("Clean GPU memory at step:", state.global_step) # Optional: for monitoring
+        if state.is_local_process_zero:
+            print("Clean GPU memory at step:", state.global_step) # Optional: for monitoring
 
     def on_evaluate(self, args, state, control, **kwargs):
         clean_memory()
