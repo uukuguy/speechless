@@ -6,6 +6,7 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 source ${SCRIPT_PATH}/task.env
 
 PYTHONPATH=${SPEECHLESS_ROOT} \
+WANDB_PROJECT=${TASK_NAME} \
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --master_port 29501 \
     -m speechless.finetune.finetune \
@@ -29,7 +30,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --dataloader_num_workers 3 \
     --logging_strategy steps \
     --logging_steps ${LOGGING_STEPS} \
-    --report_to tensorboard \
+    --report_to all \
     --remove_unused_columns False \
     --do_train \
     --do_eval \
