@@ -184,7 +184,8 @@ class CleanMemoryCallback(TrainerCallback):
 
     def on_evaluate(self, args, state, control, **kwargs):
         clean_memory()
-        print("Clean GPU memory in evaluating stage") # Optional: for monitoring
+        if state.is_local_process_zero:
+            print("Clean GPU memory in evaluating stage") # Optional: for monitoring
 
 # from transformers.trainer import ExportableState
 class EarlyStoppingCallback(TrainerCallback):#, ExportableState):
