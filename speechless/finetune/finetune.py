@@ -165,6 +165,16 @@ class DataArguments:
 @dataclass
 class TrainingArguments(transformers.Seq2SeqTrainingArguments):
 
+    custom_training_module_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "Custom training file to use."}
+    )
+
+    custom_trainer_name: str = field(
+        default=None,
+        metadata={"help": "The name of the task trainer to use."}
+    )
+
     task_name: str = field(
         default=None,
         metadata={"help": "The name of the task to train on."},
@@ -642,6 +652,26 @@ def get_lr_scheduler(lr_scheduler_type, optimizer, num_warmpup_steps, num_traini
     optim_args = optim_args or {}
     return schedule_func(optimizer, num_warmup_steps=num_warmpup_steps, num_training_steps=num_training_steps, **optim_args)
 
+
+def load_attribute_from_custom_module(file_path, attr_name):
+    import importlib.util 
+    spec = importlib.util.spec_from_file_location("custom_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as e:
+        raise RuntimeError(f"Error loading module from '{file_path}': {e}")
+    
+    if not hasattr(module, attr_name):
+        raise AttributeError(f"Module attribute '{attr_name}' not found in '{file_path}'.")
+
+    print(f"Using customized attribute '{attr_name}' from '{file_path}'")
+
+    attr = getattr(module, attr_name)
+
+    return attr
+
+
 def train():
     hfparser = transformers.HfArgumentParser((
         ModelArguments, DataArguments, TrainingArguments, GenerationArguments
@@ -705,7 +735,14 @@ def train():
     tokenizer = load_tokenizer(args.model_name_or_path)
 
     data_module = make_data_module(tokenizer=tokenizer, args=args)
-    trainer = Seq2SeqTrainer(
+
+    
+    if args.custom_training_module_file and args.custom_trainer_name:
+        CustomerTrainer = load_attribute_from_custom_module(args.custom_training_module_file, args.custom_trainer_name)    
+    else:
+        CustomerTrainer = Seq2SeqTrainer
+
+    trainer = CustomerTrainer(
     # trainer = PeftTrainer(
         model=model,
         tokenizer=tokenizer,
