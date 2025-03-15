@@ -42,9 +42,9 @@ class TaskTrainer(Seq2SeqTrainer):
         super().__init__(*args, **kwargs)
         self.task_loss = TaskLoss(self.tokenizer)
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.get("labels")
-        original_loss, outputs = super().compute_loss(model, inputs, return_outputs=True)
+        original_loss, outputs = super().compute_loss(model, inputs, return_outputs=True, num_items_in_batch=num_items_in_batch)
         
         # 计算自定义损失
         _task_loss = self.task_loss(outputs, labels)
