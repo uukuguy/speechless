@@ -13,27 +13,29 @@ class TaskLoss(torch.nn.Module):
 
     def forward(self, model_output, labels):
         # 解码生成的文本
-        generated_text = self.tokenizer.decode(
-            torch.argmax(model_output.logits, dim=-1)[0], 
+        generated_texts = self.tokenizer.batch_decode(
+            torch.argmax(model_output.logits, dim=-1), 
             skip_special_tokens=True
         )
+        # print(f"{generated_texts=}")
         
-        # 解码目标文本
-        target_text = self.tokenizer.decode(labels[0], skip_special_tokens=True)
+        # # 解码目标文本
+        # target_text = self.tokenizer.decode(labels[0], skip_special_tokens=True)
 
-        task_loss = 0.0
-        if "<tool_call>" in target_text:
-            toolcall_text = target_text.split("<tool_call>")[1].split("</tool_call>")[0]
-            try:
-                toolcall_text = toml.loads(toolcall_text)
-            except Exception as e:
-                task_loss = 1.0
-                
         # 自定义损失计算（例如：文本相似度）
         # 这里只是一个示例，你可以替换为实际的损失计算逻辑
         loss = torch.tensor(0.0, requires_grad=True)  # 占位符
-        if task_loss > 0:
-            loss += task_loss
+        for generated_text in generated_texts:
+            task_loss = 0.0
+            if "<tool_call>" in generated_text:
+                toolcall_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
+                try:
+                    toolcall_text = toml.loads(toolcall_text)
+                except Exception as e:
+                    task_loss = 1.0
+                    
+            if task_loss > 0:
+                loss = loss + task_loss
         
         return loss
 
