@@ -44,9 +44,9 @@ export REWARD_SCORE_FILE=./reward_score.py
 export REWARD_FUNCTION_NAME=compute_score
 
 # ----- Project specific configurations -----
-export WANDB_PROJECT=verl_grpo_example_gsm8k
+export WANDB_PROJECT=$(basename $(pwd))
 export RUN_NAME=$(date +%Y%m%d-%H%M%S)
-export LOG_FILE=logs/verl_grpo_finetune-${RUN_NAME}.log
+export LOG_FILE=logs/verl_grpo-${RUN_NAME}.log
 
 export VLLM_ATTENTION_BACKEND=XFORMERS
 
