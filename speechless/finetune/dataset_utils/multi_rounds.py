@@ -155,7 +155,7 @@ def format_chat(messages, output_format, add_generation_prompt=False):
                     system_parts.append("[[functions]]")
                     system_parts.append("name = <function-name>")
                     system_parts.append("")
-                    system_parts.append("[[functions.arguments]]")
+                    system_parts.append("[functions.arguments]")
                     system_parts.append("\"<arg-name>\" = <arg-value>")
                     system_parts.append("</tool_call>")
                     system_parts.append("")
