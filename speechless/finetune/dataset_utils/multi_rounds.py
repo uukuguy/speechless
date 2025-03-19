@@ -119,7 +119,10 @@ import transformers
 from dataclasses import dataclass
 
 
-def format_chat(messages, add_generation_prompt=False):
+def format_chat(messages, output_format, add_generation_prompt=False):
+    """
+    output_format: "json" or "toml"
+    """
     formatted = []
     for msg in messages:
         role = msg["role"]
@@ -138,14 +141,29 @@ def format_chat(messages, add_generation_prompt=False):
 
                 system_parts.append("</tools>")
 
-                system_parts.append("")
-                system_parts.append("For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:")
-                system_parts.append("<tool_call>")
-                system_parts.append("{\"name\": <function-name>, \"arguments\": <args-json-object>}")
-                system_parts.append("</tool_call>")
-                system_parts.append("")
+                if output_format == "json":
+                    system_parts.append("")
+                    system_parts.append("For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:")
+                    system_parts.append("<tool_call>")
+                    system_parts.append("{\"name\": <function-name>, \"arguments\": <args-json-object>}")
+                    system_parts.append("</tool_call>")
+                    system_parts.append("")
+                elif output_format == "toml":
+                    system_parts.append("")
+                    system_parts.append("For each function call, return a toml object with function name and arguments within <tool_call></tool_call> XML tags:")
+                    system_parts.append("<tool_call>")
+                    system_parts.append("[[functions]]")
+                    system_parts.append("name = <function-name>")
+                    system_parts.append("")
+                    system_parts.append("[[functions.arguments]]")
+                    system_parts.append("\"<arg-name>\" = <arg-value>")
+                    system_parts.append("</tool_call>")
+                    system_parts.append("")
+                    pass
+                else:
+                    raise ValueError(f"Unknown output format in format_chat(): {output_format}")
 
-            formatted.append(f"<|im_start|>system\n{'\n'.join(system_parts)}<|im_end|>")
+            formatted.append(f"<|im_start|>system\n{'\n'.join(system_parts)}<|im_end|>\n")
 
         elif role == "user":
             formatted.append(f"<|im_start|>user\n{content}<|im_end|>")
