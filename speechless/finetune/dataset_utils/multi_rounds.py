@@ -119,7 +119,7 @@ import transformers
 from dataclasses import dataclass
 
 
-def format_chat(messages, output_format, add_generation_prompt=False):
+def format_chat(messages, output_format, add_generation_prompt=False, include_toolcall_example=True):
     """
     output_format: "json" or "toml"
     """
@@ -141,42 +141,43 @@ def format_chat(messages, output_format, add_generation_prompt=False):
 
                 system_parts.append("</tools>")
 
-                if output_format == "json":
-                    system_parts.append("")
-                    system_parts.append("For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:")
-                    system_parts.append("<tool_call>")
-                    system_parts.append("{\"name\": <function-name>, \"arguments\": <args-json-object>}")
-                    system_parts.append("</tool_call>")
-                    system_parts.append("")
-                elif output_format == "toml":
-                    system_parts.append("")
-                    system_parts.append("For each function call, return a toml object with function name and arguments within <tool_call></tool_call> XML tags:")
-                    system_parts.append("<tool_call>")
-                    system_parts.append("[[functions]]")
+                if include_toolcall_example:
+                    if output_format == "json":
+                        system_parts.append("")
+                        system_parts.append("For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:")
+                        system_parts.append("<tool_call>")
+                        system_parts.append("{\"name\": <function-name>, \"arguments\": <args-json-object>}")
+                        system_parts.append("</tool_call>")
+                        system_parts.append("")
+                    elif output_format == "toml":
+                        system_parts.append("")
+                        system_parts.append("For each function call, return a toml object with function name and arguments within <tool_call></tool_call> XML tags:")
+                        system_parts.append("<tool_call>")
+                        system_parts.append("[[functions]]")
 
-                    system_parts.append("name = <function-name>")
-                    system_parts.append("")
-                    system_parts.append("[functions.arguments]")
-                    system_parts.append("\"<arg-name>\" = <arg-value>")
+                        system_parts.append("name = <function-name>")
+                        system_parts.append("")
+                        system_parts.append("[functions.arguments]")
+                        system_parts.append("\"<arg-name>\" = <arg-value>")
 
-                    # system_parts.append("name = \"send_mail\"")
-                    # # system_parts.append("name = <function-name>")
-                    # system_parts.append("")
-                    # system_parts.append("[functions.arguments]")
-                    # # system_parts.append("\"<arg-name>\" = <arg-value>")
-                    # system_parts.append("address = \"example@gmail.com\"")
-                    # system_parts.append("subject = \"Meeting\"")
-                    # # List example
-                    # system_parts.append("peoples = [\"Tom\", \"Jerry\"]")
-                    # # Dict example
-                    # system_parts.append("objects = {\"machine\" = 1000, \"labor\" = 500}")
-                    # # Date example
-                    # system_parts.append("start_date = \"2024-10-01\"")
-                    # # Time example
-                    # system_parts.append("end_time = \"2025-11-01 08:00:00\"")
+                        # system_parts.append("name = \"send_mail\"")
+                        # # system_parts.append("name = <function-name>")
+                        # system_parts.append("")
+                        # system_parts.append("[functions.arguments]")
+                        # # system_parts.append("\"<arg-name>\" = <arg-value>")
+                        # system_parts.append("address = \"example@gmail.com\"")
+                        # system_parts.append("subject = \"Meeting\"")
+                        # # List example
+                        # system_parts.append("peoples = [\"Tom\", \"Jerry\"]")
+                        # # Dict example
+                        # system_parts.append("objects = {\"machine\" = 1000, \"labor\" = 500}")
+                        # # Date example
+                        # system_parts.append("start_date = \"2024-10-01\"")
+                        # # Time example
+                        # system_parts.append("end_time = \"2025-11-01 08:00:00\"")
 
-                    system_parts.append("</tool_call>")
-                    system_parts.append("")
+                        system_parts.append("</tool_call>")
+                        system_parts.append("")
                     pass
                 else:
                     raise ValueError(f"Unknown output format in format_chat(): {output_format}")
