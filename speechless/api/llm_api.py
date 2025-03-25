@@ -107,6 +107,9 @@ class OpenAI_API(LLM_API):
         model_name = model_name if model_name is not None else os.getenv("OPENAI_MODEL_NAME")
         base_url = base_url if base_url is not None else os.getenv("OPENAI_API_KEY")
         api_key = api_key if api_key is not None else os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.warning("OpenAI API key is not set. Use `sk-unknown` as default.")
+            api_key = "sk-unknown"
 
         from openai import OpenAI
         self.client =OpenAI(api_key=api_key, base_url=base_url)
