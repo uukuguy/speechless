@@ -46,7 +46,7 @@ def main():
                 generated_text = response.generated_text
                 llm_response = response.llm_response
                 data["generated_text"] = generated_text
-                data["llm_response"] = llm_response
+                data["llm_response"] = json.loads(llm_response.model_dump_json())
             else:
                 data["generated_text"] = ""
                 data["llm_response"] = {}
