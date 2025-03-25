@@ -110,8 +110,8 @@ def main():
             for line in tqdm(lines):
                 data = json.loads(line)
                 data = run_single({"line": line, "llm_api": llm_api})
-                f.write(json.dumps(data, ensure_ascii=False) + "\n")
-                f.flush()
+                fd.write(json.dumps(data, ensure_ascii=False) + "\n")
+                fd.flush()
 
 
 if __name__ == "__main__":
