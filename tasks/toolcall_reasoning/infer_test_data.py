@@ -25,9 +25,10 @@ def get_args():
 
 def run_single(params):
     line = params["line"]
+    llm_api = params["llm_api"]
+
     data = json.loads(line)
     instruction = data["instruction"]
-    llm_api = data["llm_api"]
     apis = data["apis"]
 
     gen_kwargs = {
