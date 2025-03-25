@@ -23,9 +23,11 @@ def get_args():
     args = parser.parse_args()
     return args
 
+args = get_args()
+llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
+
 def run_single(params):
     line = params["line"]
-    llm_api = params["llm_api"]
 
     data = json.loads(line)
     instruction = data["instruction"]
@@ -51,10 +53,7 @@ def run_single(params):
     return data
 
 def main():
-    args = get_args()
     test_file = args.test_file
-
-    llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 
     with open(test_file, "r") as f:
         lines = f.readlines()
@@ -90,7 +89,7 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(lines), request_batch_size):
                 batch_lines = lines[i:i+request_batch_size]
-                params_list = [{"line": line, "llm_api": llm_api} for line in batch_lines]
+                params_list = [{"line": line} for line in batch_lines]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,
                     params_list,
@@ -109,7 +108,7 @@ def main():
         else:
             for line in tqdm(lines):
                 data = json.loads(line)
-                data = run_single({"line": line, "llm_api": llm_api})
+                data = run_single({"line": line})
                 fd.write(json.dumps(data, ensure_ascii=False) + "\n")
                 fd.flush()
 
