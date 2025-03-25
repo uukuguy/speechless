@@ -16,9 +16,9 @@ def get_args():
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--model_name", type=str, default=None)
 
-    parser.add_argument("--parallel_processes", type=int, default=0, help="Number of parallel processes")
+    parser.add_argument("--parallel_processes", type=int, default=4, help="Number of parallel processes")
     parser.add_argument("--parallel_chunk_size", type=int, default=16, help="Chunk size for parallel processes")
-    parser.add_argument("--request_batch_size", type=int, default=128, help="Number of requests in each batch")
+    parser.add_argument("--request_batch_size", type=int, default=64, help="Number of requests in each batch")
 
     args = parser.parse_args()
     return args
