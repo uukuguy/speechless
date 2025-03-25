@@ -20,8 +20,11 @@ from loguru import logger
 from abc import ABC, abstractmethod
 import openai
 
-from pydantic import BaseModel
-class LLMResponse(BaseModel):
+# from pydantic import BaseModel
+# class LLMResponse(BaseModel):
+from dataclasses import dataclass
+@dataclass
+class LLMResponse:
     generated_text: str
     llm_response: openai.types.Completion
 
