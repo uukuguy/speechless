@@ -5,14 +5,13 @@ from tqdm import tqdm
 from loguru import logger
 import rich
 
-test_file = "./toolcall_data/6_3_1/toolcall-instructions-intent-test-1000-1000-6_3_1.jsonl"
-
 from speechless.api.llm_api import OpenAI_API
 
 def get_args():
     import argparse
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--test_file", type=str, required=True)
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--model_name", type=str, default=None)
 
@@ -21,6 +20,7 @@ def get_args():
 
 def main():
     args = get_args()
+    test_file = args.test_file
 
     llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 
