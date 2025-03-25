@@ -18,11 +18,12 @@ generated_text, llm_response = llm_api(prompt_or_messages=instruction, gen_kwarg
 import os
 from loguru import logger
 from abc import ABC, abstractmethod
+import openai
 
 from pydantic import BaseModel
 class LLMResponse(BaseModel):
     generated_text: str
-    llm_response: dict
+    llm_response: openai.types.Completion
 
 class LLM_API(ABC):
     def __init__(self, model=None):
