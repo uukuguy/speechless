@@ -91,7 +91,7 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
-                params_list = [{"data": data} for line in batch_datas]
+                params_list = [{"data": data} for data in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,
                     params_list,
