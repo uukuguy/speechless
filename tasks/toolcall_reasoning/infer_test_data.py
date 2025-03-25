@@ -47,11 +47,13 @@ def run_single(params):
         "generated_text": "",
         "llm_response": {},
     }
-    if response is not None:
-        generated_text = response.generated_text
-        llm_response = response.llm_response
-        result["generated_text"] = generated_text
-        result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
+
+    assert response is not None, f"Failed to get response for {id=}, return response is None"
+
+    generated_text = response.generated_text
+    llm_response = response.llm_response
+    result["generated_text"] = generated_text
+    result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
 
     if args.verbose:
         # logger.info(f"Instruction: {instruction}")
