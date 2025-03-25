@@ -16,6 +16,13 @@ def get_args():
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--model_name", type=str, default=None)
     parser.add_argument("--verbose", action="store_true", default=False)
+    parser.add_argument("--temperature", type=float, default=0.95, help="Temperature")
+    parser.add_argument("--max_tokens", type=int, default=1024, help="Max tokens")
+    parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
+    parser.add_argument("--repeat_penalty", type=float, default=1.5, help="Repeat penalty")
+    parser.add_argument("--frequency_penalty", type=float, default=1.5, help="Frequency penalty")
+    parser.add_argument("--stream", action="store_true", default=False, help="Stream")
+    parser.add_argument("--tool_choice", type=str, default="auto", help="Tool choice")  
 
     parser.add_argument("--parallel_processes", type=int, default=4, help="Number of parallel processes")
     parser.add_argument("--parallel_chunk_size", type=int, default=16, help="Chunk size for parallel processes")
@@ -29,18 +36,12 @@ llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 
 def run_single(params):
     data = params["data"]
+    gen_kwargs = params["gen_kwargs"]
 
     id = data["id"]
     instruction = data["instruction"]
     apis = data["apis"]
 
-    gen_kwargs = {
-        "temperature": 0.95,
-        "max_tokens": 8192,
-        "frequency_penalty": 1.5,
-        "stream": False,
-        # "tool_choice": "auto",
-    }
     response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=apis, verbose=False)
     result = {
         "generated_text": "",
@@ -62,6 +63,15 @@ def run_single(params):
 
 def main():
     test_file = args.test_file
+
+    gen_kwargs = {
+        "temperature": args.temperature,
+        "max_tokens": args.max_tokens,
+        "frequency_penalty": args.frequency_penalty,
+        "repeat_penalty": args.repeat_penalty,
+        "stream": args.stream,
+        # "tool_choice": "auto",
+    }
 
     with open(test_file, "r") as f:
         lines = f.readlines()
@@ -99,7 +109,7 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
-                params_list = [{"data": data} for data in batch_datas]
+                params_list = [{"data": data, "gen_kwargs": gen_kwargs} for data in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,
                     params_list,
@@ -123,7 +133,7 @@ def main():
                     fd.flush()
         else:
             for data in tqdm(test_datas):
-                result = run_single({"data": data})
+                result = run_single({"data": data, "gen_kwargs": gen_kwargs})
                 data["generated_text"] = result["generated_text"]
                 data["llm_response"] = result["llm_response"]
                 fd.write(json.dumps(data, ensure_ascii=False) + "\n")
