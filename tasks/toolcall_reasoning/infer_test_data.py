@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument("--test_file", type=str, required=True)
     parser.add_argument("--base_url", type=str, default=None)
     parser.add_argument("--model_name", type=str, default=None)
+    parser.add_argument("--verbose", action="store_true", default=False)
 
     parser.add_argument("--parallel_processes", type=int, default=4, help="Number of parallel processes")
     parser.add_argument("--parallel_chunk_size", type=int, default=16, help="Chunk size for parallel processes")
@@ -29,6 +30,7 @@ llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 def run_single(params):
     data = params["data"]
 
+    id = data["id"]
     instruction = data["instruction"]
     apis = data["apis"]
 
@@ -49,6 +51,12 @@ def run_single(params):
         llm_response = response.llm_response
         result["generated_text"] = generated_text
         result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
+
+    if args.verbose:
+        # logger.info(f"Instruction: {instruction}")
+        # logger.info(f"APIs: {apis}")
+        logger.info(f"[{id=}] Generated text: {generated_text}")
+        # logger.info(f"LLM response: {llm_response}")
 
     return result
 
