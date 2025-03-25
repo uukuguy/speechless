@@ -42,11 +42,15 @@ def main():
                 "tool_choice": "auto",
             }
             response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=apis, verbose=False)
-            generated_text = response.generated_text
-            llm_response = response.llm_response
+            if response is not None:
+                generated_text = response.generated_text
+                llm_response = response.llm_response
+                data["generated_text"] = generated_text
+                data["llm_response"] = llm_response
+            else:
+                data["generated_text"] = ""
+                data["llm_response"] = {}
 
-            data["generated_text"] = generated_text
-            data["llm_response"] = llm_response
             f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
 
