@@ -131,7 +131,7 @@ class OpenAI_API(LLM_API):
         }
 
     def __call__(self, prompt_or_messages, gen_kwargs=None, tools=None, verbose=False):
-
+        self.num_try = 0
         generated_text = ""
         llm_response = {}
         while self.num_try < self.max_try + 1:
