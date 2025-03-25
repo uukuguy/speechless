@@ -19,6 +19,11 @@ import os
 from loguru import logger
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel
+class LLMResponse(BaseModel):
+    generated_text: str
+    llm_response: dict
+
 class LLM_API(ABC):
     def __init__(self, model=None):
         pass
@@ -135,7 +140,7 @@ class OpenAI_API(LLM_API):
                 is_messages = isinstance(prompt_or_messages, list)
                 final_messages = prompt_or_messages if is_messages else []
                 if is_prompt:
-                    response = self.client.completions.create(
+                    llm_response = self.client.completions.create(
                         model=self.model_name,
                         prompt=prompt,
                         **gen_kwargs,
@@ -145,7 +150,7 @@ class OpenAI_API(LLM_API):
                         # stream=stream,
                     )
                 elif is_messages:
-                    response = self.client.chat.completions.create(
+                    llm_response = self.client.chat.completions.create(
                         model=self.model_name,
                         tools=tools,
                         messages=final_messages,
@@ -166,13 +171,13 @@ class OpenAI_API(LLM_API):
             generated_text = ""
             if stream:
                 # async for chunk in response:
-                for chunk in response:
+                for chunk in llm_response:
                     chunk_content = chunk.choices[0].delta.content
                     if chunk_content is not None:
                         print(chunk_content, end="")
                         generated_text += chunk_content
             else:
-                generated_text = response.choices[0].message.content if is_messages else response.choices[0].text
+                generated_text = llm_response.choices[0].message.content if is_messages else llm_response.choices[0].text
 
             if verbose:
                 logger.debug(f"{generated_text=}")
@@ -182,7 +187,7 @@ class OpenAI_API(LLM_API):
                 break
 
             # logger.warning(f"The generated text is not valid tool_call structure. Retry {self.num_try}/{self.max_try} ...")
-        return generated_text, response
+        return LLMResponse(generated_text=generated_text, llm_response=llm_response)
 
 
 def get_llm_api(LLM_API="ZhipuAI", model=None):
