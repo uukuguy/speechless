@@ -39,7 +39,7 @@ def main():
                 "max_tokens": 8192,
                 "frequency_penalty": 1.5,
                 "stream": False,
-                "tool_choice": "auto",
+                # "tool_choice": "auto",
             }
             response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=apis, verbose=False)
             if response is not None:

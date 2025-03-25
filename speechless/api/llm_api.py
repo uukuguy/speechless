@@ -123,7 +123,7 @@ class OpenAI_API(LLM_API):
             "max_tokens": 8192,
             "frequency_penalty": 1.5,
             "stream": False,
-            "tool_choice": "auto",
+            # "tool_choice": "auto",
         }
 
     def __call__(self, prompt_or_messages, gen_kwargs=None, tools=None, verbose=False):
