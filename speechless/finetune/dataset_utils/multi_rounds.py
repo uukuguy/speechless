@@ -178,9 +178,8 @@ def format_chat(messages, output_format, add_generation_prompt=False, include_to
 
                         system_parts.append("</tool_call>")
                         system_parts.append("")
-                    pass
-                else:
-                    raise ValueError(f"Unknown output format in format_chat(): {output_format}")
+                    else:
+                        raise ValueError(f"Unknown output format in format_chat(): {output_format}")
 
             formatted.append(f"<|im_start|>system\n{'\n'.join(system_parts)}<|im_end|>\n")
 
