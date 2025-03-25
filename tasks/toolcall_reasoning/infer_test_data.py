@@ -19,7 +19,6 @@ def get_args():
     parser.add_argument("--temperature", type=float, default=0.95, help="Temperature")
     parser.add_argument("--max_tokens", type=int, default=1024, help="Max tokens")
     parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
-    parser.add_argument("--repeat_penalty", type=float, default=1.5, help="Repeat penalty")
     parser.add_argument("--frequency_penalty", type=float, default=1.5, help="Frequency penalty")
     parser.add_argument("--stream", action="store_true", default=False, help="Stream")
     parser.add_argument("--tool_choice", type=str, default="auto", help="Tool choice")  
@@ -43,23 +42,24 @@ def run_single(params):
     apis = data["apis"]
 
     response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=apis, verbose=False)
-    result = {
-        "generated_text": "",
-        "llm_response": {},
-    }
 
-    assert response is not None, f"Failed to get response for {id=}, return response is None"
+    result = {}
+    if response is not None:
+        generated_text = response.generated_text
+        llm_response = response.llm_response
+        result["generated_text"] = generated_text
+        result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
 
-    generated_text = response.generated_text
-    llm_response = response.llm_response
-    result["generated_text"] = generated_text
-    result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
-
-    if args.verbose:
-        # logger.info(f"Instruction: {instruction}")
-        # logger.info(f"APIs: {apis}")
-        logger.info(f"[{id=}] Generated text: {generated_text}")
-        # logger.info(f"LLM response: {llm_response}")
+        if args.verbose:
+            # logger.info(f"Instruction: {instruction}")
+            # logger.info(f"APIs: {apis}")
+            logger.info(f"[{id=}] Generated text: {generated_text}")
+            # logger.info(f"LLM response: {llm_response}")
+    else:
+        result = {
+            "generated_text": "",
+            "llm_response": {},
+        }
 
     return result
 
@@ -70,7 +70,6 @@ def main():
         "temperature": args.temperature,
         "max_tokens": args.max_tokens,
         "frequency_penalty": args.frequency_penalty,
-        "repeat_penalty": args.repeat_penalty,
         "stream": args.stream,
         # "tool_choice": "auto",
     }
