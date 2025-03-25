@@ -27,9 +27,8 @@ args = get_args()
 llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 
 def run_single(params):
-    line = params["line"]
+    data = params["data"]
 
-    data = json.loads(line)
     instruction = data["instruction"]
     apis = data["apis"]
 
@@ -41,22 +40,25 @@ def run_single(params):
         # "tool_choice": "auto",
     }
     response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=apis, verbose=False)
+    result = {
+        "generated_text": "",
+        "llm_response": {},
+    }
     if response is not None:
         generated_text = response.generated_text
         llm_response = response.llm_response
-        data["generated_text"] = generated_text
-        data["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
-    else:
-        data["generated_text"] = ""
-        data["llm_response"] = {}
+        result["generated_text"] = generated_text
+        result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
 
-    return data
+    return result
 
 def main():
     test_file = args.test_file
 
     with open(test_file, "r") as f:
         lines = f.readlines()
+
+    test_datas = [json.loads(line) for line in lines]
 
     inferred_file = test_file.replace(".jsonl", "-inferred.jsonl")
     with open(inferred_file, "w", encoding="utf-8") as fd:
@@ -87,9 +89,9 @@ def main():
         if args.parallel_processes > 1:
             request_batch_size = args.request_batch_size
             num_test_data = len(lines)
-            for i in trange(0, len(lines), request_batch_size):
-                batch_lines = lines[i:i+request_batch_size]
-                params_list = [{"line": line} for line in batch_lines]
+            for i in trange(0, len(test_datas), request_batch_size):
+                batch_datas = test_datas[i:i+request_batch_size]
+                params_list = [{"data": data} for line in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,
                     params_list,
@@ -99,16 +101,23 @@ def main():
                     use_progress_bar=True,
                     progress_bar_desc=f"Batch {i//request_batch_size}/{num_test_data//request_batch_size}",
                 )
-                for result in parallel_results:
-                    rsp_messages, raw_messages = [], []
+                for j, result in enumerate(parallel_results):
+                    data = batch_datas[j]
                     if result.is_success():
-                        datas = result.result
-                    fd.write(json.dumps(data, ensure_ascii=False) + "\n")
+                        result = result.result
+                        data["generated_text"] = result["generated_text"]
+                        data["llm_response"] = result["llm_response"]
+                    else:
+                        data["generated_text"] = ""
+                        data["llm_response"] = {}
+                    json_str = json.dumps(data, ensure_ascii=False) + "\n" 
+                    fd.write(json_str)
                     fd.flush()
         else:
-            for line in tqdm(lines):
-                data = json.loads(line)
-                data = run_single({"line": line})
+            for data in tqdm(test_datas):
+                result = run_single({"data": data})
+                data["generated_text"] = result["generated_text"]
+                data["llm_response"] = result["llm_response"]
                 fd.write(json.dumps(data, ensure_ascii=False) + "\n")
                 fd.flush()
 
