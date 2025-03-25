@@ -1,4 +1,20 @@
 #!/usr/bin/env python
+"""
+from speechless.generate.llm_api import OpenAI_API
+llm_api = OpenAI_API(model_name=OPENAI_MODEL_NAME)
+
+gen_kwargs = {
+    "temperature": 0.95,
+    "max_tokens": 8192,
+    "frequency_penalty": 1.5,
+    "stream": False,
+    "tool_choice": "auto",
+}
+
+generated_text, llm_response = llm_api(prompt_or_messages=instruction, gen_kwargs=gen_kwargs, tools=tools, verbose=verbose)
+
+
+"""
 import os
 from loguru import logger
 from abc import ABC, abstractmethod
@@ -69,7 +85,7 @@ class DashScope_API(LLM_API):
             # model = "qwen-turbo"
         self.model = model
         
-class OpenAI_API(LLM_API):
+class OpenAI_API_Old(LLM_API):
     def __init__(self, model=None):
         from openai import OpenAI
         self.client =OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
@@ -79,6 +95,95 @@ class OpenAI_API(LLM_API):
             # model= "claude-3-opus-20240229"
             # model= "gpt-4-turbo"
         self.model = model
+
+
+class OpenAI_API(LLM_API):
+    def __init__(self, model_name=None, base_url=None, api_key=None, gen_kwargs=None):
+        model_name = model_name if model_name is not None else os.getenv("OPENAI_MODEL_NAME")
+        base_url = base_url if base_url is not None else os.getenv("OPENAI_API_KEY")
+        api_key = api_key if api_key is not None else os.getenv("OPENAI_API_KEY")
+
+        from openai import OpenAI
+        self.client =OpenAI(api_key=api_key, base_url=base_url)
+        self.model_name = model_name
+        
+        self.max_try = 0 
+        self.num_try = 0
+
+        self.default_gen_kwargs = gen_kwargs or {
+            "temperature": 0.95,
+            "max_tokens": 8192,
+            "frequency_penalty": 1.5,
+            "stream": False,
+            "tool_choice": "auto",
+        }
+
+    def __call__(self, prompt_or_messages, gen_kwargs=None, tools=None, verbose=False):
+        while self.num_try < self.max_try + 1:
+            self.num_try += 1
+
+            if gen_kwargs is None:
+                gen_kwargs = self.default_gen_kwargs
+            else:
+                gen_kwargs = {**self.default_gen_kwargs, **gen_kwargs}
+
+            stream = gen_kwargs.get("stream", False)
+
+            try:
+                is_prompt = isinstance(prompt_or_messages, str)
+                prompt = prompt_or_messages if is_prompt else ""
+                is_messages = isinstance(prompt_or_messages, list)
+                final_messages = prompt_or_messages if is_messages else []
+                if is_prompt:
+                    response = self.client.completions.create(
+                        model=self.model_name,
+                        prompt=prompt,
+                        **gen_kwargs,
+                        # temperature=temperature,
+                        # max_tokens=8192,
+                        # frequency_penalty=1.5,
+                        # stream=stream,
+                    )
+                elif is_messages:
+                    response = self.client.chat.completions.create(
+                        model=self.model_name,
+                        tools=tools,
+                        messages=final_messages,
+                        # temperature=temperature,
+                        # max_tokens=8192,
+                        # frequency_penalty=1.5,
+                        # stream=stream,
+                        # tool_choice="auto",
+                    )
+
+            except Exception as e:
+                if self.num_try - 1 >= self.max_try:
+                    return None, None
+                else:
+                    logger.error(f"Error: {e}. Retry {self.num_try}/{self.max_try} ...")
+                    continue
+
+            generated_text = ""
+            if stream:
+                # async for chunk in response:
+                for chunk in response:
+                    chunk_content = chunk.choices[0].delta.content
+                    if chunk_content is not None:
+                        print(chunk_content, end="")
+                        generated_text += chunk_content
+            else:
+                generated_text = response.choices[0].message.content if is_messages else response.choices[0].text
+
+            if verbose:
+                logger.debug(f"{generated_text=}")
+
+
+            if self.num_try - 1 >= self.max_try:
+                break
+
+            # logger.warning(f"The generated text is not valid tool_call structure. Retry {self.num_try}/{self.max_try} ...")
+        return generated_text, response
+
 
 def get_llm_api(LLM_API="ZhipuAI", model=None):
     if LLM_API == "ZhipuAI":
@@ -124,9 +229,8 @@ def get_args():
     return parser.parse_args()
 
 def main(args):
-
-
-    do_query(args, client, model)
+    # do_query(args, client, model)
+    pass
 
 if __name__ == "__main__":
     args = get_args()
