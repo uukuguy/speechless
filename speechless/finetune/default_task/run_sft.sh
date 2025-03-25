@@ -5,10 +5,14 @@ PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_PATH}/task.env
 
-PYTHONPATH=${SPEECHLESS_ROOT} \
+min=20000
+max=30000
+MASTER_PORT=$((RANDOM % (max - min + 1) + min))
+
+PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
 WANDB_PROJECT=${TASK_NAME} \
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
-    --master_port 29501 \
+    --master_port ${MASTER_PORT} \
     -m speechless.finetune.finetune \
     ${DEEPSPEED_STAGE2} \
     --task_name ${TASK_NAME} \
@@ -64,7 +68,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --force_remove_overlength_samples False \
     --flash_attention True \
     --rerope False \
-    ${ADD_REASONING_TOKEN} \
+    ${ADD_REASONING_TOKENS} \
     ${NEFTUNE} \
     ${DEEPSEED} \
     ${MISC_PARAMS}
