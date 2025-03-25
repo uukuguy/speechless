@@ -98,7 +98,7 @@ def main():
                     chunk_size=args.parallel_chunk_size,
                     unordered=False,
                     use_progress_bar=True,
-                    progress_bar_desc=f"Batch {i//request_batch_size}/{len(num_test_data)//request_batch_size}",
+                    progress_bar_desc=f"Batch {i//request_batch_size}/{num_test_data//request_batch_size}",
                 )
                 for result in parallel_results:
                     rsp_messages, raw_messages = [], []
