@@ -5,7 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 # from utils.model_utils import merge_peft_adapters
-def merge_peft_adapters(base_model_name_or_path, peft_model_path, merged_model_name_or_path=None, push_to_hub=False):
+def merge_peft_adapters(base_model_name_or_path, lora_model_path, merged_model_name_or_path=None, push_to_hub=False, add_reasoning_tokens=False):
     if merged_model_name_or_path is None:
         merged_model_name_or_path = f"{base_model_name_or_path}-merged"
 
@@ -18,13 +18,18 @@ def merge_peft_adapters(base_model_name_or_path, peft_model_path, merged_model_n
         trust_remote_code=True,
     )
 
-    print(f"Loading peft model from {peft_model_path} ...")
-    model = PeftModel.from_pretrained(base_model, peft_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path, trust_remote_code=True)
+    if add_reasoning_tokens:
+        from speechless.finetune.finetune import smart_tokenizer_and_embedding_resize
+        special_tokens_dict = {'additional_special_tokens': ["<think>", "</think>"]}
+        smart_tokenizer_and_embedding_resize(special_tokens_dict, tokenizer, model)
+
+    print(f"Loading peft model from {lora_model_path} ...")
+    model = PeftModel.from_pretrained(base_model, lora_model_path)
     print(f"Merging ...")
     model = model.merge_and_unload()
     model.generation_config.do_sample = True
 
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path, trust_remote_code=True)
 
     if push_to_hub:
         print(f"Saving to hub ...")
@@ -42,18 +47,18 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--base_model_name_or_path", type=str)
-    # parser.add_argument("--peft_model_path", type=str)
     parser.add_argument("--lora_model_path", type=str)
     parser.add_argument("--merged_model_name_or_path", type=str, default=None)
     parser.add_argument("--push_to_hub", action="store_true", default=False)
+    parser.add_argument("--add_reasoning_tokens", action="store_true", default=False)
 
     args = parser.parse_args()
 
     merge_peft_adapters(base_model_name_or_path=args.base_model_name_or_path, 
-                        # peft_model_path=args.peft_model_path, 
-                        peft_model_path=args.lora_model_path, 
+                        lora_model_path=args.lora_model_path, 
                         merged_model_name_or_path=args.merged_model_name_or_path,
-                        push_to_hub=args.push_to_hub
+                        push_to_hub=args.push_to_hub,
+                        add_reasoning_tokens=args.add_reasoning_tokens
                         )
 
 
