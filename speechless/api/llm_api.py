@@ -169,6 +169,7 @@ class OpenAI_API(LLM_API):
 
             except Exception as e:
                 if self.num_try - 1 >= self.max_try:
+                    logger.error(f"Error: {e}. Max try ({self.max_try}) reached.")
                     return None
                 else:
                     logger.error(f"Error: {e}. Retry {self.num_try}/{self.max_try} ...")
