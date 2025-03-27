@@ -19,6 +19,7 @@ def get_args():
     parser.add_argument("--temperature", type=float, default=0.95, help="Temperature")
     parser.add_argument("--max_tokens", type=int, default=1024, help="Max tokens")
     parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
+    parser.add_argument("--presence_penalty", type=float, default=1.5, help="Presence penalty")
     parser.add_argument("--frequency_penalty", type=float, default=1.5, help="Frequency penalty")
     parser.add_argument("--stream", action="store_true", default=False, help="Stream")
     parser.add_argument("--tool_choice", type=str, default="auto", help="Tool choice")  
@@ -69,6 +70,7 @@ def main():
     gen_kwargs = {
         "temperature": args.temperature,
         "max_tokens": args.max_tokens,
+        "presence_penalty": args.presence_penalty,
         "frequency_penalty": args.frequency_penalty,
         "stream": args.stream,
         # "tool_choice": "auto",
