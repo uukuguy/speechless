@@ -27,7 +27,7 @@ class FixedTagLoss(torch.nn.Module):
                     if torch.equal(labels[i, j:j + fixed_tag_len], fixed_tag_id):
                         weights[i, j:j + fixed_tag_len] = 2.0
 
-        logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
+        # logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
 
         # transformers/loss/loss_utils.py ForCausalLMLoss
 
@@ -39,9 +39,9 @@ class FixedTagLoss(torch.nn.Module):
         # Enable model parallelism
         # labels = labels.to(logits.device)
         loss = loss_fct(logits, labels)
-        logger.debug(f"{loss.shape=}")
+        # logger.debug(f"{loss.shape=}")
         weighted_loss = loss * weights.view(-1)
-        logger.debug(f"{weighted_loss.shape=}")
+        # logger.debug(f"{weighted_loss.shape=}")
         loss = weighted_loss.mean()
 
         return loss
