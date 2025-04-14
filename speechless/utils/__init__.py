@@ -1,1 +1,2 @@
 from .prompt_utils import generate_llm_prompt
+from .model_utils import load_attribute_from_custom_module

@@ -139,3 +139,21 @@ def get_accelerate_model(args, checkpoint_dir):
                 module.to(compute_dtype)
 
     return model
+
+def load_attribute_from_custom_module(file_path, attr_name):
+    import importlib.util 
+    spec = importlib.util.spec_from_file_location("custom_module", file_path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as e:
+        raise RuntimeError(f"Error loading module from '{file_path}': {e}")
+    
+    if not hasattr(module, attr_name):
+        raise AttributeError(f"Module attribute '{attr_name}' not found in '{file_path}'.")
+
+    print(f"Using customized attribute '{attr_name}' from '{file_path}'")
+
+    attr = getattr(module, attr_name)
+
+    return attr
