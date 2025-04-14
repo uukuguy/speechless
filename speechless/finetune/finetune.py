@@ -165,6 +165,10 @@ class DataArguments:
 @dataclass
 class TrainingArguments(transformers.Seq2SeqTrainingArguments):
 
+    fixed_tags: Optional[str] = field(
+        default=None,
+        metadata={"help": "Fixed tags to use."}
+    )
     custom_training_module_file: Optional[str] = field(
         default=None,
         metadata={"help": "Custom training file to use."}
@@ -742,10 +746,18 @@ def train():
     else:
         CustomerTrainer = Seq2SeqTrainer
 
+    compute_loss_func = None
+    if args.fixed_tags:
+        fixed_tags = [t.strip() for t in args.fixed_tags.split(',') if t.strip()]
+        if len(fixed_tags) > 0:
+            from speechless.losses import FixedTagLoss
+            compute_loss_func = FixedTagLoss(tokenizer=tokenizer, fixed_tags=fixed_tags)
+
     trainer = CustomerTrainer(
     # trainer = PeftTrainer(
         model=model,
         tokenizer=tokenizer,
+        compute_loss_func=compute_loss_func,
         args=training_args,
         **{k:v for k,v in data_module.items() if k != 'predict_dataset'},
     )
