@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, json, re
+from copy import deepcopy
 from tqdm import tqdm, trange
 from loguru import logger
 from transformers import AutoTokenizer
@@ -43,7 +44,16 @@ tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=Tru
 
 def run_single(params):
     data = params["data"]
-    gen_kwargs = params["gen_kwargs"]
+    gen_kwargs = deepcopy(params["gen_kwargs"])
+    logits_processor_module_file = params.get("module_file")
+    logits_processor_class_name = params.get("class_name")
+
+    if logits_processor_module_file is not None and logits_processor_class_name is not None:
+        logits_processor = load_attribute_from_custom_module(logits_processor_module_file, logits_processor_class_name)
+        if logits_processor is not None:
+            gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
+        else:
+            raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
 
     id = data["id"]
     instruction = data["instruction"]
@@ -83,12 +93,12 @@ def main():
         # "tool_choice": "auto",
     }
 
-    if args.logits_processor_module_file is not None and args.logits_processor_class_name is not None:
-        logits_processor = load_attribute_from_custom_module(args.logits_processor_module_file, args.logits_processor_class_name)
-        if logits_processor is not None:
-            gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
-        else:
-            raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
+    # if args.logits_processor_module_file is not None and args.logits_processor_class_name is not None:
+    #     logits_processor = load_attribute_from_custom_module(args.logits_processor_module_file, args.logits_processor_class_name)
+    #     if logits_processor is not None:
+    #         gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
+    #     else:
+    #         raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
 
 
     with open(test_file, "r") as f:
@@ -106,7 +116,7 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
-                params_list = [{"data": data, "gen_kwargs": gen_kwargs} for data in batch_datas]
+                params_list = [{"data": data, "gen_kwargs": gen_kwargs, "module_file": args.logits_processor_module_file, "class_name": args.logits_processor_class_name} for data in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,
                     params_list,
