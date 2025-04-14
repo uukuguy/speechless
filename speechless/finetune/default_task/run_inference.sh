@@ -6,6 +6,8 @@ source ${SCRIPT_ROOT}/task.env
 
 TEST_FILE="test_data.jsonl"
 OUTPUT_FILE="inference_results.jsonl"
+LOGITS_PROCESSOR_MODULE_FILE="${PWD}/logits_processor.py"
+LOGITS_PROCESSOR_CLASS_NAME=BacktickConstraint
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
 python ${SCRIPT_ROOT}/inference_openai.py \
@@ -16,7 +18,9 @@ python ${SCRIPT_ROOT}/inference_openai.py \
         --parallel_chunk_size 16 \
         --request_batch_size 64 \
         --temperature 0.1 \
-        --max_tokens 2048 \
+        --max_tokens 512 \
+        --logits_processor_module_file ${LOGITS_PROCESSOR_MODULE_FILE} \
+        --logits_processor_class_name ${LOGITS_PROCESSOR_CLASS_NAME} \
         --verbose
 
 # python ${SCRIPT_ROOT}/inference_vllm.py \
