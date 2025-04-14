@@ -1,6 +1,7 @@
 
 from typing import List
 import torch
+from loguru import logger
 
 class FixedTagLoss(torch.nn.Module):
     def __init__(self, tokenizer, fixed_tags: List):
@@ -24,6 +25,8 @@ class FixedTagLoss(torch.nn.Module):
                     if torch.equal(labels[i, j:j + fixed_tag_len], fixed_tag_id):
                         weights[i, j:j + fixed_tag_len] = 2.0
         logits = outputs.logits
+
+        logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
 
         # transformers/loss/loss_utils.py ForCausalLMLoss
 
