@@ -10,7 +10,7 @@ LOGITS_PROCESSOR_MODULE_FILE="${PWD}/logits_processor.py"
 LOGITS_PROCESSOR_CLASS_NAME=BacktickConstraint
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
-python ${SCRIPT_ROOT}/inference_openai.py \
+python -m speechless.finetune.default_task.inference_openai.py \
         --model_name ${TEST_MODEL_PATH} \
         --test_file ${TEST_FILE} \
         --base_url http://localhost:${VLLM_PORT}/v1 \
