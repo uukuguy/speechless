@@ -40,7 +40,7 @@ class FixedTagLoss(torch.nn.Module):
         # labels = labels.to(logits.device)
         loss = loss_fct(logits, labels)
         logger.debug(f"{loss.shape=}")
-        weighted_loss = loss * weights
+        weighted_loss = loss * weights.view(-1)
         logger.debug(f"{weighted_loss.shape=}")
         loss = weighted_loss.mean()
 
