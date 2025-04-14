@@ -49,10 +49,11 @@ class VllmAIModel(BaseLLM):
         self.model_path = model_path
         self.max_tokens = max_tokens
         self.max_model_len = max_model_len
-        self.chat_model = self.load_model()
         if tensor_parallel_size == 0:
             tensor_parallel_size = torch.cuda.device_count()
         self.tensor_parallel_size = tensor_parallel_size
+
+        self.chat_model = self.load_model()
 
     def load_model(self):
         from vllm import LLM
