@@ -5,6 +5,9 @@ from tqdm import tqdm
 from copy import deepcopy
 from loguru import logger
 
+import multiprocessing as mp
+mp.set_start_method('spawn', force=True)
+
 SPEECHLESS_ROOT = os.getenv("SPEECHLESS_ROOT")
 if SPEECHLESS_ROOT:
     sys.path.append(SPEECHLESS_ROOT)
@@ -84,6 +87,4 @@ def main():
     print(f"Saved {len(test_data)} lines in {output_file}")
 
 if __name__ == "__main__":
-    import multiprocessing as mp
-    mp.set_start_method('spawn', force=True)
     main()
