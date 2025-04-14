@@ -31,17 +31,22 @@ class FixedTagLoss(torch.nn.Module):
 
         # transformers/loss/loss_utils.py ForCausalLMLoss
 
-        # loss_fct = torch.nn.CrossEntropyLoss(weight=weights.view(-1), reduction="mean")
-        loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
-        # Flatten the tokens
-        logits = logits.view(-1, logits.size(-1))
-        labels = labels.view(-1)
-        # Enable model parallelism
-        # labels = labels.to(logits.device)
-        loss = loss_fct(logits, labels)
-        # logger.debug(f"{loss.shape=}")
+        from transformers.loss.loss_utils import ForCausalLMLoss
+        loss = ForCausalLMLoss(logits, labels, vocab_size=logits.size(-1), num_items_in_batch=num_items_in_batch)
         weighted_loss = loss * weights.view(-1)
-        # logger.debug(f"{weighted_loss.shape=}")
         loss = weighted_loss.mean()
+
+        # # loss_fct = torch.nn.CrossEntropyLoss(weight=weights.view(-1), reduction="mean")
+        # loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
+        # # Flatten the tokens
+        # logits = logits.view(-1, logits.size(-1))
+        # labels = labels.view(-1)
+        # # Enable model parallelism
+        # # labels = labels.to(logits.device)
+        # loss = loss_fct(logits, labels)
+        # # logger.debug(f"{loss.shape=}")
+        # weighted_loss = loss * weights.view(-1)
+        # # logger.debug(f"{weighted_loss.shape=}")
+        # loss = weighted_loss.mean()
 
         return loss
