@@ -51,7 +51,10 @@ def run_single(params):
     if logits_processor_module_file is not None and logits_processor_class_name is not None:
         logits_processor = load_attribute_from_custom_module(logits_processor_module_file, logits_processor_class_name)
         if logits_processor is not None:
-            gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
+            # gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
+            gen_kwargs["extra_body"] = {
+                "logits_processors": [logits_processor(tokenizer)],
+            }
         else:
             raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
 
