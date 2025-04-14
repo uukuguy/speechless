@@ -23,6 +23,8 @@ def get_args():
     parser.add_argument("--output_file", type=str, default="./inference_results.jsonl", help="Output file for generated answers.")
     parser.add_argument("--test_file", type=str, help="Input test file.")
     parser.add_argument("--max_tokens", type=int, default=1024, help="Maximum number of tokens to generate.")
+    parser.add_argument("--tensor_parallel_size", type=int, default=0, help="Tensor parallel size.")
+    parser.add_argument("--batch_size", type=int, default=0, help="Batch size for generation.")
     parser.add_argument("--temperature", type=float, default=0.1, help="Temperature for sampling.")
     return parser.parse_args()
 
@@ -34,10 +36,17 @@ def main():
     temperature = args.temperature
     max_tokens = args.temperature
 
+    tensor_parallel_size = args.tensor_parallel_size
+    if tensor_parallel_size == 0:
+        tensor_parallel_size = torch.cuda.device_count()
+    batch_size = args.batch_size
+    if batch_size == 0:
+        batch_size = tensor_parallel_size * 4 
+
     test_data = [json.loads(line.strip()) for line in open(test_file).readlines()]
 
     # vllm
-    model = VllmAIModel(model_path=model_path, max_tokens=max_tokens)
+    model = VllmAIModel(model_path=model_path, max_tokens=max_tokens, tensor_parallel_size=tensor_parallel_size)
     sampling_params = {
         'temperature': temperature,
         'max_tokens': max_tokens,
@@ -61,11 +70,10 @@ def main():
     # }
     # model = HFAIModel(model_path=model_path, max_tokens=max_tokens, bits=8, gen_kwargs=gen_kwargs)
 
-    max_examples = torch.cuda.device_count() * 4 
 
     prompts = [data['instruction'] for data in test_data]
     with open(output_file, 'w', encoding='utf-8') as fd:
-        for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples, **sampling_params):
+        for s, e, batch_responses in model.generate_batch(prompts, batch_size=batch_size, **sampling_params):
         # for s, e, batch_responses in model.generate_batch(prompts, batch_size=max_examples):
             assert e - s == len(batch_responses), f"{s=}, {e=}, {len(batch_responses)=}"
             # for response, instruction, raw_data in zip(batch_responses, prompts[s:e], raw_datas[s:e]):
@@ -78,3 +86,6 @@ def main():
                 fd.flush()
 
     print(f"Saved {len(test_data)} lines in {output_file}")
+
+if __name__ == "__main__":
+    main()

@@ -44,19 +44,21 @@ class BaseLLM(ABC):
         pass
 
 class VllmAIModel(BaseLLM):
-    def __init__(self, model_path=None, max_model_len=32768, max_tokens=2048, *args, **kwargs):
+    def __init__(self, model_path=None, max_model_len=32768, max_tokens=2048, tensor_parallel_size=0, *args, **kwargs):
         assert model_path is not None, "模型路径不能为空"
         self.model_path = model_path
         self.max_tokens = max_tokens
         self.max_model_len = max_model_len
         self.chat_model = self.load_model()
-
+        if tensor_parallel_size == 0:
+            tensor_parallel_size = torch.cuda.device_count()
+        self.tensor_parallel_size = tensor_parallel_size
 
     def load_model(self):
         from vllm import LLM
 
 
-        return LLM(model=self.model_path, max_model_len=self.max_model_len, trust_remote_code=True, tensor_parallel_size=torch.cuda.device_count())
+        return LLM(model=self.model_path, max_model_len=self.max_model_len, trust_remote_code=True, tensor_parallel_size=self.tensor_parallel_size)
 
     def generate_batch(self, instructions: List[str], batch_size: int=2, **kw_sampling_params) -> Generator[Any, Any, Any]: 
         cached_instructions = []
