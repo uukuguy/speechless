@@ -71,5 +71,4 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     ${ADD_REASONING_TOKENS} \
     ${NEFTUNE} \
     ${DEEPSEED} \
-    ${LOGITS_PROCESSOR_PARAMS} \
     ${MISC_PARAMS}
