@@ -10,11 +10,6 @@ if SPEECHLESS_ROOT:
     sys.path.append(SPEECHLESS_ROOT)
 else:
     sys.path.append("../../speechless")
-from speechless.generate.llm import VllmAIModel, HFAIModel
-
-model_path = "/opt/local/llm_models/huggingface.co/speechlessai/Finance2024-Qwen2.5-7B"
-output_file = "Finance2024-Qwen2.5-7B-test-answers.jsonl"
-test_file = "/opt/local/datasets/competitions/IndustryCorpus2024/finance2024_test_data.jsonl"
 
 def get_args():
     import argparse
@@ -45,6 +40,7 @@ def main():
 
     test_data = [json.loads(line.strip()) for line in open(test_file).readlines()]
 
+    from speechless.generate.llm import VllmAIModel, HFAIModel
     # vllm
     model = VllmAIModel(model_path=model_path, max_tokens=max_tokens, tensor_parallel_size=tensor_parallel_size)
     sampling_params = {
