@@ -17,16 +17,17 @@ class FixedTagLoss(torch.nn.Module):
             self.fixed_tags_ids = [self.tokenizer.encode(tag, add_special_tokens=False) for tag in self.fixed_tags]
             self.fixed_tags_ids = [torch.tensor(tag_id).to(labels.device) for tag_id in self.fixed_tags_ids]
 
-        weights = torch.ones_like(labels, dtype=torch.float)
+        logits = outputs.logits
+        # weights = torch.ones_like(labels, dtype=torch.float)
+        weights = torch.tensor([1.0] * logits.size(-1), dtype=torch.float).to(labels.device)
         for fixed_tag_id in self.fixed_tags_ids:
             fixed_tag_len = len(fixed_tag_id)
             for i in range(labels.size(0)):
                 for j in range(labels.size(1) - fixed_tag_len + 1):
                     if torch.equal(labels[i, j:j + fixed_tag_len], fixed_tag_id):
                         weights[i, j:j + fixed_tag_len] = 2.0
-        logits = outputs.logits
 
-        logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
+        # logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
 
         # transformers/loss/loss_utils.py ForCausalLMLoss
 
@@ -35,7 +36,7 @@ class FixedTagLoss(torch.nn.Module):
         logits = logits.view(-1, logits.size(-1))
         labels = labels.view(-1)
         # Enable model parallelism
-        labels = labels.to(logits.device)
+        # labels = labels.to(logits.device)
         loss = loss_fct(logits, labels)
 
         return loss
