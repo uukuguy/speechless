@@ -169,6 +169,10 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         default=None,
         metadata={"help": "Fixed tags to use."}
     )
+    fixed_tag_weight: float = field(
+        default=2.0,
+        metadata={"help": "Fixed tag weight."}
+    )
     custom_training_module_file: Optional[str] = field(
         default=None,
         metadata={"help": "Custom training file to use."}
@@ -733,7 +737,7 @@ def train():
         fixed_tags = [t.strip() for t in args.fixed_tags.split(',') if t.strip()]
         if len(fixed_tags) > 0:
             from ..losses import FixedTagLoss
-            compute_loss_func = FixedTagLoss(tokenizer=tokenizer, fixed_tags=fixed_tags)
+            compute_loss_func = FixedTagLoss(tokenizer=tokenizer, fixed_tags=fixed_tags, fixed_tag_weight=args.fixed_tag_weight)
 
     trainer = CustomerTrainer(
     # trainer = PeftTrainer(
