@@ -24,7 +24,7 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
     --data_seed 10042 \
     --save_strategy ${SAVE_STRATEGY} \
     ${SAVE_TOTAL_LIMIT} \
-    --evaluation_strategy steps \
+    --eval_strategy steps \
     --eval_dataset_size ${EVAL_DATASET_SIZE} \
     --save_steps ${SAVE_STEPS} \
     --eval_steps ${EVAL_STEPS} \
