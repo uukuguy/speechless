@@ -8,16 +8,20 @@ class FixedTagLoss(torch.nn.Module):
         self.tokenizer = tokenizer
         assert isinstance(fixed_tags, list) and len(fixed_tags) > 0, "fixed_tags should be a non-empty list"
         self.fixed_tags = fixed_tags
-        self.fixed_tags_ids = [self.tokenizer.encode(tag, add_special_tokens=False) for tag in fixed_tags]
+        self.fixed_tags_ids = None
 
     # def forward(self, model, inputs, return_outputs=False, num_items_in_batch=None):
     def forward(self, outputs, labels, num_items_in_batch=None):
+        if self.fixed_tags_ids is None:
+            self.fixed_tags_ids = [self.tokenizer.encode(tag, add_special_tokens=False) for tag in self.fixed_tags]
+            self.fixed_tags_ids = [torch.tensor(tag_id).to(labels.device) for tag_id in self.fixed_tags_ids]
+
         weights = torch.ones_like(labels, dtype=torch.float)
-        for fixed_tag in self.fixed_tags_ids:
-            fixed_tag_len = len(fixed_tag)
+        for fixed_tag_id in self.fixed_tags_ids:
+            fixed_tag_len = len(fixed_tag_id)
             for i in range(labels.size(0)):
                 for j in range(labels.size(1) - fixed_tag_len + 1):
-                    if torch.equal(labels[i, j:j + fixed_tag_len], torch.tensor(fixed_tag)):
+                    if torch.equal(labels[i, j:j + fixed_tag_len], fixed_tag_id):
                         weights[i, j:j + fixed_tag_len] = 2.0
         logits = outputs.logits
 
