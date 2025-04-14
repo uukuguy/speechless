@@ -8,7 +8,7 @@ TEST_FILE="test_data.jsonl"
 OUTPUT_FILE="inference_results.jsonl"
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
-python ${PARENT_PATH}/inference_openai.py \
+python ${SCRIPT_ROOT}/inference_openai.py \
         --model_name ${TEST_MODEL_PATH} \
         --test_file ${TEST_FILE} \
         --base_url http://localhost:${VLLM_PORT}/v1 \
@@ -19,7 +19,7 @@ python ${PARENT_PATH}/inference_openai.py \
         --max_tokens 2048 \
         --verbose
 
-# python ${PARENT_PATH}/inference_vllm.py \
+# python ${SCRIPT_ROOT}/inference_vllm.py \
 #     --model_path ${TEST_MODEL_PATH} \
 #     --test_file ${TEST_FILE} \
 #     --output_file ${OUTPUT_FILE} \
