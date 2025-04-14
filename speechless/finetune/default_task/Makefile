@@ -10,5 +10,5 @@ merge:
 vllm_serve:
         bash vllm_serve.sh
 
-test:
-        bash test.sh
+inference:
+        bash run_inference.sh
