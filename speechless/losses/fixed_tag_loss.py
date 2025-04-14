@@ -1,0 +1,34 @@
+
+from typing import List
+import torch
+
+class FixedTagLoss(torch.nn.Module):
+    def __init__(self, tokenizer, fixed_tags: List):
+        super(FixedTagLoss, self).__init__()
+        self.tokenizer = tokenizer
+        assert isinstance(fixed_tags, list) and len(fixed_tags) > 0, "fixed_tags should be a non-empty list"
+        self.fixed_tags = fixed_tags
+        self.fixed_tags_ids = [self.tokenizer.encode(tag, add_special_tokens=False) for tag in fixed_tags]
+
+    # def forward(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+    def forward(self, outputs, labels, num_items_in_batch=None):
+        weights = torch.ones_like(labels, dtype=torch.float)
+        for fixed_tag in self.fixed_tags_ids:
+            fixed_tag_len = len(fixed_tag)
+            for i in range(labels.size(0)):
+                for j in range(labels.size(1) - fixed_tag_len + 1):
+                    if torch.equal(labels[i, j:j + fixed_tag_len], torch.tensor(fixed_tag)):
+                        weights[i, j:j + fixed_tag_len] = 2.0
+        logits = outputs.logits
+
+        # transformers/loss/loss_utils.py ForCausalLMLoss
+
+        loss_fct = torch.nn.CrossEntropyLoss(weight=weights.view(-1), reduction="mean")
+        # Flatten the tokens
+        logits = logits.view(-1, logits.size(-1))
+        labels = labels.view(-1)
+        # Enable model parallelism
+        labels = labels.to(logits.device)
+        loss = loss_fct(logits, labels)
+
+        return loss

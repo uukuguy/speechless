@@ -1,4 +1,5 @@
 
+from typing import List
 import torch
 from transformers import Seq2SeqTrainer, Trainer, TrainingArguments
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -38,6 +39,7 @@ class TaskLoss(torch.nn.Module):
                 loss = loss + task_loss
         
         return loss
+
 
 class TaskTrainer(Seq2SeqTrainer):
     def __init__(self, *args, **kwargs):
