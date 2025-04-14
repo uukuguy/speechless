@@ -18,8 +18,8 @@ class FixedTagLoss(torch.nn.Module):
             self.fixed_tags_ids = [torch.tensor(tag_id).to(labels.device) for tag_id in self.fixed_tags_ids]
 
         logits = outputs.logits
-        # weights = torch.ones_like(labels, dtype=torch.float)
-        weights = torch.tensor([1.0] * logits.size(-1), dtype=torch.float).to(labels.device)
+        weights = torch.ones_like(labels, dtype=torch.float)
+        # weights = torch.tensor([1.0] * logits.size(-1), dtype=torch.float).to(labels.device)
         for fixed_tag_id in self.fixed_tags_ids:
             fixed_tag_len = len(fixed_tag_id)
             for i in range(labels.size(0)):
@@ -27,16 +27,21 @@ class FixedTagLoss(torch.nn.Module):
                     if torch.equal(labels[i, j:j + fixed_tag_len], fixed_tag_id):
                         weights[i, j:j + fixed_tag_len] = 2.0
 
-        # logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
+        logger.debug(f"{logits.shape=}, {labels.shape=}, {weights.shape=}")
 
         # transformers/loss/loss_utils.py ForCausalLMLoss
 
-        loss_fct = torch.nn.CrossEntropyLoss(weight=weights.view(-1), reduction="mean")
+        # loss_fct = torch.nn.CrossEntropyLoss(weight=weights.view(-1), reduction="mean")
+        loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
         # Flatten the tokens
         logits = logits.view(-1, logits.size(-1))
         labels = labels.view(-1)
         # Enable model parallelism
         # labels = labels.to(logits.device)
         loss = loss_fct(logits, labels)
+        logger.debug(f"{loss.shape=}")
+        weighted_loss = loss * weights
+        logger.debug(f"{weighted_loss.shape=}")
+        loss = weighted_loss.mean()
 
         return loss
