@@ -750,7 +750,7 @@ def train():
     if args.fixed_tags:
         fixed_tags = [t.strip() for t in args.fixed_tags.split(',') if t.strip()]
         if len(fixed_tags) > 0:
-            from speechless.losses import FixedTagLoss
+            from ..losses import FixedTagLoss
             compute_loss_func = FixedTagLoss(tokenizer=tokenizer, fixed_tags=fixed_tags)
 
     trainer = CustomerTrainer(
