@@ -88,4 +88,6 @@ def main():
     print(f"Saved {len(test_data)} lines in {output_file}")
 
 if __name__ == "__main__":
+    import multiprocessing as mp
+    mp.set_start_method('spawn')
     main()
