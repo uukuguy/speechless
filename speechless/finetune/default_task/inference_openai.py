@@ -3,10 +3,12 @@
 import os, json, re
 from tqdm import tqdm, trange
 from loguru import logger
+from transformers import AutoTokenizer
 import rich
 
 from speechless.api.llm_api import OpenAI_API
 from speechless.utils.multiprocess_utils import initialize_multiprocessing, run_func_in_multiprocessing
+from speechless.utils import load_attribute_from_custom_module
 
 def get_args():
     import argparse
@@ -25,6 +27,9 @@ def get_args():
     parser.add_argument("--stream", action="store_true", default=False, help="Stream")
     parser.add_argument("--tool_choice", type=str, default="auto", help="Tool choice")  
 
+    parser.add_argument("--logits_processor_module_file", type=str, default=None, help="Logits processor module file")
+    parser.add_argument("--logits_processor_class_name", type=str, default=None, help="Logits processor class name")
+
     parser.add_argument("--parallel_processes", type=int, default=4, help="Number of parallel processes")
     parser.add_argument("--parallel_chunk_size", type=int, default=16, help="Chunk size for parallel processes")
     parser.add_argument("--request_batch_size", type=int, default=64, help="Number of requests in each batch")
@@ -34,6 +39,7 @@ def get_args():
 
 args = get_args()
 llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
+tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 
 def run_single(params):
     data = params["data"]
@@ -76,6 +82,14 @@ def main():
         "stream": args.stream,
         # "tool_choice": "auto",
     }
+
+    if args.logits_processor_module_file is not None and args.logits_processor_class_name is not None:
+        logits_processor = load_attribute_from_custom_module(args.logits_processor_module_file, args.logits_processor_class_name)
+        if logits_processor is not None:
+            gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
+        else:
+            raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
+
 
     with open(test_file, "r") as f:
         lines = f.readlines()

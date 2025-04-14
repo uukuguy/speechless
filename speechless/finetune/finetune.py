@@ -656,25 +656,7 @@ def get_lr_scheduler(lr_scheduler_type, optimizer, num_warmpup_steps, num_traini
     optim_args = optim_args or {}
     return schedule_func(optimizer, num_warmup_steps=num_warmpup_steps, num_training_steps=num_training_steps, **optim_args)
 
-
-def load_attribute_from_custom_module(file_path, attr_name):
-    import importlib.util 
-    spec = importlib.util.spec_from_file_location("custom_module", file_path)
-    module = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(module)
-    except Exception as e:
-        raise RuntimeError(f"Error loading module from '{file_path}': {e}")
-    
-    if not hasattr(module, attr_name):
-        raise AttributeError(f"Module attribute '{attr_name}' not found in '{file_path}'.")
-
-    print(f"Using customized attribute '{attr_name}' from '{file_path}'")
-
-    attr = getattr(module, attr_name)
-
-    return attr
-
+from ..utils import load_attribute_from_custom_module
 
 def train():
     hfparser = transformers.HfArgumentParser((
