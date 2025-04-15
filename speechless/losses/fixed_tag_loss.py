@@ -17,7 +17,7 @@ class FixedTagLoss(torch.nn.Module):
         self.allowed_token_weight = allowed_token_weight
 
         self.allowed_token_ids = tokenizer.convert_tokens_to_ids(allowed_colors) if self.allowed_colors else []
-        self.allowed_token_ids = [torch.tensor(token_id).to(tokenizer.device) for token_id in self.allowed_token_ids]
+        self.allowed_token_ids = [torch.tensor(token_id).to(labels.device) for token_id in self.allowed_token_ids]
 
     # def forward(self, model, inputs, return_outputs=False, num_items_in_batch=None):
     def forward(self, outputs, labels, num_items_in_batch=None):

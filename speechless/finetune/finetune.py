@@ -20,7 +20,7 @@ import gc, ctypes
 import os, json
 from os.path import exists, join, isdir
 from dataclasses import dataclass, field
-from typing import Optional, Dict 
+from typing import Optional, Dict
 import numpy as np
 import bitsandbytes as bnb
 
@@ -381,7 +381,7 @@ def get_accelerate_model(args, checkpoint_dir):
         n_gpus = torch.cuda.device_count()
     else:
         n_gpus = 0
-    
+
 
     max_memory = f'{args.max_memory_MB}MB'
     max_memory = {i: max_memory for i in range(n_gpus)}
@@ -730,9 +730,9 @@ def train():
 
     data_module = make_data_module(tokenizer=tokenizer, args=args)
 
-    
+
     if args.custom_training_module_file and args.custom_trainer_name:
-        CustomerTrainer = load_attribute_from_custom_module(args.custom_training_module_file, args.custom_trainer_name)    
+        CustomerTrainer = load_attribute_from_custom_module(args.custom_training_module_file, args.custom_trainer_name)
     else:
         CustomerTrainer = Seq2SeqTrainer
 
@@ -741,7 +741,14 @@ def train():
         fixed_tags = [t.strip() for t in args.fixed_tags.split(',') if t.strip()]
         if len(fixed_tags) > 0:
             from ..losses import FixedTagLoss
-            compute_loss_func = FixedTagLoss(tokenizer=tokenizer, fixed_tags=fixed_tags, fixed_tag_weight=args.fixed_tag_weight)
+            allowed_colors = ('Black', 'Blue', 'Red', 'Green', 'Yellow', 'Gray', 'Pink', 'Orange', 'Purple', 'Brown')
+            compute_loss_func = FixedTagLoss(
+                tokenizer=tokenizer,
+                fixed_tags=fixed_tags,
+                fixed_tag_weight=args.fixed_tag_weight,
+                allowed_colors=allowed_colors,
+                allowed_token_weight=args.allowed_token_weight
+            )
 
     trainer = CustomerTrainer(
     # trainer = PeftTrainer(
