@@ -11,7 +11,8 @@ class FixedTagLoss(torch.nn.Module):
         self.fixed_tags = fixed_tags
         self.fixed_tags_ids = None
         self.fixed_tag_weight = fixed_tag_weight
-        # allowed_colors = ('Black', 'Blue', 'Red', 'Green', 'Yellow', 'Gray', 'Pink', 'Orange', 'Purple', 'Brown')
+        if allowed_colors is None:
+            allowed_colors = ('Black', 'Blue', 'Red', 'Green', 'Yellow', 'Gray', 'Pink', 'Orange', 'Purple', 'Brown')
         self.allowed_colors = allowed_colors
         self.allowed_token_weight = allowed_token_weight
 

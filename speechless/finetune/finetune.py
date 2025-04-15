@@ -173,6 +173,10 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
         default=2.0,
         metadata={"help": "Fixed tag weight."}
     )
+    allowed_token_weight: float = field(
+        default=1.0,
+        metadata={"help": "Allowed toke weight."}
+    )
     custom_training_module_file: Optional[str] = field(
         default=None,
         metadata={"help": "Custom training file to use."}
