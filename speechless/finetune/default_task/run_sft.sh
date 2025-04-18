@@ -8,10 +8,15 @@ source ${SCRIPT_PATH}/task.env
 min=20000
 max=30000
 MASTER_PORT=$((RANDOM % (max - min + 1) + min))
+MASTER_ADDR=$(hostname)
+export OMP_NUM_THREADS=1
+export TORCH_DISTRIBUTED_DEBUG=info
+export NCCL_IB_DISABLE=1
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
 WANDB_PROJECT=${TASK_NAME} \
-torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} \
+torchrun --nnodes=1 --nproc_per_node=${NUM_GPUS} --node_rank-0 \
+    --master_addr ${MASTER_ADDR} \
     --master_port ${MASTER_PORT} \
     -m speechless.finetune.finetune \
     ${DEEPSPEED_STAGE2} \
