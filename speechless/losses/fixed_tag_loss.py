@@ -24,7 +24,7 @@ class FixedTagLoss(torch.nn.Module):
             self.fixed_tags_ids = [torch.tensor(tag_id).to(labels.device) for tag_id in self.fixed_tags_ids]
         if self.allowed_token_ids is None:
             self.allowed_token_ids = self.tokenizer.convert_tokens_to_ids(self.allowed_colors) if self.allowed_colors else []
-            self.allowed_token_ids = [torch.tensor(token_id).to(labels.device) for token_id in self.allowed_token_ids]
+            self.allowed_token_ids = [torch.tensor([token_id]).to(labels.device) for token_id in self.allowed_token_ids]
 
         logits = outputs.logits
         weights = torch.ones_like(labels, dtype=torch.float)
