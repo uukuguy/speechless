@@ -15,6 +15,7 @@ class FixedTagLoss(torch.nn.Module):
             allowed_colors = ('Black', 'Blue', 'Red', 'Green', 'Yellow', 'Gray', 'Pink', 'Orange', 'Purple', 'Brown')
         self.allowed_colors = allowed_colors
         self.allowed_token_weight = allowed_token_weight
+        self.allowed_token_ids = None
 
     # def forward(self, model, inputs, return_outputs=False, num_items_in_batch=None):
     def forward(self, outputs, labels, num_items_in_batch=None):
