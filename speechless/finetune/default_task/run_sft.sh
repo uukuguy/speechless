@@ -12,6 +12,7 @@ MASTER_ADDR=$(hostname)
 export OMP_NUM_THREADS=1
 export TORCH_DISTRIBUTED_DEBUG=info
 export NCCL_IB_DISABLE=1
+export TOKENIZERS_PARALLELISM=false
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} \
 WANDB_PROJECT=${TASK_NAME} \
