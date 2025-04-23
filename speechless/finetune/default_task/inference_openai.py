@@ -71,7 +71,7 @@ def run_single(params):
         else:
             raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
 
-    id = data["id"]
+    id = data.get("id")
     instruction = data["instruction"]
     tools = data.get("tools")
 
@@ -133,7 +133,9 @@ def main():
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
                 if args.use_chat_template == "auto":
-                    for data in batch_datas:
+                    for idx, data in enumerate(batch_datas):
+                        if "id" not in data:
+                            data["id"] = str(i + idx)
                         if "messages" in data:
                             data['instruction'] = tokenizer.apply_chat_template(data['messages'], add_generation_prompt=True, tokenize=False)
                 params_list = [{"data": data, "gen_kwargs": gen_kwargs, "module_file": args.logits_processor_module_file, "class_name": args.logits_processor_class_name} for data in batch_datas]
