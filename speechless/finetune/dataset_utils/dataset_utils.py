@@ -263,7 +263,7 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
                         "from": m['role'],
                         "value": m['content'],
                     })
-                return conversations
+                return {"conversations": conversations}
 
             dataset = dataset.map(_format_messages)
 
