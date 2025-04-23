@@ -11,6 +11,15 @@ from speechless.api.llm_api import OpenAI_API
 from speechless.utils.multiprocess_utils import initialize_multiprocessing, run_func_in_multiprocessing
 from speechless.utils import load_attribute_from_custom_module
 
+# https://github.com/chujiezheng/chat_templates
+available_chat_templates = [
+    "auto",
+    "alpaca",
+    "chatml",
+    "llama3",
+    "qwen2.5"
+]
+
 def get_args():
     import argparse
     parser = argparse.ArgumentParser()
@@ -35,6 +44,9 @@ def get_args():
     parser.add_argument("--parallel_chunk_size", type=int, default=16, help="Chunk size for parallel processes")
     parser.add_argument("--request_batch_size", type=int, default=64, help="Number of requests in each batch")
 
+    parser.add_argument("--use_chat_template", type=str, default="auto", choices=available_chat_templates, help="Use chat template")
+    parser.add_argument("--use_chat_template_file", type=str, default=None, help="Use chat template file")
+
     args = parser.parse_args()
     return args
 
@@ -43,6 +55,7 @@ llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 
 def run_single(params):
+    use_chat_template = params.get("use_chat_template")
     data = params["data"]
     gen_kwargs = deepcopy(params["gen_kwargs"])
     logits_processor_module_file = params.get("module_file")
@@ -119,6 +132,10 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
+                if args.use_chat_template == "auto":
+                    for data in batch_datas:
+                        if "messages" in data:
+                            data['instruction'] = tokenizer.apply_chat_template(data['messages'], add_generation_prompt=True, tokenize=False)
                 params_list = [{"data": data, "gen_kwargs": gen_kwargs, "module_file": args.logits_processor_module_file, "class_name": args.logits_processor_class_name} for data in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
                     run_single,

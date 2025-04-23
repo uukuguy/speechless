@@ -21,6 +21,7 @@ python -m speechless.finetune.default_task.inference_openai \
         --max_tokens 512 \
         --logits_processor_module_file ${LOGITS_PROCESSOR_MODULE_FILE} \
         --logits_processor_class_name ${LOGITS_PROCESSOR_CLASS_NAME} \
+        --use_chat_template auto \
         --verbose
 
 # python ${SCRIPT_ROOT}/inference_vllm.py \
