@@ -255,6 +255,18 @@ def make_data_module(tokenizer: transformers.PreTrainedTokenizer, args) -> Dict:
 
             dataset = dataset.map(_format_instruction_input_response)
 
+        elif dataset_format == 'messages':
+            def _format_messages(example):
+                conversations = []
+                for m in example["messages"]:
+                    conversations.append({
+                        "from": m['role'],
+                        "value": m['content'],
+                    })
+                return conversations
+
+            dataset = dataset.map(_format_messages)
+
         elif dataset_format == 'input-output':
             # leave as is
             pass
