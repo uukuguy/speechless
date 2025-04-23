@@ -470,6 +470,9 @@ class DialogDataCollatorForCausalLM(object):
                             eos_token=self.tokenizer.eos_token,
                             system_prompt=system_prompt,
                         )
+                    elif prompt_type == "chat_template":
+                        source = self.tokenizer.apply_chat_template(human_input, add_generation_prompt=True, tokenize=False)
+                        target = bot_response
                     else:  # default alpaca
                         source, target = generate_round_prompt_alpaca(
                             idx,
@@ -479,6 +482,7 @@ class DialogDataCollatorForCausalLM(object):
                             eos_token=self.tokenizer.eos_token,
                             system_prompt=system_prompt,
                         )
+                    
 
                     tokenized_source = self.tokenizer(
                         source,
