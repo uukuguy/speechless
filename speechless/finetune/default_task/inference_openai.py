@@ -132,11 +132,10 @@ def main():
             num_test_data = len(lines)
             for i in trange(0, len(test_datas), request_batch_size):
                 batch_datas = test_datas[i:i+request_batch_size]
-                if args.use_chat_template == "auto":
-                    for idx, data in enumerate(batch_datas):
+                for idx, data in enumerate(batch_datas):
                         if "id" not in data:
                             data["id"] = str(i + idx)
-                        if "messages" in data:
+                        if "messages" in data and args.use_chat_template == "auto":
                             data['instruction'] = tokenizer.apply_chat_template(data['messages'], add_generation_prompt=True, tokenize=False)
                 params_list = [{"data": data, "gen_kwargs": gen_kwargs, "module_file": args.logits_processor_module_file, "class_name": args.logits_processor_class_name} for data in batch_datas]
                 parallel_results = run_func_in_multiprocessing(
@@ -161,7 +160,11 @@ def main():
                     fd.write(json_str)
                     fd.flush()
         else:
-            for data in tqdm(test_datas):
+            for i, data in enumerate(tqdm(test_datas)):
+                if "id" not in data:
+                    data["id"] = str(i)
+                if "messages" in data and args.use_chat_template == "auto":
+                    data['instruction'] = tokenizer.apply_chat_template(data['messages'], add_generation_prompt=True, tokenize=False)
                 result = run_single({"data": data, "gen_kwargs": gen_kwargs})
                 data["generated_text"] = result["generated_text"]
                 data["llm_response"] = result["llm_response"]
