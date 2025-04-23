@@ -164,6 +164,7 @@ class OpenAI_API(LLM_API):
                         model=self.model_name,
                         tools=tools,
                         messages=final_messages,
+                        **gen_kwargs,
                         # temperature=temperature,
                         # max_tokens=8192,
                         # frequency_penalty=1.5,
