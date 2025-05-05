@@ -16,10 +16,10 @@
 Math Verification Reward Function
 
 This module provides backward compatibility for the compute_score function
-by importing the MathVerifyReward class from reward_functions.py.
+by importing the MathVerifyReward class from the reward_functions package.
 """
 
-from reward_functions import MathVerifyReward
+from speechless.reasoning.general_reasoner.reward_functions.math_rewards import MathVerifyReward
 
 
 def compute_score(data_source, solution_str, ground_truth, extra_info=None):
@@ -45,7 +45,7 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None):
 # Example usage
 if __name__ == "__main__":
     print("This module provides backward compatibility for the compute_score function.")
-    print("For examples, see the example_usage function in reward_functions.py")
+    print("For examples, see the example_usage function in reward_functions.utils module")
     
     # Simple example
     answer = "The answer is 42."

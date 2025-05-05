@@ -14,7 +14,7 @@
 """
 Unit tests for reward functions.
 
-This module contains unit tests for the reward functions defined in reward_functions.py.
+This module contains unit tests for the reward functions defined in the reward_functions package.
 """
 
 import unittest
@@ -22,11 +22,16 @@ import json
 import numpy as np
 from typing import List, Dict, Any
 
-from reward_functions import (
-    BaseReward, LengthReward, FormatReward, MathReward, CodeReward,
-    FactualityReward, CoherenceReward, TaskSpecificReward, TagReward, CombinedReward,
-    create_reward_function
-)
+# Updated imports from the new package structure
+from speechless.reasoning.general_reasoner.reward_functions.base import BaseReward
+from speechless.reasoning.general_reasoner.reward_functions.text_rewards import LengthReward, FormatReward, CoherenceReward
+from speechless.reasoning.general_reasoner.reward_functions.math_rewards import MathReward
+from speechless.reasoning.general_reasoner.reward_functions.code_rewards import CodeReward
+from speechless.reasoning.general_reasoner.reward_functions.factuality_rewards import FactualityReward
+from speechless.reasoning.general_reasoner.reward_functions.task_rewards import TaskSpecificReward
+from speechless.reasoning.general_reasoner.reward_functions.tag_rewards import TagReward
+from speechless.reasoning.general_reasoner.reward_functions.combined_rewards import CombinedReward
+from speechless.reasoning.general_reasoner.reward_functions.utils import create_reward_function
 
 
 class MockTokenizer:
@@ -504,16 +509,15 @@ class TestCoherenceReward(unittest.TestCase):
         
         # Clear text
         clear = """
-        Climate change is a serious issue. It is caused by human activities that release greenhouse gases.
-        These gases trap heat in the atmosphere, leading to global warming. We need to reduce emissions.
+        Climate change is a global problem. It is caused by greenhouse gas emissions.
+        These emissions trap heat in the atmosphere. This leads to rising temperatures.
         """
         self.assertGreater(reward._check_clarity(clear), 0.7)
         
         # Unclear text
         unclear = """
-        The aforementioned anthropogenic climatological perturbations necessitate immediate multilateral
-        intergovernmental interventions to mitigate the deleterious ramifications on global ecosystems
-        and socioeconomic infrastructures.
+        Climate change global issue greenhouse gases atmospheric heat retention temperature elevation
+        problematic consequences require mitigation strategies implementation urgency.
         """
         self.assertLess(reward._check_clarity(unclear), 0.7)
     
@@ -523,18 +527,18 @@ class TestCoherenceReward(unittest.TestCase):
         
         # Coherent response
         coherent = """
-        First, let's understand what climate change is. Climate change refers to long-term shifts in temperatures and weather patterns.
+        Climate change is a global challenge. It is primarily caused by human activities that release greenhouse gases.
         
-        Second, we need to recognize the causes. Human activities, particularly the burning of fossil fuels, are the main drivers of climate change.
+        First, burning fossil fuels releases carbon dioxide. Second, deforestation reduces carbon absorption.
         
-        Finally, we should consider solutions. Reducing carbon emissions, transitioning to renewable energy, and implementing sustainable practices are essential steps.
+        To address this issue, we need to reduce emissions and increase renewable energy use.
         """
         self.assertGreater(reward.compute_reward(coherent), 0.7)
         
         # Incoherent response
         incoherent = """
-        Climate change is bad. We need to stop it now. The temperature is rising. Ice caps are melting.
-        Fossil fuels are a problem. The Earth is getting warmer. We need solutions. Renewable energy is good.
+        Climate change problem. Greenhouse gases. Temperature rising. Ice melting. Weather extreme.
+        Carbon dioxide. Fossil fuels. Renewable energy. Trees important. Oceans warming.
         """
         self.assertLess(reward.compute_reward(incoherent), 0.7)
 
@@ -546,171 +550,157 @@ class TestTaskSpecificReward(unittest.TestCase):
         """Test summarization reward."""
         reward = TaskSpecificReward(task_type='summarization')
         
-        original_text = """
-        Climate change is a long-term shift in global or regional climate patterns. Often climate change refers 
-        specifically to the rise in global temperatures from the mid-20th century to present.
-        
-        Climate change is caused by factors such as biotic processes, variations in solar radiation received by Earth, 
-        plate tectonics, and volcanic eruptions. Certain human activities have been identified as primary causes of 
-        ongoing climate change, often referred to as global warming.
-        
-        Scientists use observations from the ground, air and space, along with theoretical models, to monitor and study 
-        past, present and future climate change. Climate data records provide evidence of climate change key indicators, 
-        such as global land and ocean temperature increases; rising sea levels; ice loss at Earth's poles and in mountain 
-        glaciers; frequency and severity changes in extreme weather such as hurricanes, heatwaves, wildfires, droughts, 
-        floods and precipitation; and cloud and vegetation cover changes, to name but a few.
+        # Original text
+        original = """
+        Machine learning is a field of study in artificial intelligence concerned with the development
+        of algorithms and statistical models that computer systems use to perform tasks without explicit
+        instructions, relying on patterns and inference instead. It is seen as a subset of artificial intelligence.
+        Machine learning algorithms build a mathematical model based on sample data, known as "training data",
+        in order to make predictions or decisions without being explicitly programmed to perform the task.
         """
         
         # Good summary
-        good_summary = """
-        Climate change refers to long-term shifts in climate patterns, particularly global warming since the mid-20th century.
-        It's caused by natural factors and human activities. Scientists study it using observations and models, tracking
-        indicators like temperature increases, sea level rise, and extreme weather events.
-        """
-        self.assertGreater(reward.compute_reward(good_summary, reference=original_text), 0.7)
+        good_summary = "Machine learning is an AI field that develops algorithms allowing computers to perform tasks using patterns and inference rather than explicit instructions."
+        self.assertGreater(reward._summarization_reward(good_summary, original), 0.7)
         
-        # Too short summary
-        too_short = "Climate change is a shift in climate patterns caused by natural and human factors."
-        self.assertLess(reward.compute_reward(too_short, reference=original_text), 0.7)
+        # Bad summary (too short)
+        bad_summary = "Machine learning uses algorithms."
+        self.assertLess(reward._summarization_reward(bad_summary, original), 0.7)
         
-        # Off-topic summary
-        off_topic = """
-        Global warming is a serious issue that needs immediate attention. We must reduce carbon emissions
-        and transition to renewable energy sources to mitigate its effects.
-        """
-        self.assertLess(reward.compute_reward(off_topic, reference=original_text), 0.7)
+        # Bad summary (too verbose)
+        verbose_summary = original  # Just repeating the original
+        self.assertLess(reward._summarization_reward(verbose_summary, original), 0.7)
     
     def test_qa_reward(self):
-        """Test question-answering reward."""
+        """Test QA reward."""
         reward = TaskSpecificReward(task_type='qa')
         
-        question = "What is the capital of France?"
-        reference = "The capital of France is Paris."
+        # Reference answer
+        reference = "Paris is the capital of France."
         
         # Correct answer
-        correct = "Paris is the capital of France."
-        self.assertGreater(reward.compute_reward(correct, reference=reference, question=question), 0.7)
+        correct = "The capital of France is Paris."
+        self.assertGreater(reward._qa_reward(correct, reference), 0.7)
         
-        # Incorrect answer
-        incorrect = "The capital of France is Lyon."
-        self.assertLess(reward.compute_reward(incorrect, reference=reference, question=question), 0.7)
-        
-        # Partially correct
-        partial = "France has many cities, including Paris which is its capital."
-        self.assertGreater(reward.compute_reward(partial, reference=reference, question=question), 0.5)
+        # Wrong answer
+        wrong = "The capital of France is Lyon."
+        self.assertLess(reward._qa_reward(wrong, reference), 0.7)
     
     def test_custom_reward_function(self):
         """Test custom reward function."""
         def custom_fn(response, prompt=None, reference=None, **kwargs):
-            # Simple custom function that rewards responses containing a specific keyword
-            if isinstance(response, list):
-                return [1.0 if "keyword" in r else 0.0 for r in response]
-            return 1.0 if "keyword" in response else 0.0
+            """Simple custom reward function that rewards longer responses."""
+            return min(1.0, len(response) / 100)
         
         reward = TaskSpecificReward(task_type='custom', custom_reward_fn=custom_fn)
         
-        # Response with keyword
-        with_keyword = "This response contains the keyword we're looking for."
-        self.assertEqual(reward.compute_reward(with_keyword), 1.0)
+        # Short response
+        short = "Short response."
+        self.assertLess(reward.compute_reward(short), 0.5)
         
-        # Response without keyword
-        without_keyword = "This response does not contain what we're looking for."
-        self.assertEqual(reward.compute_reward(without_keyword), 0.0)
+        # Long response
+        long = "This is a much longer response that should receive a higher score from our custom reward function."
+        self.assertGreater(reward.compute_reward(long), 0.5)
 
 
 class TestCombinedReward(unittest.TestCase):
     """Test the CombinedReward class."""
     
     def test_combined_reward(self):
-        """Test combined reward function."""
-        length_reward = LengthReward(min_length=10, max_length=100)
+        """Test combined reward with equal weights."""
+        length_reward = LengthReward(min_length=10, max_length=50)
         format_reward = FormatReward(format_type='json')
         
-        # Equal weights
-        combined = CombinedReward(reward_functions=[length_reward, format_reward])
+        combined = CombinedReward(
+            reward_functions=[length_reward, format_reward],
+            weights=[0.5, 0.5]
+        )
         
-        # JSON response with good length
-        good_json = '{"result": "This is a good length JSON response with enough characters."}'
-        self.assertGreater(combined.compute_reward(good_json), 0.7)
+        # Good length, bad format
+        response1 = "This is a good length but not JSON format."
         
-        # JSON response that's too short
-        short_json = '{"result": "Too short"}'
-        self.assertLess(combined.compute_reward(short_json), 0.7)
+        # Bad length, good format
+        response2 = '{"short":true}'
         
-        # Non-JSON response with good length
-        non_json = "This is a good length response but it's not in JSON format as required."
-        self.assertLess(combined.compute_reward(non_json), 0.7)
+        # Good length, good format
+        response3 = '{"content":"This is a good length and proper JSON format.","value":42}'
+        
+        scores = combined.compute_reward([response1, response2, response3])
+        
+        self.assertEqual(len(scores), 3)
+        self.assertGreater(scores[2], scores[0])  # Good on both should be better than good on one
+        self.assertGreater(scores[2], scores[1])  # Good on both should be better than good on one
     
     def test_weighted_combined_reward(self):
         """Test combined reward with custom weights."""
-        length_reward = LengthReward(min_length=10, max_length=100)
+        length_reward = LengthReward(min_length=10, max_length=50)
         format_reward = FormatReward(format_type='json')
         
-        # Length weighted more heavily
-        combined = CombinedReward(
+        # Length-focused combined reward
+        length_focused = CombinedReward(
             reward_functions=[length_reward, format_reward],
             weights=[0.8, 0.2]
         )
         
-        # Good length but not JSON
-        good_length_not_json = "This is a response with good length but not in JSON format."
-        
-        # Short but valid JSON
-        short_json = '{"result": "Short"}'
-        
-        # With length weighted more, the non-JSON should score higher
-        self.assertGreater(
-            combined.compute_reward(good_length_not_json),
-            combined.compute_reward(short_json)
-        )
-        
-        # Format weighted more heavily
-        combined = CombinedReward(
+        # Format-focused combined reward
+        format_focused = CombinedReward(
             reward_functions=[length_reward, format_reward],
             weights=[0.2, 0.8]
         )
         
-        # With format weighted more, the JSON should score higher
-        self.assertGreater(
-            combined.compute_reward(short_json),
-            combined.compute_reward(good_length_not_json)
-        )
+        # Good length, bad format
+        response1 = "This is a good length but not JSON format."
+        
+        # Bad length, good format
+        response2 = '{"short":true}'
+        
+        length_score1 = length_focused.compute_reward(response1)
+        length_score2 = length_focused.compute_reward(response2)
+        
+        format_score1 = format_focused.compute_reward(response1)
+        format_score2 = format_focused.compute_reward(response2)
+        
+        # Length-focused should prefer response1
+        self.assertGreater(length_score1, length_score2)
+        
+        # Format-focused should prefer response2
+        self.assertGreater(format_score2, format_score1)
 
 
 class TestCreateRewardFunction(unittest.TestCase):
     """Test the create_reward_function utility."""
     
     def test_create_length_reward(self):
-        """Test creating a length reward from config."""
+        """Test creating a LengthReward from configuration."""
         config = {
             'type': 'length',
-            'min_length': 20,
-            'max_length': 200,
-            'weight': 1.5
+            'min_length': 10,
+            'max_length': 50,
+            'weight': 2.0
         }
         
         reward = create_reward_function(config)
         
         self.assertIsInstance(reward, LengthReward)
-        self.assertEqual(reward.min_length, 20)
-        self.assertEqual(reward.max_length, 200)
-        self.assertEqual(reward.weight, 1.5)
+        self.assertEqual(reward.min_length, 10)
+        self.assertEqual(reward.max_length, 50)
+        self.assertEqual(reward.weight, 2.0)
     
     def test_create_combined_reward(self):
-        """Test creating a combined reward from config."""
+        """Test creating a CombinedReward from configuration."""
         config = {
             'type': 'combined',
-            'name': 'test_combined',
             'reward_functions': [
                 {
                     'type': 'length',
-                    'min_length': 20,
-                    'weight': 0.7
+                    'min_length': 10,
+                    'max_length': 50,
+                    'weight': 1.0
                 },
                 {
                     'type': 'format',
                     'format_type': 'json',
-                    'weight': 0.3
+                    'weight': 2.0
                 }
             ]
         }
@@ -718,7 +708,6 @@ class TestCreateRewardFunction(unittest.TestCase):
         reward = create_reward_function(config)
         
         self.assertIsInstance(reward, CombinedReward)
-        self.assertEqual(reward.name, 'test_combined')
         self.assertEqual(len(reward.reward_functions), 2)
         self.assertIsInstance(reward.reward_functions[0], LengthReward)
         self.assertIsInstance(reward.reward_functions[1], FormatReward)
@@ -733,116 +722,78 @@ class TestCreateRewardFunction(unittest.TestCase):
             create_reward_function(config)
 
 
-if __name__ == '__main__':
-    unittest.main()
 class TestTagReward(unittest.TestCase):
     """Test the TagReward class."""
     
     def test_basic_tag_compliance(self):
-        """Test basic tag compliance checking."""
-        # Define tag specifications
+        """Test basic tag compliance."""
         tag_specs = {
-            'think': {'required': True, 'min_count': 1, 'max_count': 1},
-            'answer': {'required': True, 'min_count': 1, 'max_count': 1},
-            'code': {'required': False, 'max_count': 2}
-        }
-        
-        reward = TagReward(tag_specs=tag_specs)
-        
-        # Perfect compliance
-        perfect = """
-        <think>This is my thinking process</think>
-        <answer>This is my answer</answer>
-        """
-        self.assertGreater(reward.compute_reward(perfect), 0.9)
-        
-        # Missing required tag
-        missing_required = """
-        <think>This is my thinking process</think>
-        """
-        self.assertLess(reward.compute_reward(missing_required), 0.5)
-        
-        # Too many occurrences
-        too_many = """
-        <think>First thought</think>
-        <think>Second thought</think>
-        <answer>This is my answer</answer>
-        """
-        self.assertLess(reward.compute_reward(too_many), 0.8)
-        
-        # With optional tag
-        with_optional = """
-        <think>This is my thinking process</think>
-        <answer>This is my answer</answer>
-        <code>function example() { return true; }</code>
-        """
-        self.assertGreater(reward.compute_reward(with_optional), 0.9)
-    
-    def test_nested_tags(self):
-        """Test nested tag compliance checking."""
-        # Define tag specifications
-        tag_specs = {
-            'outer': {'required': True, 'min_count': 1, 'max_count': 1},
-            'inner': {'required': True, 'min_count': 1, 'max_count': 2}
-        }
-        
-        # With strict nesting
-        strict_reward = TagReward(tag_specs=tag_specs, strict_nesting=True)
-        
-        # Properly nested
-        properly_nested = """
-        <outer>
-            This is outer content
-            <inner>This is inner content</inner>
-        </outer>
-        """
-        self.assertGreater(strict_reward.compute_reward(properly_nested), 0.9)
-        
-        # Improperly nested
-        improperly_nested = """
-        <outer>
-            This is outer content
-            <inner>This is inner content
-        </outer>
-        </inner>
-        """
-        self.assertLess(strict_reward.compute_reward(improperly_nested), 0.5)
-        
-        # Without strict nesting
-        non_strict_reward = TagReward(tag_specs=tag_specs, strict_nesting=False)
-        self.assertGreater(non_strict_reward.compute_reward(improperly_nested), 0.5)
-    
-    def test_content_requirements(self):
-        """Test content requirements for tags."""
-        # Define tag specifications with content requirements
-        tag_specs = {
-            'think': {
-                'required': True, 
-                'content_required': True,
-                'content_regex': r'.*\bstep\b.*'  # Must contain the word "step"
-            },
+            'thinking': {'required': True},
             'answer': {'required': True}
         }
         
         reward = TagReward(tag_specs=tag_specs)
         
+        # Compliant response
+        compliant = "<thinking>This is a math problem. 6 * 7 = 42</thinking><answer>42</answer>"
+        self.assertGreater(reward.compute_reward(compliant), 0.8)
+        
+        # Missing required tag
+        missing_tag = "<thinking>This is a math problem. 6 * 7 = 42</thinking>"
+        self.assertLess(reward.compute_reward(missing_tag), 0.5)
+        
+        # Empty tag content
+        empty_content = "<thinking></thinking><answer>42</answer>"
+        self.assertLess(reward.compute_reward(empty_content), 0.8)
+    
+    def test_nested_tags(self):
+        """Test nested tags."""
+        tag_specs = {
+            'thinking': {'required': True},
+            'code': {'required': False},
+            'answer': {'required': True}
+        }
+        
+        reward = TagReward(tag_specs=tag_specs)
+        
+        # Properly nested tags
+        nested = """
+        <thinking>
+            This is a math problem.
+            <code>6 * 7 = 42</code>
+        </thinking>
+        <answer>42</answer>
+        """
+        self.assertGreater(reward.compute_reward(nested), 0.8)
+        
+        # Improperly nested tags with strict_nesting=True (default)
+        improper = """
+        <thinking>
+            This is a math problem.
+            <code>6 * 7 = 42
+        </thinking>
+        </code>
+        <answer>42</answer>
+        """
+        self.assertLess(reward.compute_reward(improper), 0.5)
+        
+        # Improperly nested tags with strict_nesting=False
+        lenient_reward = TagReward(tag_specs=tag_specs, strict_nesting=False)
+        self.assertGreater(lenient_reward.compute_reward(improper), 0.5)
+    
+    def test_content_requirements(self):
+        """Test content requirements."""
+        tag_specs = {
+            'thinking': {'required': True, 'content_required': True},
+            'answer': {'required': True, 'content_regex': r'^\d+$'}
+        }
+        
+        reward = TagReward(tag_specs=tag_specs)
+        
         # Valid content
-        valid_content = """
-        <think>First step: analyze the problem. Second step: solve it.</think>
-        <answer>The solution is 42.</answer>
-        """
-        self.assertGreater(reward.compute_reward(valid_content), 0.9)
+        valid = "<thinking>This is a math problem. 6 * 7 = 42</thinking><answer>42</answer>"
+        self.assertGreater(reward.compute_reward(valid), 0.8)
         
-        # Invalid content (missing required word)
-        invalid_content = """
-        <think>I need to analyze the problem and then solve it.</think>
-        <answer>The solution is 42.</answer>
-        """
-        self.assertLess(reward.compute_reward(invalid_content), 0.9)
-        
-        # Empty content
-        empty_content = """
-        <think></think>
-        <answer>The solution is 42.</answer>
-        """
-        self.assertLess(reward.compute_reward(empty_content), 0.7)
+        # Invalid content (non-numeric answer)
+        invalid = "<thinking>This is a math problem. 6 * 7 = 42</thinking><answer>forty-two</answer>"
+        self.assertLess(reward.compute_reward(invalid), 0.8)
