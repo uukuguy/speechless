@@ -15,7 +15,7 @@
 """
 Example usage of reward functions for RL fine-tuning.
 
-This script demonstrates how to use the reward functions defined in reward_functions.py
+This script demonstrates how to use the reward functions defined in the reward_functions package
 for evaluating language model outputs.
 """
 
@@ -23,11 +23,15 @@ import json
 import argparse
 from typing import List, Dict, Any
 
-from reward_functions import (
-    LengthReward, FormatReward, MathReward, CodeReward,
-    FactualityReward, CoherenceReward, TaskSpecificReward, TagReward, CombinedReward,
-    create_reward_function
-)
+# Updated imports from the new package structure
+from speechless.reasoning.general_reasoner.reward_functions.text_rewards import LengthReward, FormatReward, CoherenceReward
+from speechless.reasoning.general_reasoner.reward_functions.math_rewards import MathReward
+from speechless.reasoning.general_reasoner.reward_functions.code_rewards import CodeReward
+from speechless.reasoning.general_reasoner.reward_functions.factuality_rewards import FactualityReward
+from speechless.reasoning.general_reasoner.reward_functions.task_rewards import TaskSpecificReward
+from speechless.reasoning.general_reasoner.reward_functions.tag_rewards import TagReward
+from speechless.reasoning.general_reasoner.reward_functions.combined_rewards import CombinedReward
+from speechless.reasoning.general_reasoner.reward_functions.utils import create_reward_function
 
 
 def demonstrate_length_reward():

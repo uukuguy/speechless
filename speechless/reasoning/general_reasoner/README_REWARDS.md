@@ -306,6 +306,7 @@ custom_reward = TaskSpecificReward(
     custom_reward_fn=custom_reward_fn
 )
 ```
+
 ### TagReward
 
 Evaluates the correct usage of XML-style tags in responses, with support for mandatory and optional tags.
@@ -414,7 +415,12 @@ The module includes a comprehensive test suite. To run the tests:
 
 ```bash
 cd speechless
-python -m unittest speechless/reasoning/general_reasoner/test_reward_functions.py
+# Run all tests
+python -m unittest discover -s speechless/reasoning/general_reasoner/reward_functions/tests
+
+# Run specific test files
+python -m unittest speechless/reasoning/general_reasoner/reward_functions/tests/test_base.py
+python -m unittest speechless/reasoning/general_reasoner/reward_functions/tests/test_text_rewards.py
 ```
 
 ## Contributing
