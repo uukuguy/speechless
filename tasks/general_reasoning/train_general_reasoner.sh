@@ -171,7 +171,7 @@ echo -e "Training with the following parameters:\nTrain Batch Size: $TRAIN_BATCH
 
 PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} 
 
-HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . --use-gpu \
+HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
     --entrypoint-num-cpus=1 \
     --runtime-env-json='{
          "working_dir": "'${WORKING_DIR}'",
