@@ -136,6 +136,9 @@ class TaskRunner:
                 from verl.workers.fsdp_workers import RewardModelWorker
             elif config.reward_model.strategy == 'megatron':
                 from verl.workers.megatron_workers import RewardModelWorker
+            # FIXME: verifier is not a strategy, but a type of reward model. (for general reasoner)
+            elif config.reward_model.strategy == 'verifier':
+                from verifier import RewardModelWorker
             else:
                 raise NotImplementedError
             role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
@@ -148,14 +151,26 @@ class TaskRunner:
         elif reward_manager_name == 'prime':
             from verl.workers.reward_manager import PrimeRewardManager
             reward_manager_cls = PrimeRewardManager
+
+        # FIXME: add batch reward manager (for general reasoner)
+        elif reward_manager_name == 'batch':
+            from verl.workers.reward_manager import BatchRewardManager
+            reward_manager_cls = BatchRewardManager
+        # FIXME: add dapo reward manager (for general reasoner)
+        elif reward_manager_name == 'dapo':
+            from verl.workers.reward_manager import DAPORewardManager
+            reward_manager_cls = DAPORewardManager
+
         else:
             raise NotImplementedError
 
         compute_score = get_custom_reward_fn(config)
-        reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=0, compute_score=compute_score)
+        # FIXME: add reward_kwargs (for general reasoner)
+        reward_kwargs = dict(config.reward_model.get("reward_kwargs", {}))
+        reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=0, compute_score=compute_score, **reward_kwargs)
 
         # Note that we always use function-based RM for validation
-        val_reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score)
+        val_reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, **reward_kwargs)
 
         resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
 
