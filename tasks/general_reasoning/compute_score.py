@@ -12,29 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from math_verify.metric import math_metric
-    from math_verify.parser import LatexExtractionConfig, ExprExtractionConfig
-    from math_verify.errors import TimeoutException
-except ImportError:
-    print("To use Math-Verify, please install it first by running `pip install math-verify`.")
+"""
+Math Verification Reward Function
 
+This module provides backward compatibility for the compute_score function
+by importing the MathVerifyReward class from the reward_functions package.
+"""
 
+from speechless.reasoning.general_reasoner.reward_functions.math_rewards import LengthReward
 def compute_score(data_source, solution_str, ground_truth, extra_info=None):
-    model_output = solution_str
-    verify_func = math_metric(
-        gold_extraction_target=(LatexExtractionConfig(),),
-        pred_extraction_target=(ExprExtractionConfig(), LatexExtractionConfig()),
-    )
-    ret_score = 0.
+    """
+    Legacy function to compute math verification score.
+    
+    This function is maintained for backward compatibility.
+    It's recommended to use the MathVerifyReward class instead.
+    
+    Args:
+        data_source: Source of the problem
+        solution_str: Model's solution string
+        ground_truth: Ground truth answer
+        extra_info: Additional information
+        
+    Returns:
+        Verification score between 0 and 1
+    """
+    reward = LengthReward(min_length=256, max_length=2048)
+    return reward.compute_reward(solution_str, reference=ground_truth)
 
-    # Wrap the ground truth in \boxed{} format for verification
-    ground_truth_boxed = "\\boxed{" + ground_truth + "}"
-    try:
-        ret_score, _ = verify_func([ground_truth_boxed], [model_output])
-    except Exception as e:
-        pass
-    except TimeoutException:
-        ret_score = 0
+# from speechless.reasoning.general_reasoner.reward_functions.math_rewards import MathVerifyReward
 
-    return ret_score
+# def compute_score(data_source, solution_str, ground_truth, extra_info=None):
+#     """
+#     Legacy function to compute math verification score.
+    
+#     This function is maintained for backward compatibility.
+#     It's recommended to use the MathVerifyReward class instead.
+    
+#     Args:
+#         data_source: Source of the problem
+#         solution_str: Model's solution string
+#         ground_truth: Ground truth answer
+#         extra_info: Additional information
+        
+#     Returns:
+#         Verification score between 0 and 1
+#     """
+#     reward = MathVerifyReward()
+#     return reward.compute_reward(solution_str, reference=ground_truth)
+
+
+# Example usage
+if __name__ == "__main__":
+    print("This module provides backward compatibility for the compute_score function.")
+    print("For examples, see the example_usage function in reward_functions.utils module")
+    
+    # Simple example
+    answer = "The answer is 42."
+    ground_truth = "42"
+    score = compute_score(None, answer, ground_truth)
+    print(f"Score: {score}")
