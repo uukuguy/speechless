@@ -185,7 +185,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     -- python -m speechless.reasoning.general_reasoner \
     algorithm.adv_estimator=grpo \
     custom_reward_function.path=./compute_score.py \
-    reward_model.enable=True \
+    reward_model.enable=False \
     reward_model.model.path=$HDFS_MODEL_PATH/$VERIFIER_NAME \
     reward_model.strategy=verifier \
     reward_model.reward_manager=naive \
