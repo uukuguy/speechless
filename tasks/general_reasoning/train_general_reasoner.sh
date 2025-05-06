@@ -28,7 +28,15 @@ export HDFS_LOG_PATH=${SCRIPT_DIR}/logs # to be replaced
 # fi
 export RUN_NAME=${TASK_NAME}_${CURRENT_TIME}
 
-export NUM_GPUS=8
+# Calculate the number of GPUs based on the CUDA_VISIBLE_DEVICES variable. Use all the GPUs if not set.
+if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
+  export NUM_GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+  # Automatically set CUDA_VISIBLE_DEVICES to all available GPUs
+  export CUDA_VISIBLE_DEVICES=$(seq -s, 0 $((NUM_GPUS - 1)))
+else
+  IFS=',' read -r -a gpu_array <<< "$CUDA_VISIBLE_DEVICES"
+  export NUM_GPUS=${#gpu_array[@]}
+fi
 
 # Default values
 TRAIN_BATCH_SIZE=1024
@@ -167,10 +175,6 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     --entrypoint-num-cpus=1 \
     --runtime-env-json='{
          "working_dir": "'${WORKING_DIR}'",
-          "excludes":[
-            "$HDFS_DATA_PATH/$DATASET_NAME/train.parquet",
-            "$HDFS_DATA_PATH/$DATASET_NAME/test.parquet"
-          ],
          "env_vars": {
             "http_proxy": "",
             "https_proxy": "",
