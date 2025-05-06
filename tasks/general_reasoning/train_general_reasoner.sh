@@ -179,7 +179,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
             "http_proxy": "",
             "https_proxy": "",
             "PYTHONPATH": "'${PYTHONPATH}'",
-            "CUDA_VISIBLE_DEVICES": "${CUDA_VISIBLE_DEVICES}",
+            "CUDA_VISIBLE_DEVICES": "'${CUDA_VISIBLE_DEVICES}'"
          }
      }' \
     -- python -m speechless.reasoning.general_reasoner \
