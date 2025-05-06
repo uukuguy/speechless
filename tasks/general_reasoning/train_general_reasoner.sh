@@ -171,6 +171,10 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
             "http_proxy": "",
             "https_proxy": "",
             "PYTHONPATH": "'${PYTHONPATH}'",
+            "excludes":[
+              "$HDFS_DATA_PATH/$DATASET_NAME/train.parquet",
+              "$HDFS_DATA_PATH/$DATASET_NAME/test.parquet"
+            ],
             "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7"
          }
      }' \
