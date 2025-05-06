@@ -19,7 +19,7 @@ This module provides backward compatibility for the compute_score function
 by importing the MathVerifyReward class from the reward_functions package.
 """
 
-from speechless.reasoning.general_reasoner.reward_functions.math_rewards import LengthReward
+from speechless.reasoning.general_reasoner.reward_functions import LengthReward
 def compute_score(data_source, solution_str, ground_truth, extra_info=None):
     """
     Legacy function to compute math verification score.
