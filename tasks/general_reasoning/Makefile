@@ -15,8 +15,8 @@ ray_start:
         ray stop
         # ray start --head
         ray start --head \
-          --dashboard-host 0.0.0.0 \
-          --dashboard-port 8265 \
+                --dashboard-host 0.0.0.0 \
+                --dashboard-port 8265 \
 
 test_ray:
         python test_ray.py
