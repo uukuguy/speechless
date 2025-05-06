@@ -6,8 +6,12 @@ export NCCL_DEBUG=DEBUG
 export RAY_BACKEND_LOG_LEVEL=debug
 export RAY_DEDUP_LOGS=1
 
+export HEAD_IP=$(hostname)
+# export RAY_ADDRESS=$(hostname):8265
+
 export SCRIPT_DIR=$(cd $(dirname $0); pwd)
-export WORKING_DIR=$(cd ${SCRIPT_DIR}/..; pwd)
+# export WORKING_DIR=$(cd ${SCRIPT_DIR}/..; pwd)
+export WORKING_DIR=${SCRIPT_DIR}
 export TASK_NAME=$(basename $(dirname "$0"))
 export CURRENT_TIME=$(date +%Y%m%d_%H%M%S)
 
@@ -155,16 +159,21 @@ echo "LOG FILE PATH: $LOG_FILE_PATH"
 max_num_batched_tokens=$(expr $MAX_PROMPT_LENGTH + $MAX_RESPONSE_LENGTH + 1000)
 echo -e "Training with the following parameters:\nTrain Batch Size: $TRAIN_BATCH_SIZE\nVal Batch Size: $VAL_BATCH_SIZE\nMax Prompt Length: $MAX_PROMPT_LENGTH\nMax Response Length: $MAX_RESPONSE_LENGTH\nLearning Rate: $LEARNING_RATE\nPPO Mini Batch Size: $PPO_MINI_BATCH_SIZE\nPPO Micro Batch Size: $PPO_MICRO_BATCH_SIZE\nKL Loss Coefficient: $KL_LOSS_COEF\nKL Loss Type: $KL_LOSS_TYPE\nTemperature: $TEMPERATURE\nRollout N: $ROLLOUT_N\nKL Coefficient: $KL_COEF\nTotal Epochs: $TOTAL_EPOCHS\nDataset Name: $DATASET_NAME\nModel Name: $MODEL_NAME"
 
-HYDRA_FULL_ERROR=1 ray job submit --address=${HEAD_IP}:6379 \
+
+
+PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} 
+
+HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
     --entrypoint-num-cpus=1 \
     --runtime-env-json='{
          "working_dir": "'${WORKING_DIR}'",
          "env_vars": {
             "http_proxy": "",
             "https_proxy": "",
+            "PYTHONPATH": "'${PYTHONPATH}'",
             "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7"
          }
-      }' \
+     }' \
     -- python -m speechless.reasoning.general_reasoner \
     algorithm.adv_estimator=grpo \
     custom_reward_function.path=./compute_score.py \
