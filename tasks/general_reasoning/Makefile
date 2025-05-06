@@ -10,10 +10,18 @@ preprocess_data:
 #	--node-ip-address 28.160.2.28 \
 #	--port 6379
 
+# Calculate the number of GPUs based on the CUDA_VISIBLE_DEVICES variable. Use all the GPUs if not set.
+ifneq ($(CUDA_VISIBLE_DEVICES),)
+        GPU_COUNT := $(shell echo $(CUDA_VISIBLE_DEVICES) | tr ',' '\n' | wc -l)
+else
+        GPU_COUNT := $(shell nvidia-smi -L | wc -l)
+endif
+
 ray_start:
 	ray stop
 	# ray start --head
 	ray start --head \
+                --num-gpus ${GPU_COUNT} \
 		--dashboard-host 0.0.0.0 \
 		--dashboard-port 8265 \
 
