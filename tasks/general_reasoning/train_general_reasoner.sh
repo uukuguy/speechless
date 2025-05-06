@@ -61,7 +61,7 @@ ROLLOUT_GPU_MEMORY_UTIL=0.6
 ACTOR_OPTIMIZER_OFFLOAD=False
 ACTOR_PARAMETER_OFFLOAD=False
 MODEL_NAME=Qwen/Qwen3-4B
-VERIFIER_NAME=general-verifier
+VERIFIER_NAME=TIGER-Lab/general-verifier
 
 generate_suffix() {
   local suffix=""
