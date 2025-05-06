@@ -324,7 +324,7 @@ def run_ppo(config) -> None:
     ray.get(runner.run.remote(config))
 
 
-@hydra.main(config_path='./verl/verl/trainer/config', config_name='ppo_trainer', version_base=None)
+@hydra.main(config_path='./verl/trainer/config', config_name='ppo_trainer', version_base=None)
 def main(config):
     """
     Main entry point for the PPO training script.

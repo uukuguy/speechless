@@ -6,17 +6,29 @@ export NCCL_DEBUG=DEBUG
 export RAY_BACKEND_LOG_LEVEL=debug
 export RAY_DEDUP_LOGS=1
 
-export PROJECT_NAME= # to be replaced
-export WANDB_API_KEY= # to be replaced
+export HEAD_IP=$(hostname)
+# export RAY_ADDRESS=$(hostname):8265
+
+export SCRIPT_DIR=$(cd $(dirname $0); pwd)
+# export WORKING_DIR=$(cd ${SCRIPT_DIR}/..; pwd)
+export WORKING_DIR=${SCRIPT_DIR}
+export TASK_NAME=$(basename $(dirname "$0"))
+export CURRENT_TIME=$(date +%Y%m%d_%H%M%S)
+
+export PROJECT_NAME=${TASK_NAME} # to be replaced
+# export WANDB_API_KEY= # to be replaced
 export WANDB_OFFICIAL=1
 # export VLLM_ATTENTION_BACKEND=XFORMERS
-export HDFS_DATA_PATH= # to be replaced
-export HDFS_MODEL_PATH= # to be replaced
-export HDFS_CHECKPOINT_PATH= # to be replaced
-export HDFS_LOG_PATH= # to be replaced
-if [ -z "$RUN_NAME" ]; then
-    RUN_NAME=general-reasoner
-fi
+export HDFS_DATA_PATH=${SCRIPT_DIR}/data # to be replaced
+export HDFS_MODEL_PATH=/opt/local/llm_models/huggingface.co # to be replaced
+export HDFS_CHECKPOINT_PATH=${SCRIPT_DIR}/outputs # to be replaced
+export HDFS_LOG_PATH=${SCRIPT_DIR}/logs # to be replaced
+# if [ -z "$RUN_NAME" ]; then
+#     RUN_NAME=${TASK_NAME}_${CURRENT_TIME}
+# fi
+export RUN_NAME=${TASK_NAME}_${CURRENT_TIME}
+
+export NUM_GPUS=8
 
 # Default values
 TRAIN_BATCH_SIZE=1024
@@ -40,7 +52,7 @@ DATASET_NAME=webinstruct-verified
 ROLLOUT_GPU_MEMORY_UTIL=0.6
 ACTOR_OPTIMIZER_OFFLOAD=False
 ACTOR_PARAMETER_OFFLOAD=False
-MODEL_NAME=Qwen2.5-7B
+MODEL_NAME=Qwen/Qwen3-4B
 VERIFIER_NAME=general-verifier
 
 generate_suffix() {
@@ -89,8 +101,9 @@ generate_suffix() {
 echo "Arguments received: $@"
 
 # Generate a unique suffix based on the input arguments
-SUFFIX=$(generate_suffix "$@")
-RUN_NAME="$RUN_NAME$SUFFIX"
+# SUFFIX=$(generate_suffix "$@")
+# RUN_NAME="$RUN_NAME$SUFFIX"
+
 LOG_FILE_PATH="$HDFS_LOG_PATH/$RUN_NAME.log"
 
 # Parse named arguments
@@ -146,17 +159,22 @@ echo "LOG FILE PATH: $LOG_FILE_PATH"
 max_num_batched_tokens=$(expr $MAX_PROMPT_LENGTH + $MAX_RESPONSE_LENGTH + 1000)
 echo -e "Training with the following parameters:\nTrain Batch Size: $TRAIN_BATCH_SIZE\nVal Batch Size: $VAL_BATCH_SIZE\nMax Prompt Length: $MAX_PROMPT_LENGTH\nMax Response Length: $MAX_RESPONSE_LENGTH\nLearning Rate: $LEARNING_RATE\nPPO Mini Batch Size: $PPO_MINI_BATCH_SIZE\nPPO Micro Batch Size: $PPO_MICRO_BATCH_SIZE\nKL Loss Coefficient: $KL_LOSS_COEF\nKL Loss Type: $KL_LOSS_TYPE\nTemperature: $TEMPERATURE\nRollout N: $ROLLOUT_N\nKL Coefficient: $KL_COEF\nTotal Epochs: $TOTAL_EPOCHS\nDataset Name: $DATASET_NAME\nModel Name: $MODEL_NAME"
 
-HYDRA_FULL_ERROR=1 ray job submit --address=${HEAD_IP}:6379 \
+
+
+PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless} 
+
+HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
     --entrypoint-num-cpus=1 \
     --runtime-env-json='{
          "working_dir": "'${WORKING_DIR}'",
          "env_vars": {
             "http_proxy": "",
             "https_proxy": "",
+            "PYTHONPATH": "'${PYTHONPATH}'",
             "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7"
          }
-      }' \
-    -- python -m main_ppo \
+     }' \
+    -- python -m speechless.reasoning.general_reasoner \
     algorithm.adv_estimator=grpo \
     custom_reward_function.path=./compute_score.py \
     reward_model.enable=True \
@@ -202,7 +220,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=${HEAD_IP}:6379 \
     trainer.logger=['console','wandb'] \
     trainer.project_name=$PROJECT_NAME \
     trainer.experiment_name=$RUN_NAME \
-    trainer.n_gpus_per_node=8 \
+    trainer.n_gpus_per_node=${NUM_GPUS} \
     trainer.nnodes=1 \
     trainer.save_freq=20 \
     trainer.test_freq=5 \
