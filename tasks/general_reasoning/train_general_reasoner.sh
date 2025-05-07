@@ -12,7 +12,7 @@ export HEAD_IP=$(hostname)
 export SCRIPT_DIR=$(cd $(dirname $0); pwd)
 # export WORKING_DIR=$(cd ${SCRIPT_DIR}/..; pwd)
 export WORKING_DIR=${SCRIPT_DIR}
-export TASK_NAME=$(basename $(dirname "$0"))
+export TASK_NAME=$(basename ${WORK_DIR})
 export CURRENT_TIME=$(date +%Y%m%d_%H%M%S)
 
 export PROJECT_NAME=${TASK_NAME} # to be replaced
@@ -39,23 +39,23 @@ else
 fi
 
 # Default values
-TRAIN_BATCH_SIZE=1024
-VAL_BATCH_SIZE=500
+TRAIN_BATCH_SIZE=256
+VAL_BATCH_SIZE=256
 MAX_PROMPT_LENGTH=1024
 MAX_RESPONSE_LENGTH=8192
 LEARNING_RATE=5e-7
 PPO_MINI_BATCH_SIZE=256
 # per GPU
-PPO_MICRO_BATCH_SIZE=8
+PPO_MICRO_BATCH_SIZE=4
 CLIP_RATIO=0.3
 KL_LOSS_COEF=0.0001
 ENTROPY_COEFFIENT=0.001
 KL_LOSS_TYPE="low_var_kl"
 TEMPERATURE=1.0
-LOG_PROB_MICRO_BATCH_SIZE=160
+LOG_PROB_MICRO_BATCH_SIZE=80
 ROLLOUT_N=8
 KL_COEF=0.001
-TOTAL_EPOCHS=30
+TOTAL_EPOCHS=10
 DATASET_NAME=webinstruct-verified
 ROLLOUT_GPU_MEMORY_UTIL=0.6
 ACTOR_OPTIMIZER_OFFLOAD=False
@@ -230,7 +230,11 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     trainer.experiment_name=$RUN_NAME \
     trainer.n_gpus_per_node=${NUM_GPUS} \
     trainer.nnodes=1 \
-    trainer.save_freq=20 \
-    trainer.test_freq=5 \
+    trainer.save_freq=10 \
+    trainer.test_freq=10 \
+    trainer.default_local_dir=$HDFS_CHECKPOINT_PATH/$RUN_NAME \
+    trainer.total_epochs=$TOTAL_EPOCHS \
+    trainer.logging_level=info \
+    trainer.checkpoint_freq=5 \
     trainer.default_local_dir=$HDFS_CHECKPOINT_PATH/$RUN_NAME \
     trainer.total_epochs=$TOTAL_EPOCHS 2>&1 | tee -a $LOG_FILE_PATH
