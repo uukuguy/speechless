@@ -21,7 +21,7 @@ ray_start:
 	ray stop
 	# ray start --head
 	ray start --head \
-		--enable-usage-stats \
+		--disable-usage-stats \
 		--num-gpus ${GPU_COUNT} \
 		--dashboard-host 0.0.0.0 \
 		--dashboard-port 8265 \
