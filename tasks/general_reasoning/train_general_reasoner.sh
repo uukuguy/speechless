@@ -23,6 +23,10 @@ export HDFS_DATA_PATH=${SCRIPT_DIR}/data # to be replaced
 export HDFS_MODEL_PATH=/opt/local/llm_models/huggingface.co # to be replaced
 export HDFS_CHECKPOINT_PATH=${SCRIPT_DIR}/outputs # to be replaced
 export HDFS_LOG_PATH=${SCRIPT_DIR}/logs # to be replaced
+if [ ! -d "$HDFS_LOG_PATH" ]; then
+    mkdir -p $HDFS_LOG_PATH
+fi
+
 # if [ -z "$RUN_NAME" ]; then
 #     RUN_NAME=${TASK_NAME}_${CURRENT_TIME}
 # fi
