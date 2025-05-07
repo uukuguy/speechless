@@ -233,8 +233,4 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     trainer.save_freq=10 \
     trainer.test_freq=10 \
     trainer.default_local_dir=$HDFS_CHECKPOINT_PATH/$RUN_NAME \
-    trainer.total_epochs=$TOTAL_EPOCHS \
-    trainer.logging_level=info \
-    trainer.checkpoint_freq=5 \
-    trainer.default_local_dir=$HDFS_CHECKPOINT_PATH/$RUN_NAME \
     trainer.total_epochs=$TOTAL_EPOCHS 2>&1 | tee -a $LOG_FILE_PATH
