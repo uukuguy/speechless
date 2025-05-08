@@ -40,56 +40,46 @@ def generate_by_hf(args):
 
     The generated text is printed to the console along with the TPS metric.
     """
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+        tokenizer.pad_token = tokenizer.pad_token or tokenizer.eos_token
 
-    model_kwargs = {
-        "torch_dtype": torch.bfloat16,
-        "device_map": device, #device_map,
-        "trust_remote_code": True,
-    }
-    # model_kwargs["attn_implementation"] = "flash_attention_2"
-    model = AutoModelForCausalLM.from_pretrained(args.model_path,
-                                                # quantization_config=bnb_config,
-                                                **model_kwargs)
+        model_kwargs = {
+            "torch_dtype": torch.bfloat16,
+            "device_map": device,
+            "trust_remote_code": True,
+        }
+        model = AutoModelForCausalLM.from_pretrained(args.model_path, **model_kwargs)
 
-    if args.prompt_file:
-        prompt = open(args.prompt_file).read().strip()
-    else:
-        prompt = args.prompt
+        prompt = open(args.prompt_file).read().strip() if args.prompt_file else args.prompt
 
-    generate_kwargs = {
-        "temperature": args.temperature,
-        "max_new_tokens": args.max_new_tokens,
-        "do_sample": True,
-        "top_p": args.top_p,
-        # "stop": args.stop,
-        # "seed": args.seed,
-        # "stream": args.stream,
-    }
+        generate_kwargs = {
+            "temperature": args.temperature,
+            "max_new_tokens": args.max_new_tokens,
+            "do_sample": True,
+            "top_p": args.top_p,
+        }
 
-    start_time = time.time()
-    inputs = tokenizer(
-        prompt,
-        return_token_type_ids=False,
-        return_attention_mask=True,
-        return_tensors="pt",
-    ).to(device)
-    gen_tokens = model.generate(**inputs, pad_token_id=tokenizer.pad_token_id, **generate_kwargs)
-    result = tokenizer.batch_decode(
-        gen_tokens[:, inputs["input_ids"].shape[1] :],
-        skip_special_tokens=True,
-    )
-    generated_text = result[0]
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    tps = (gen_tokens.shape[1] - inputs["input_ids"].shape[1]) / elapsed_time
-    print(f"TPS (Tokens Per Second): {round(tps, 2)}")
+        start_time = time.time()
+        inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True).to(device)
+        
+        with torch.no_grad():
+            gen_tokens = model.generate(**inputs, pad_token_id=tokenizer.pad_token_id, **generate_kwargs)
+        
+        generated_text = tokenizer.decode(gen_tokens[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        tps = (gen_tokens.shape[1] - inputs["input_ids"].shape[1]) / elapsed_time
+        
+        logger.info(f"Generated text: {generated_text}")
+        logger.info(f"TPS (Tokens Per Second): {round(tps, 2)}")
 
-    print(generated_text)
+        return generated_text
 
-    return generated_text
+    except Exception as e:
+        logger.error(f"Error in generate_by_hf: {str(e)}")
+        return None
 
 
 # def generate_by_hf(args):
