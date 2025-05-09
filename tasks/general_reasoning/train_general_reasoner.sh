@@ -177,6 +177,8 @@ PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless}
 
     # --entrypoint-num-cpus=1 \
 
+    # -- python -m speechless.reasoning.general_reasoner \
+
 HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
     --runtime-env-json='{
          "working_dir": "'${WORKING_DIR}'",
@@ -187,7 +189,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
             "CUDA_VISIBLE_DEVICES": "'${CUDA_VISIBLE_DEVICES}'"
          }
      }' \
-    -- python -m speechless.reasoning.general_reasoner \
+    -- python -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     custom_reward_function.path=./compute_score.py \
     reward_model.enable=False \
