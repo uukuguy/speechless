@@ -234,7 +234,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     algorithm.kl_ctrl.kl_coef=$KL_COEF \
     critic.ppo_micro_batch_size_per_gpu=8 \
     trainer.critic_warmup=0 \
-    trainer.logger=['console','wandb'] \
+    trainer.logger=['console','tensorboard'] \
     trainer.project_name=$PROJECT_NAME \
     trainer.experiment_name=$RUN_NAME \
     trainer.n_gpus_per_node=${NUM_GPUS} \
