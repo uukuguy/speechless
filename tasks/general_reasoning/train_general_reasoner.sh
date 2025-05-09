@@ -43,12 +43,12 @@ else
 fi
 
 # Default values
-TRAIN_BATCH_SIZE=256
-VAL_BATCH_SIZE=256
-MAX_PROMPT_LENGTH=1024
-MAX_RESPONSE_LENGTH=8192
+TRAIN_BATCH_SIZE=16
+# VAL_BATCH_SIZE=256
+MAX_PROMPT_LENGTH=512
+MAX_RESPONSE_LENGTH=2048
 LEARNING_RATE=5e-7
-PPO_MINI_BATCH_SIZE=256
+PPO_MINI_BATCH_SIZE=16
 # per GPU
 PPO_MICRO_BATCH_SIZE=2
 CLIP_RATIO=0.3
@@ -75,7 +75,7 @@ generate_suffix() {
   while [[ "$#" -gt 0 ]]; do
     case $1 in
       --train_batch_size) suffix+="_batch$2"; shift 2 ;;
-      --val_batch_size) suffix+="_valbatch$2"; shift 2 ;;
+      # --val_batch_size) suffix+="_valbatch$2"; shift 2 ;;
       --max_prompt_length) suffix+="_max_prompt$2"; shift 2 ;;
       --max_response_length) suffix+="_max_response$2"; shift 2 ;;
       --learning_rate) suffix+="_lr$2"; shift 2 ;;
@@ -123,7 +123,7 @@ while [[ "$#" -gt 0 ]]; do
   echo "Processing: $1"
   case "$1" in
     --train_batch_size) TRAIN_BATCH_SIZE="$2"; shift 2 ;;
-    --val_batch_size) VAL_BATCH_SIZE="$2"; shift 2 ;;
+    # --val_batch_size) VAL_BATCH_SIZE="$2"; shift 2 ;;
     --max_prompt_length) MAX_PROMPT_LENGTH="$2"; shift 2 ;;
     --max_response_length) MAX_RESPONSE_LENGTH="$2"; shift 2 ;;
     --learning_rate) LEARNING_RATE="$2"; shift 2 ;;
@@ -152,7 +152,7 @@ done
 
 echo "Training with the following parameters:"
 echo "Train Batch Size: $TRAIN_BATCH_SIZE"
-echo "Val Batch Size: $VAL_BATCH_SIZE" 
+# echo "Val Batch Size: $VAL_BATCH_SIZE" 
 echo "Max Prompt Length: $MAX_PROMPT_LENGTH" 
 echo "Max Response Length: $MAX_RESPONSE_LENGTH" 
 echo "Learning Rate: $LEARNING_RATE" 
@@ -168,8 +168,9 @@ echo "Dataset Name: $DATASET_NAME"
 echo "Model Name: $MODEL_NAME"
 echo "LOG FILE PATH: $LOG_FILE_PATH"
 
+# $VAL_BATCH_SIZE\n
 max_num_batched_tokens=$(expr $MAX_PROMPT_LENGTH + $MAX_RESPONSE_LENGTH + 1000)
-echo -e "Training with the following parameters:\nTrain Batch Size: $TRAIN_BATCH_SIZE\nVal Batch Size: $VAL_BATCH_SIZE\nMax Prompt Length: $MAX_PROMPT_LENGTH\nMax Response Length: $MAX_RESPONSE_LENGTH\nLearning Rate: $LEARNING_RATE\nPPO Mini Batch Size: $PPO_MINI_BATCH_SIZE\nPPO Micro Batch Size: $PPO_MICRO_BATCH_SIZE\nKL Loss Coefficient: $KL_LOSS_COEF\nKL Loss Type: $KL_LOSS_TYPE\nTemperature: $TEMPERATURE\nRollout N: $ROLLOUT_N\nKL Coefficient: $KL_COEF\nTotal Epochs: $TOTAL_EPOCHS\nDataset Name: $DATASET_NAME\nModel Name: $MODEL_NAME"
+echo -e "Training with the following parameters:\nTrain Batch Size: $TRAIN_BATCH_SIZE\nVal Batch Size: Max Prompt Length: $MAX_PROMPT_LENGTH\nMax Response Length: $MAX_RESPONSE_LENGTH\nLearning Rate: $LEARNING_RATE\nPPO Mini Batch Size: $PPO_MINI_BATCH_SIZE\nPPO Micro Batch Size: $PPO_MICRO_BATCH_SIZE\nKL Loss Coefficient: $KL_LOSS_COEF\nKL Loss Type: $KL_LOSS_TYPE\nTemperature: $TEMPERATURE\nRollout N: $ROLLOUT_N\nKL Coefficient: $KL_COEF\nTotal Epochs: $TOTAL_EPOCHS\nDataset Name: $DATASET_NAME\nModel Name: $MODEL_NAME"
 
 
 
@@ -178,6 +179,8 @@ PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless}
     # --entrypoint-num-cpus=1 \
 
     # -- python -m speechless.reasoning.general_reasoner \
+
+    # data.val_batch_size=$VAL_BATCH_SIZE \
 
 HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
     --runtime-env-json='{
@@ -200,7 +203,6 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     data.train_files=[$HDFS_DATA_PATH/$DATASET_NAME/train.parquet] \
     data.val_files=[$HDFS_DATA_PATH/$DATASET_NAME/test.parquet] \
     data.train_batch_size=$TRAIN_BATCH_SIZE \
-    data.val_batch_size=$VAL_BATCH_SIZE \
     data.max_prompt_length=$MAX_PROMPT_LENGTH \
     data.max_response_length=$MAX_RESPONSE_LENGTH \
     data.filter_overlong_prompts=True \
