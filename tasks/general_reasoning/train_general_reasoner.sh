@@ -205,7 +205,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     data.train_batch_size=$TRAIN_BATCH_SIZE \
     data.max_prompt_length=$MAX_PROMPT_LENGTH \
     data.max_response_length=$MAX_RESPONSE_LENGTH \
-    data.filter_overlong_prompts=True \
+    data.filter_overlong_prompts=False \
     data.truncation='error' \
     actor_rollout_ref.model.path=$HDFS_MODEL_PATH/$MODEL_NAME \
     actor_rollout_ref.actor.optim.lr=$LEARNING_RATE \
