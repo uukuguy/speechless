@@ -39,7 +39,7 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None):
     length_reward = LengthReward(min_length=256, max_length=2048)
     math_reward = MathVerifyReward()
 
-    combined_reward = CombinedReward(rewards_functions=[length_reward, math_reward])
+    combined_reward = CombinedReward(reward_functions=[length_reward, math_reward])
 
     return combined_reward.compute_reward(solution_str, reference=ground_truth)
 
