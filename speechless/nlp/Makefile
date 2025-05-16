@@ -57,6 +57,7 @@ run_apis_test_queries:
 		--num_train_epochs ${NUM_TRAIN_EPOCHS} \
 		--report_to tensorboard \
 		--overwrite_output_dir \
+		--remove_unused_columns False \
 		--output_dir ${OUTPUTS_DIR}
 
 TRAIN_QUERIES_FILE_PATH="./data/AFAC2024-Track1-api-classifer-train-queries.jsonl"
@@ -80,4 +81,5 @@ run_apis_train_queries:
 		--num_train_epochs ${NUM_TRAIN_EPOCHS} \
 		--report_to tensorboard \
 		--overwrite_output_dir \
+		--remove_unused_columns False \
 		--output_dir ${OUTPUTS_DIR}
