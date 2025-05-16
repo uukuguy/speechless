@@ -35,15 +35,51 @@ python run_classification_refactored.py \
   --per_device_eval_batch_size $BATCH_SIZE \
   --do_eval
 
-# Prediction only
-echo "Running prediction only..."
+# Prediction only (standard)
+echo "Running standard prediction..."
 python run_classification_refactored.py \
   --model_name_or_path $OUTPUT_DIR \
   --test_file ./data/test.jsonl \
   --text_column_names text \
-  --output_dir $OUTPUT_DIR \
+  --output_dir $OUTPUT_DIR/standard_prediction \
   --max_seq_length $MAX_SEQ_LENGTH \
   --per_device_eval_batch_size $BATCH_SIZE \
+  --do_predict
+
+# Prediction with temperature scaling
+echo "Running prediction with temperature scaling..."
+python run_classification_refactored.py \
+  --model_name_or_path $OUTPUT_DIR \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir $OUTPUT_DIR/temperature_scaling \
+  --max_seq_length $MAX_SEQ_LENGTH \
+  --per_device_eval_batch_size $BATCH_SIZE \
+  --temperature 1.5 \
+  --do_predict
+
+# Prediction with label distribution adjustment
+echo "Running prediction with label distribution adjustment..."
+python run_classification_refactored.py \
+  --model_name_or_path $OUTPUT_DIR \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir $OUTPUT_DIR/label_distribution \
+  --max_seq_length $MAX_SEQ_LENGTH \
+  --per_device_eval_batch_size $BATCH_SIZE \
+  --expected_label_distribution '{"0": 0.7, "1": 0.3}' \
+  --do_predict
+
+# Prediction with decision threshold adjustment (for binary classification)
+echo "Running prediction with decision threshold adjustment..."
+python run_classification_refactored.py \
+  --model_name_or_path $OUTPUT_DIR \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir $OUTPUT_DIR/threshold_adjustment \
+  --max_seq_length $MAX_SEQ_LENGTH \
+  --per_device_eval_batch_size $BATCH_SIZE \
+  --decision_threshold 0.7 \
   --do_predict
 
 # Combined run (train, eval, and predict)
