@@ -122,6 +122,73 @@ The refactored script is organized into the following main functions:
 
 Each function is designed to be independent and reusable, making the code more maintainable and easier to understand.
 
+## Handling Different Label Distributions
+
+The refactored script includes several techniques to handle situations where the label distribution in the inference/prediction dataset may be very different from the training dataset. This is a common issue in machine learning known as "distribution shift" or "dataset shift".
+
+### Available Techniques
+
+1. **Temperature Scaling**: Adjust the softmax temperature to make the predictions more or less confident.
+   - Higher temperature values make the model less confident (smoother probability distribution)
+   - Lower temperature values make the model more confident (sharper probability distribution)
+
+2. **Label Distribution Adjustment**: Explicitly adjust the predictions based on the expected label distribution in the test set.
+   - This is useful when you know the approximate distribution of labels in the test set
+   - The model's predictions are adjusted to match the expected distribution
+
+3. **Decision Threshold Adjustment**: For binary classification, adjust the decision threshold based on the expected label distribution.
+   - By default, the threshold is 0.5
+   - Increasing the threshold makes the model more conservative about predicting the positive class
+   - Decreasing the threshold makes the model more likely to predict the positive class
+
+4. **Prediction Threshold Adjustment**: For multi-label classification, adjust the threshold for each label.
+   - By default, the threshold is 0.0 (equivalent to using the sign of the logits)
+   - Increasing the threshold makes the model more conservative about predicting each label
+
+### Usage
+
+To use these techniques, add the appropriate parameters when running prediction:
+
+```bash
+# Temperature scaling
+python run_classification_refactored.py \
+  --model_name_or_path ./output \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir ./output/temperature_scaling \
+  --temperature 1.5 \
+  --do_predict
+
+# Label distribution adjustment
+python run_classification_refactored.py \
+  --model_name_or_path ./output \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir ./output/label_distribution \
+  --expected_label_distribution '{"0": 0.7, "1": 0.3}' \
+  --do_predict
+
+# Decision threshold adjustment (for binary classification)
+python run_classification_refactored.py \
+  --model_name_or_path ./output \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir ./output/threshold_adjustment \
+  --decision_threshold 0.7 \
+  --do_predict
+
+# Prediction threshold adjustment (for multi-label classification)
+python run_classification_refactored.py \
+  --model_name_or_path ./output \
+  --test_file ./data/test.jsonl \
+  --text_column_names text \
+  --output_dir ./output/multi_label_threshold \
+  --prediction_threshold 0.3 \
+  --do_predict
+```
+
+These techniques can be combined with the ensemble prediction methods described earlier for even better results.
+
 ## Ensemble Predictions
 
 The `ensemble_predictions.py` script allows you to combine predictions from multiple models trained with cross-validation to create a final prediction with higher accuracy.

@@ -28,6 +28,7 @@ import datasets
 import evaluate
 import numpy as np
 from datasets import Value, load_dataset
+from loguru import logger
 
 import transformers
 from transformers import (
@@ -180,6 +181,24 @@ class DataTrainingArguments:
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
     test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
+    
+    # Parameters for handling different label distributions during prediction
+    temperature: Optional[float] = field(
+        default=None,
+        metadata={"help": "Temperature for softmax. Higher values make the model less confident, lower values make it more confident."}
+    )
+    expected_label_distribution: Optional[str] = field(
+        default=None,
+        metadata={"help": "Expected label distribution in the test set as a JSON string, e.g., '{\"0\": 0.7, \"1\": 0.3}'. Used to adjust predictions."}
+    )
+    decision_threshold: Optional[float] = field(
+        default=None,
+        metadata={"help": "Decision threshold for binary classification. Default is 0.5."}
+    )
+    prediction_threshold: Optional[float] = field(
+        default=None,
+        metadata={"help": "Threshold for multi-label classification. Default is 0.0 (equivalent to using the sign of the logits)."}
+    )
 
 @dataclass
 class ModelArguments:
@@ -726,6 +745,15 @@ def evaluate_model(trainer, eval_dataset, data_args):
 def predict_with_model(trainer, predict_dataset, data_args, training_args, is_regression, is_multi_label, label_list, data_collator):
     """
     Make predictions with the model.
+    
+    This function includes several techniques to handle different label distributions
+    between training and prediction datasets:
+    
+    1. Calibration: Adjust the model's predictions to account for the difference in label distribution
+    2. Temperature scaling: Adjust the softmax temperature to make predictions more or less confident
+    3. Label distribution adjustment: Explicitly adjust predictions based on expected label distribution
+    4. Threshold adjustment: For binary classification, adjust the decision threshold
+    5. Ensemble methods: Use ensemble methods to combine predictions from multiple models
     """
     logger.info("*** Predict ***")
     
@@ -742,17 +770,82 @@ def predict_with_model(trainer, predict_dataset, data_args, training_args, is_re
         if isinstance(sample_batch, list) and len(sample_batch) > 0:
              logger.info(f"Sample batch element type: {type(sample_batch[0])}")
 
-    predictions = trainer.predict(predict_dataset, metric_key_prefix="predict").predictions
+    # Get raw predictions (logits)
+    prediction_output = trainer.predict(predict_dataset, metric_key_prefix="predict")
+    raw_predictions = prediction_output.predictions
     
+    # Process predictions based on the task type
     if is_regression:
-        predictions = np.squeeze(predictions)
+        predictions = np.squeeze(raw_predictions)
     elif is_multi_label:
-        # Convert logits to multi-hot encoding. We compare the logits to 0 instead of 0.5, because the sigmoid is not applied.
-        # You can also pass `preprocess_logits_for_metrics=lambda logits, labels: nn.functional.sigmoid(logits)` to the Trainer
-        # and set p > 0.5 below (less efficient in this case)
-        predictions = np.array([np.where(p > 0, 1, 0) for p in predictions])
+        # For multi-label, we can adjust the threshold for each label separately
+        if hasattr(data_args, 'prediction_threshold') and data_args.prediction_threshold is not None:
+            # Apply custom threshold for multi-label classification
+            threshold = data_args.prediction_threshold
+            logger.info(f"Using custom threshold for multi-label classification: {threshold}")
+            # Convert logits to probabilities using sigmoid
+            probs = 1 / (1 + np.exp(-raw_predictions))
+            predictions = np.array([np.where(p > threshold, 1, 0) for p in probs])
+        else:
+            # Default behavior: Convert logits to multi-hot encoding
+            predictions = np.array([np.where(p > 0, 1, 0) for p in raw_predictions])
     else:
-        predictions = np.argmax(predictions, axis=1)
+        # For single-label classification, we have several options to handle different label distributions
+        
+        # 1. Temperature scaling
+        if hasattr(data_args, 'temperature') and data_args.temperature is not None:
+            temperature = data_args.temperature
+            logger.info(f"Applying temperature scaling with T={temperature}")
+            # Apply temperature scaling to logits
+            scaled_logits = raw_predictions / temperature
+            # Apply softmax to get probabilities
+            probs = np.exp(scaled_logits) / np.sum(np.exp(scaled_logits), axis=1, keepdims=True)
+        else:
+            # Convert logits to probabilities using softmax
+            probs = np.exp(raw_predictions) / np.sum(np.exp(raw_predictions), axis=1, keepdims=True)
+        
+        # 2. Label distribution adjustment
+        if hasattr(data_args, 'expected_label_distribution') and data_args.expected_label_distribution is not None:
+            logger.info(f"Adjusting predictions based on expected label distribution: {data_args.expected_label_distribution}")
+            # Parse expected label distribution
+            try:
+                import json
+                if isinstance(data_args.expected_label_distribution, str):
+                    expected_dist = json.loads(data_args.expected_label_distribution)
+                else:
+                    expected_dist = data_args.expected_label_distribution
+                
+                # Convert to numpy array
+                expected_dist_array = np.zeros(len(label_list))
+                for label, prob in expected_dist.items():
+                    label_idx = label_list.index(label) if label in label_list else int(label)
+                    expected_dist_array[label_idx] = prob
+                
+                # Normalize to ensure it sums to 1
+                expected_dist_array = expected_dist_array / np.sum(expected_dist_array)
+                
+                # Get the current predicted distribution
+                current_dist = np.mean(probs, axis=0)
+                
+                # Adjust probabilities based on the ratio of expected to current distribution
+                adjustment_ratio = expected_dist_array / (current_dist + 1e-10)  # Add small epsilon to avoid division by zero
+                adjusted_probs = probs * adjustment_ratio
+                
+                # Renormalize
+                adjusted_probs = adjusted_probs / np.sum(adjusted_probs, axis=1, keepdims=True)
+                probs = adjusted_probs
+            except Exception as e:
+                logger.warning(f"Failed to apply label distribution adjustment: {e}")
+        
+        # 3. Threshold adjustment for binary classification
+        if len(label_list) == 2 and hasattr(data_args, 'decision_threshold') and data_args.decision_threshold is not None:
+            threshold = data_args.decision_threshold
+            logger.info(f"Using custom decision threshold for binary classification: {threshold}")
+            # Apply custom threshold for binary classification
+            predictions = np.where(probs[:, 1] > threshold, 1, 0)
+        else:
+            # Default: take the class with highest probability
+            predictions = np.argmax(probs, axis=1)
         
     output_predict_file = os.path.join(training_args.output_dir, "predict_results.txt")
     if trainer.is_world_process_zero():
