@@ -769,6 +769,16 @@ def main():
         # Removing the `label` columns if exists because it might contains -1 and Trainer won't like that.
         if "label" in predict_dataset.features:
             predict_dataset = predict_dataset.remove_columns("label")
+
+        # Log a sample batch from the prediction dataset
+        if len(predict_dataset) > 0:
+            sample_batch = data_collator([predict_dataset[0]]) if data_collator is not None else [predict_dataset[0]]
+            logger.info(f"Sample batch for prediction: {sample_batch}")
+            logger.info(f"Sample batch type: {type(sample_batch)}")
+            if isinstance(sample_batch, list) and len(sample_batch) > 0:
+                 logger.info(f"Sample batch element type: {type(sample_batch[0])}")
+
+
         predictions = trainer.predict(predict_dataset, metric_key_prefix="predict").predictions
         if is_regression:
             predictions = np.squeeze(predictions)
