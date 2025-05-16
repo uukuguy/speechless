@@ -60,6 +60,12 @@ class DataTrainingArguments:
     the command line.
     """
 
+    labels_only: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "Whether to only use the labels for predicting. If True, the results will only include the labels."
+        },
+    )
     dataset_name: Optional[str] = field(
         default=None, metadata={"help": "The name of the dataset to use (via the datasets library)."}
     )
@@ -831,7 +837,7 @@ def predict_with_model(trainer, predict_dataset, data_args, training_args, is_re
     if trainer.is_world_process_zero():
         with open(output_predict_file, "w") as writer:
             logger.info("***** Predict results *****")
-            writer.write("index\tprediction\n")
+            # writer.write("index\tprediction\n")
             for index, item in enumerate(predictions):
                 if is_regression:
                     writer.write(f"{index}\t{item:3.3f}\n")
@@ -841,7 +847,10 @@ def predict_with_model(trainer, predict_dataset, data_args, training_args, is_re
                     writer.write(f"{index}\t{item}\n")
                 else:
                     item = label_list[item]
-                    writer.write(f"{index}\t{item}\n")
+                    if data_args.labels_only:
+                        writer.write(f"{item}\n")
+                    else:
+                        writer.write(f"{index}\t{item}\n")
     
     logger.info("Predict results saved at {}".format(output_predict_file))
     return predictions
