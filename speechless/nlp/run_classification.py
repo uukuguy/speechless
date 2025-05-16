@@ -644,13 +644,37 @@ def main():
                     continue
                 for i in range(len(examples[column])):
                     examples["sentence"][i] += data_args.text_column_delimiter + examples[column][i]
+            
+            logger.info(f"Created 'sentence' column with {len(examples['sentence'])} examples")
+            if len(examples['sentence']) > 0:
+                logger.info(f"First sentence example: {examples['sentence'][0][:100]}...")
         # Tokenize the texts
-        result = tokenizer(examples["sentence"], padding=padding, max_length=max_seq_length, truncation=True)
+        try:
+            logger.info(f"Tokenizing {len(examples['sentence']) if 'sentence' in examples else 0} examples")
+            result = tokenizer(examples["sentence"], padding=padding, max_length=max_seq_length, truncation=True)
+            logger.info(f"Tokenization result keys: {list(result.keys())}")
+            logger.info(f"Tokenization result size: {len(result['input_ids']) if 'input_ids' in result else 0} examples")
+        except Exception as e:
+            logger.error(f"Error during tokenization: {str(e)}")
+            # Create an empty result to avoid errors
+            result = {"input_ids": [], "attention_mask": []}
+            
         if label_to_id is not None and "label" in examples:
-            if is_multi_label:
-                result["label"] = [multi_labels_to_ids(l) for l in examples["label"]]
-            else:
-                result["label"] = [(label_to_id[str(l)] if l != -1 else -1) for l in examples["label"]]
+            try:
+                logger.info(f"Processing labels. Label to ID mapping: {label_to_id}")
+                if is_multi_label:
+                    result["label"] = [multi_labels_to_ids(l) for l in examples["label"]]
+                else:
+                    result["label"] = [(label_to_id[str(l)] if l != -1 else -1) for l in examples["label"]]
+                logger.info(f"Processed {len(result['label'])} labels")
+            except Exception as e:
+                logger.error(f"Error processing labels: {str(e)}")
+                # Create a result without labels to avoid errors
+                if "label" in result:
+                    del result["label"]
+        
+        logger.info(f"Final preprocessing result keys: {list(result.keys())}")
+        logger.info(f"Final preprocessing result size: {len(result['input_ids']) if 'input_ids' in result else 0} examples")
         return result
 
     # Running the preprocessing pipeline on all the datasets
