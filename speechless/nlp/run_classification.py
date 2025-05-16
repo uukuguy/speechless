@@ -718,11 +718,21 @@ def main():
     if training_args.do_predict or data_args.test_file is not None:
         if "test" not in raw_datasets:
             raise ValueError("--do_predict requires a test dataset")
+        logger.info(f"Raw test dataset before assignment to predict_dataset: {len(raw_datasets['test'])} examples")
+        logger.info(f"Raw test dataset features: {raw_datasets['test'].features}")
+        logger.info(f"Raw test dataset object ID: {id(raw_datasets['test'])}")
+        if len(raw_datasets['test']) > 0:
+            logger.info(f"First example in raw test dataset: {raw_datasets['test'][0]}")
+        
         predict_dataset = raw_datasets["test"]
+        logger.info(f"Predict dataset after assignment: {len(predict_dataset)} examples")
+        logger.info(f"Predict dataset object ID: {id(predict_dataset)}")
+        
         # remove label column if it exists
         if data_args.max_predict_samples is not None:
             max_predict_samples = min(len(predict_dataset), data_args.max_predict_samples)
             predict_dataset = predict_dataset.select(range(max_predict_samples))
+            logger.info(f"Predict dataset after max_predict_samples selection: {len(predict_dataset)} examples")
 
     # Log a few random samples from the training set:
     if training_args.do_train:
