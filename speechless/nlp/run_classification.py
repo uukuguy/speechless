@@ -480,6 +480,15 @@ def main():
         if num_labels <= 1:
             raise ValueError("You need more than one label to do classification.")
 
+    logger.info(f"Calculated label_list: {label_list}")
+    logger.info(f"Calculated num_labels: {num_labels}")
+
+    # Save calculated labels to a file for debugging
+    debug_output = {"label_list": label_list, "num_labels": num_labels}
+    with open("debug_labels.json", "w") as f:
+        import json
+        json.dump(debug_output, f)
+
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
