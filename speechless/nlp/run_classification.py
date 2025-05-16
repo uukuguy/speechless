@@ -390,9 +390,16 @@ def main():
                 token=model_args.token,
             )
 
-    # See more about loading any type of standard or custom dataset at
-    # https://huggingface.co/docs/datasets/loading_datasets.
+    # Filter out samples with None labels
+    for split in raw_datasets.keys():
+        if "label" in raw_datasets[split].features:
+            raw_datasets[split] = raw_datasets[split].filter(lambda example: example["label"] is not None)
+            logger.info(f"Filtered {split} split to remove None labels.")
+        else:
+            logger.info(f"Skipping filtering for {split} split as it does not have a 'label' column.")
 
+        # See more about loading any type of standard or custom dataset at
+        # https://huggingface.co/docs/datasets/loading_datasets.
     if data_args.remove_splits is not None:
         for split in data_args.remove_splits.split(","):
             logger.info(f"removing split {split}")
@@ -457,50 +464,75 @@ def main():
             logger.info("Label type is list, doing multi-label classification")
         # Trying to find the number of labels in a multi-label classification task
         # We have to deal with common cases that labels appear in the training set but not in the validation/test set.
-        # So we build the label list from the union of labels in train/val/test.
-        label_list = get_label_list(raw_datasets, split="train")
-        for split in ["validation", "test"]:
-            if split in raw_datasets:
-                val_or_test_labels = get_label_list(raw_datasets, split=split)
-                diff = set(val_or_test_labels).difference(set(label_list))
-                if len(diff) > 0:
-                    # add the labels that appear in val/test but not in train, throw a warning
-                    logger.warning(
-                        f"Labels {diff} in {split} set but not in training set, adding them to the label list"
-                    )
-                    label_list += list(diff)
+        # Determine the number of labels based on the training data for prediction,
+        # otherwise use the union of labels from all splits.
+        if training_args.do_predict:
+            logger.info("Determining num_labels from training data only for prediction.")
+            label_list = get_label_list(raw_datasets, split="train")
+        else:
+            # We build the label list from the union of labels in train/val/test.
+            label_list = get_label_list(raw_datasets, split="train")
+            for split in ["validation", "test"]:
+                if split in raw_datasets:
+                    val_or_test_labels = get_label_list(raw_datasets, split=split)
+                    diff = set(val_or_test_labels).difference(set(label_list))
+                    if len(diff) > 0:
+                        # add the labels that appear in val/test but not in train, throw a warning
+                        logger.warning(
+                            f"Labels {diff} in {split} set but not in training set, adding them to the label list"
+                        )
+                        label_list += list(diff)
+
         # if label is -1, we throw a warning and remove it from the label list
-        for label in label_list:
-            if label == -1:
-                logger.warning("Label -1 found in label list, removing it.")
-                label_list.remove(label)
+        # This check should still apply regardless of prediction mode
+        labels_to_remove = [label for label in label_list if label == -1 or label is None]
+        for label in labels_to_remove:
+             logger.warning(f"Label {label} found in label list, removing it.")
+             label_list.remove(label)
 
         label_list.sort()
-        num_labels = len(label_list)
-        if num_labels <= 1:
+        calculated_num_labels = len(label_list)
+        if calculated_num_labels <= 1:
             raise ValueError("You need more than one label to do classification.")
 
-    logger.info(f"Calculated label_list: {label_list}")
-    logger.info(f"Calculated num_labels: {num_labels}")
+        logger.info(f"Calculated label_list from datasets: {label_list}")
+        logger.info(f"Calculated num_labels from datasets: {calculated_num_labels}")
 
-    # Save calculated labels to a file for debugging
-    debug_output = {"label_list": label_list, "num_labels": num_labels}
-    with open("debug_labels.json", "w") as f:
-        import json
-        json.dump(debug_output, f)
+        # Save calculated labels to a file for debugging
+        debug_output = {"label_list": label_list, "num_labels": calculated_num_labels}
+        with open("debug_labels.json", "w") as f:
+            import json
+            json.dump(debug_output, f)
 
-    # Load pretrained model and tokenizer
+    # Load pretrained model config
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
+    if model_args.config_name:
+        config_path = model_args.config_name
+    elif model_args.model_name_or_path:
+        config_path = model_args.model_name_or_path
+    else:
+        raise ValueError("You need to specify either a config_name or model_name_or_path")
+
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-        num_labels=num_labels,
-        finetuning_task="text-classification",
+        config_path,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
         trust_remote_code=model_args.trust_remote_code,
     )
+
+    # Use the number of labels from the loaded config for prediction
+    # Otherwise, use the number of labels calculated from the datasets
+    if training_args.do_predict:
+        num_labels = config.num_labels
+        logger.info(f"Using num_labels from model config for prediction: {num_labels}")
+    else:
+        num_labels = calculated_num_labels
+        logger.info(f"Using num_labels from datasets for training/evaluation: {num_labels}")
+
+    # Update config with the determined num_labels and problem type
+    config.num_labels = num_labels
 
     if is_regression:
         config.problem_type = "regression"
@@ -511,6 +543,14 @@ def main():
     else:
         config.problem_type = "single_label_classification"
         logger.info("setting problem type to single label classification")
+
+    # Ensure the config's id2label and label2id match the determined num_labels if not prediction
+    # During prediction, we trust the config loaded from the model checkpoint
+    if not training_args.do_predict and label_list is not None:
+         config.label2id = {l: i for i, l in enumerate(label_list)}
+         config.id2label = {i: l for l, i in config.label2id.items()}
+         logger.info(f"Updated config label maps based on datasets: {config.label2id}")
+
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
