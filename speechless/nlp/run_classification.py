@@ -368,6 +368,18 @@ def main():
                 ), "`test_file` should have the same extension (csv or json) as `train_file`."
                 data_files["test"] = data_args.test_file
                 logger.info(f"Test file path: {data_args.test_file}")
+                import os
+                if os.path.exists(data_args.test_file):
+                    logger.info(f"Test file exists. File size: {os.path.getsize(data_args.test_file)} bytes")
+                    with open(data_args.test_file, 'r') as f:
+                        first_line = f.readline().strip()
+                        logger.info(f"First line of test file: {first_line[:100]}...")
+                        line_count = 1
+                        for _ in f:
+                            line_count += 1
+                        logger.info(f"Test file has {line_count} lines")
+                else:
+                    logger.error(f"Test file does not exist: {data_args.test_file}")
             else:
                 raise ValueError("Need either a dataset name or a test file for `do_predict`.")
 
@@ -390,9 +402,12 @@ def main():
                 cache_dir=model_args.cache_dir,
                 token=model_args.token,
             )
-            if "test" in raw_datasets:
-                logger.info(f"Initial test dataset size after loading: {len(raw_datasets['test'])}")
-                logger.info(f"Test dataset features: {raw_datasets['test'].features}")
+            logger.info(f"Datasets after loading: {list(raw_datasets.keys())}")
+            for split in raw_datasets.keys():
+                logger.info(f"Dataset '{split}' after loading: {len(raw_datasets[split])} examples")
+                logger.info(f"Dataset '{split}' features: {raw_datasets[split].features}")
+                if len(raw_datasets[split]) > 0:
+                    logger.info(f"First example in '{split}' dataset: {raw_datasets[split][0]}")
 
     # Filter out samples with None labels
     for split in raw_datasets.keys():
