@@ -678,13 +678,29 @@ def main():
         return result
 
     # Running the preprocessing pipeline on all the datasets
+    logger.info(f"Datasets before mapping: {list(raw_datasets.keys())}")
+    for split in raw_datasets.keys():
+        logger.info(f"Dataset '{split}' before mapping: {len(raw_datasets[split])} examples")
+    
     with training_args.main_process_first(desc="dataset map pre-processing"):
-        raw_datasets = raw_datasets.map(
-            preprocess_function,
-            batched=True,
-            load_from_cache_file=not data_args.overwrite_cache,
-            desc="Running tokenizer on dataset",
-        )
+        try:
+            logger.info("Starting dataset mapping with preprocess_function")
+            raw_datasets = raw_datasets.map(
+                preprocess_function,
+                batched=True,
+                load_from_cache_file=not data_args.overwrite_cache,
+                desc="Running tokenizer on dataset",
+                remove_columns=None,  # Don't remove any columns
+            )
+            logger.info("Dataset mapping completed successfully")
+        except Exception as e:
+            logger.error(f"Error during dataset mapping: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+    
+    logger.info(f"Datasets after mapping: {list(raw_datasets.keys())}")
+    for split in raw_datasets.keys():
+        logger.info(f"Dataset '{split}' after mapping: {len(raw_datasets[split])} examples")
         if "test" in raw_datasets:
             logger.info(f"Test dataset size after preprocessing: {len(raw_datasets['test'])}")
             logger.info(f"Test dataset features after preprocessing: {raw_datasets['test'].features}")
