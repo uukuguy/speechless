@@ -368,7 +368,6 @@ def main():
                 ), "`test_file` should have the same extension (csv or json) as `train_file`."
                 data_files["test"] = data_args.test_file
                 logger.info(f"Test file path: {data_args.test_file}")
-                import os
                 if os.path.exists(data_args.test_file):
                     logger.info(f"Test file exists. File size: {os.path.getsize(data_args.test_file)} bytes")
                     with open(data_args.test_file, 'r') as f:
