@@ -252,25 +252,6 @@ class ModelArguments:
     )
 
 
-@dataclass
-class TaskArguments:
-    """
-    Arguments pertaining to which tasks to run.
-    """
-
-    do_train: bool = field(
-        default=False,
-        metadata={"help": "Whether to run training."}
-    )
-    do_eval: bool = field(
-        default=False,
-        metadata={"help": "Whether to run evaluation on the validation set."}
-    )
-    do_predict: bool = field(
-        default=False,
-        metadata={"help": "Whether to run predictions on the test set."}
-    )
-
 
 def get_label_list(raw_dataset, split="train") -> List[str]:
     """Get the list of labels from a multi-label dataset"""
@@ -285,7 +266,7 @@ def get_label_list(raw_dataset, split="train") -> List[str]:
     return label_list
 
 
-def load_datasets(model_args, data_args, task_args):
+def load_datasets(model_args, data_args, training_args):
     """
     Load datasets from either a dataset name or local files.
     """
@@ -311,16 +292,16 @@ def load_datasets(model_args, data_args, task_args):
         # CSV/JSON training and evaluation files are needed.
         data_files = {}
         
-        if task_args.do_train and data_args.train_file is not None:
+        if training_args.do_train and data_args.train_file is not None:
             data_files["train"] = data_args.train_file
             logger.info(f"Training file: {data_args.train_file}")
             
-        if task_args.do_eval and data_args.validation_file is not None:
+        if training_args.do_eval and data_args.validation_file is not None:
             data_files["validation"] = data_args.validation_file
             logger.info(f"Validation file: {data_args.validation_file}")
 
         # Get the test dataset: you can provide your own CSV/JSON test file
-        if task_args.do_predict and data_args.test_file is not None:
+        if training_args.do_predict and data_args.test_file is not None:
             data_files["test"] = data_args.test_file
             logger.info(f"Test file path: {data_args.test_file}")
             if os.path.exists(data_args.test_file):
@@ -367,7 +348,7 @@ def load_datasets(model_args, data_args, task_args):
 
     # Filter out samples with None labels, but only for training and validation
     for split in raw_datasets.keys():
-        if split == "test" and task_args.do_predict:
+        if split == "test" and training_args.do_predict:
             # Don't filter the test dataset during prediction
             logger.info(f"Skipping filtering for test split during prediction to keep all examples, even with None labels.")
         elif "label" in raw_datasets[split].features:
@@ -417,7 +398,7 @@ def load_datasets(model_args, data_args, task_args):
     return raw_datasets
 
 
-def preprocess_datasets(raw_datasets, model_args, data_args, task_args, tokenizer, is_regression, is_multi_label, label_to_id):
+def preprocess_datasets(raw_datasets, model_args, data_args, training_args, tokenizer, is_regression, is_multi_label, label_to_id):
     """
     Preprocess datasets by tokenizing and converting labels to IDs.
     """
@@ -531,7 +512,7 @@ def preprocess_datasets(raw_datasets, model_args, data_args, task_args, tokenize
     predict_dataset = None
 
     # Prepare training dataset
-    if task_args.do_train and "train" in processed_datasets:
+    if training_args.do_train and "train" in processed_datasets:
         train_dataset = processed_datasets["train"]
         if data_args.shuffle_train_dataset:
             logger.info("Shuffling the training dataset")
@@ -541,7 +522,7 @@ def preprocess_datasets(raw_datasets, model_args, data_args, task_args, tokenize
             train_dataset = train_dataset.select(range(max_train_samples))
 
     # Prepare evaluation dataset
-    if task_args.do_eval:
+    if training_args.do_eval:
         if "validation" not in processed_datasets and "validation_matched" not in processed_datasets:
             if "test" not in processed_datasets and "test_matched" not in processed_datasets:
                 raise ValueError("--do_eval requires a validation or test dataset if validation is not defined.")
@@ -556,7 +537,7 @@ def preprocess_datasets(raw_datasets, model_args, data_args, task_args, tokenize
             eval_dataset = eval_dataset.select(range(max_eval_samples))
 
     # Prepare prediction dataset
-    if task_args.do_predict:
+    if training_args.do_predict:
         if "test" not in processed_datasets:
             raise ValueError("--do_predict requires a test dataset")
         logger.info(f"Raw test dataset before assignment to predict_dataset: {len(processed_datasets['test'])} examples")
@@ -580,7 +561,7 @@ def preprocess_datasets(raw_datasets, model_args, data_args, task_args, tokenize
 
     return train_dataset, eval_dataset, predict_dataset
     # Define preprocessing function
-def load_model_and_tokenizer(model_args, data_args, task_args, num_labels, is_regression, is_multi_label, label_list):
+def load_model_and_tokenizer(model_args, data_args, training_args, num_labels, is_regression, is_multi_label, label_list):
     """
     Load model and tokenizer.
     """
@@ -604,7 +585,7 @@ def load_model_and_tokenizer(model_args, data_args, task_args, num_labels, is_re
 
     # Use the number of labels from the loaded config for prediction
     # Otherwise, use the number of labels calculated from the datasets
-    if task_args.do_predict and not task_args.do_train and not task_args.do_eval:
+    if training_args.do_predict and not training_args.do_train and not training_args.do_eval:
         if hasattr(config, "num_labels"):
             num_labels = config.num_labels
             logger.info(f"Using num_labels from model config for prediction: {num_labels}")
@@ -872,13 +853,13 @@ def main():
     Main function for text classification.
     """
     # Parse arguments
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments, TaskArguments))
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
-        model_args, data_args, training_args, task_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        model_args, data_args, training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
-        model_args, data_args, training_args, task_args = parser.parse_args_into_dataclasses()
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -928,7 +909,7 @@ def main():
     set_seed(training_args.seed)
 
     # Load datasets
-    raw_datasets = load_datasets(model_args, data_args, task_args)
+    raw_datasets = load_datasets(model_args, data_args, training_args)
 
     # Labels
     is_regression = False
@@ -936,7 +917,7 @@ def main():
     
     # A useful fast method to setup the labels:
     # If we have a dataset with labels, we can infer the label list from it
-    if task_args.do_train and "label" in raw_datasets["train"].features:
+    if training_args.do_train and "label" in raw_datasets["train"].features:
         if isinstance(raw_datasets["train"].features["label"], datasets.ClassLabel):
             label_list = raw_datasets["train"].features["label"].names
             num_labels = len(label_list)
@@ -960,7 +941,7 @@ def main():
         # Trying to have good defaults here, don't hesitate to tweak to your needs.
         is_regression = False
         # A useful fast method to setup the labels:
-        if task_args.do_predict and "label" in raw_datasets["test"].features:
+        if training_args.do_predict and "label" in raw_datasets["test"].features:
             if isinstance(raw_datasets["test"].features["label"], datasets.ClassLabel):
                 label_list = raw_datasets["test"].features["label"].names
                 num_labels = len(label_list)
@@ -982,12 +963,12 @@ def main():
 
     # Load model and tokenizer
     model, tokenizer, label_to_id = load_model_and_tokenizer(
-        model_args, data_args, task_args, num_labels, is_regression, is_multi_label, label_list
+        model_args, data_args, training_args, num_labels, is_regression, is_multi_label, label_list
     )
 
     # Preprocess datasets
     train_dataset, eval_dataset, predict_dataset = preprocess_datasets(
-        raw_datasets, model_args, data_args, task_args, tokenizer, is_regression, is_multi_label, label_to_id
+        raw_datasets, model_args, data_args, training_args, tokenizer, is_regression, is_multi_label, label_to_id
     )
 
     # Metric
@@ -1038,14 +1019,14 @@ def main():
         data_collator = None
 
     # Move model to the right device
-    model = model.to(device)
+    model = model.to(training_args.device)
 
     # Initialize Trainer
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=train_dataset if task_args.do_train else None,
-        eval_dataset=eval_dataset if task_args.do_eval else None,
+        train_dataset=train_dataset if training_args.do_train else None,
+        eval_dataset=eval_dataset if training_args.do_eval else None,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
         data_collator=data_collator,
@@ -1055,7 +1036,7 @@ def main():
     results = {}
     
     # Training
-    if task_args.do_train:
+    if training_args.do_train:
         trainer, train_metrics = train_model(
             model=model,
             tokenizer=tokenizer,
@@ -1070,7 +1051,7 @@ def main():
         results.update({"train": train_metrics})
 
     # Evaluation
-    if task_args.do_eval:
+    if training_args.do_eval:
         eval_metrics = evaluate_model(
             trainer=trainer,
             eval_dataset=eval_dataset,
@@ -1079,7 +1060,7 @@ def main():
         results.update({"eval": eval_metrics})
 
     # Prediction
-    if task_args.do_predict:
+    if training_args.do_predict:
         predictions = predict_with_model(
             trainer=trainer,
             predict_dataset=predict_dataset,
