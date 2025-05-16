@@ -482,22 +482,21 @@ def preprocess_datasets(raw_datasets, model_args, data_args, training_args, toke
     for split in raw_datasets.keys():
         logger.info(f"Dataset '{split}' before mapping: {len(raw_datasets[split])} examples")
     
-    with transformers.utils.logging.tqdm_handler():
-        try:
-            logger.info("Starting dataset mapping with preprocess_function")
-            processed_datasets = raw_datasets.map(
-                preprocess_function,
-                batched=True,
-                load_from_cache_file=not data_args.overwrite_cache,
-                desc="Running tokenizer on dataset",
-                remove_columns=None,  # Don't remove any columns
-            )
-            logger.info("Dataset mapping completed successfully")
-        except Exception as e:
-            logger.error(f"Error during dataset mapping: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            raise e
+    try:
+        logger.info("Starting dataset mapping with preprocess_function")
+        processed_datasets = raw_datasets.map(
+            preprocess_function,
+            batched=True,
+            load_from_cache_file=not data_args.overwrite_cache,
+            desc="Running tokenizer on dataset",
+            remove_columns=None,  # Don't remove any columns
+        )
+        logger.info("Dataset mapping completed successfully")
+    except Exception as e:
+        logger.error(f"Error during dataset mapping: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise e
     
     logger.info(f"Datasets after mapping: {list(processed_datasets.keys())}")
     for split in processed_datasets.keys():
