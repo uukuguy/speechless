@@ -184,7 +184,7 @@ def average_probabilities(probability_files: List[str]) -> List[int]:
     
     return ensemble_predictions
 
-def save_predictions(output_file: str, predictions: List[Union[int, str]], examples: List[Dict] = None):
+def save_predictions(output_file: str, predictions: List[Union[int, str]], examples: List[Dict] = None, labels_only: bool = False):
     """
     Save ensemble predictions to a file.
     
@@ -198,7 +198,11 @@ def save_predictions(output_file: str, predictions: List[Union[int, str]], examp
         with open(output_file, 'w') as f:
             f.write("index\tprediction\n")
             for i, pred in enumerate(predictions):
-                f.write(f"{i}\t{pred}\n")
+                if labels_only:
+                    # Only output labels
+                    f.write(f"{pred}\n")    
+                else:
+                    f.write(f"{i}\t{pred}\n")
     
     elif output_file.endswith('.json'):
         with open(output_file, 'w') as f:
@@ -223,6 +227,8 @@ def save_predictions(output_file: str, predictions: List[Union[int, str]], examp
 
 def main():
     parser = argparse.ArgumentParser(description="Ensemble predictions from multiple models")
+
+    parser.add_argument("--labels_only", action="store_true", help="Only output labels without other information")
     
     # Input arguments
     parser.add_argument(
@@ -291,7 +297,7 @@ def main():
         ensemble_predictions = average_probabilities(args.probability_files)
     
     # Save ensemble predictions
-    save_predictions(args.output_file, ensemble_predictions, examples)
+    save_predictions(args.output_file, ensemble_predictions, examples, labels_only=args.labels_only)
 
 if __name__ == "__main__":
     main()
