@@ -837,7 +837,8 @@ def predict_with_model(trainer, predict_dataset, data_args, training_args, is_re
     if trainer.is_world_process_zero():
         with open(output_predict_file, "w") as writer:
             logger.info("***** Predict results *****")
-            # writer.write("index\tprediction\n")
+            if not data_args.labels_only:
+                writer.write("index\tprediction\n")
             for index, item in enumerate(predictions):
                 if is_regression:
                     writer.write(f"{index}\t{item:3.3f}\n")
