@@ -10,6 +10,7 @@ help:
 	@echo "run_apis - Run the model on the API classification task"
 
 train_apis:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python run_classification.py \
 		--model_name_or_path ${MODEL_PATH} \
 		--train_file ${TRAIN_FILE_PATH} \
@@ -38,6 +39,7 @@ train_apis:
 TARGET_MODEL_PATH="outputs/checkpoint-2985"
 TEST_A_FILE_PATH="./data/AFAC2024-Track1-api-classifer-test-queries.jsonl"
 run_apis_test_queries:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python run_classification.py \
 		--model_name_or_path ${TARGET_MODEL_PATH} \
 		--train_file ${TRAIN_FILE_PATH} \
@@ -59,6 +61,7 @@ run_apis_test_queries:
 
 TRAIN_QUERIES_FILE_PATH="./data/AFAC2024-Track1-api-classifer-train-queries.jsonl"
 run_apis_train_queries:
+	PYTHONPATH=${SPEECHLESS_ROOT} \
 	python run_classification.py \
 		--model_name_or_path ${TARGET_MODEL_PATH} \
 		--train_file ${TRAIN_FILE_PATH} \
