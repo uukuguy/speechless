@@ -196,7 +196,7 @@ def save_predictions(output_file: str, predictions: List[Union[int, str]], examp
     # Determine output format based on extension
     if output_file.endswith('.txt'):
         with open(output_file, 'w') as f:
-            f.write("index\tprediction\n")
+            # f.write("index\tprediction\n")
             for i, pred in enumerate(predictions):
                 if labels_only:
                     # Only output labels
