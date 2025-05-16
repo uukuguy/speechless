@@ -408,9 +408,18 @@ def main():
                 if len(raw_datasets[split]) > 0:
                     logger.info(f"First example in '{split}' dataset: {raw_datasets[split][0]}")
 
-    # Filter out samples with None labels
+    # Filter out samples with None labels, but only for training and validation
     for split in raw_datasets.keys():
-        if "label" in raw_datasets[split].features:
+        if split == "test" and training_args.do_predict:
+            # Don't filter the test dataset during prediction
+            logger.info(f"Skipping filtering for test split during prediction to keep all examples, even with None labels.")
+        elif "label" in raw_datasets[split].features:
+            # Count examples with None labels before filtering
+            none_count = sum(1 for example in raw_datasets[split] if example["label"] is None)
+            if none_count > 0:
+                logger.info(f"Found {none_count} examples with None labels in {split} split before filtering.")
+            
+            # Filter out examples with None labels
             raw_datasets[split] = raw_datasets[split].filter(lambda example: example["label"] is not None)
             logger.info(f"Filtered {split} split to remove None labels.")
         else:
