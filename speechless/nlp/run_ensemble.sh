@@ -91,4 +91,16 @@ python ensemble_predictions.py \
   --weights 1.0 1.2 0.8 \
   --output_file $OUTPUT_DIR/ensemble/ensemble_weighted.txt
 
+# Ensemble predictions using majority voting with label weights
+# Label weights give more importance to certain labels
+echo "Creating ensemble prediction with label weights..."
+python ensemble_predictions.py \
+  --prediction_files \
+    $OUTPUT_DIR/model1/predict_results.txt \
+    $OUTPUT_DIR/model2/predict_results.txt \
+    $OUTPUT_DIR/model3/predict_results.txt \
+  --method majority \
+  --label_weights '{"0": 1.0, "1": 2.0}' \
+  --output_file $OUTPUT_DIR/ensemble/ensemble_label_weighted.txt
+
 echo "Ensemble predictions completed. Results saved to $OUTPUT_DIR/ensemble/"
