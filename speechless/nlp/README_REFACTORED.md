@@ -1,12 +1,14 @@
 # Refactored Text Classification Script
 
-This directory contains a refactored version of the text classification script that allows for separate execution of training, evaluation, and prediction tasks.
+This directory contains a refactored version of the text classification script that allows for separate execution of training, evaluation, and prediction tasks, as well as an ensemble prediction script for combining results from multiple models.
 
 ## Files
 
 - `run_classification.py`: The original script that combines training, evaluation, and prediction.
 - `run_classification_refactored.py`: The refactored script that separates the tasks.
 - `run_tasks.sh`: A shell script demonstrating how to use the refactored script.
+- `ensemble_predictions.py`: A script for combining predictions from multiple models.
+- `run_ensemble.sh`: A shell script demonstrating how to use the ensemble prediction script.
 
 ## Key Improvements
 
@@ -119,3 +121,84 @@ The refactored script is organized into the following main functions:
 7. `main`: The main function that orchestrates the entire process.
 
 Each function is designed to be independent and reusable, making the code more maintainable and easier to understand.
+
+## Ensemble Predictions
+
+The `ensemble_predictions.py` script allows you to combine predictions from multiple models trained with cross-validation to create a final prediction with higher accuracy.
+
+### Ensemble Methods
+
+The script supports three ensemble methods:
+
+1. **Majority Voting**: Each model gets one vote, and the class with the most votes wins.
+2. **Weighted Voting**: Similar to majority voting, but each model's vote is weighted based on its performance.
+3. **Average Probabilities**: Averages the probability distributions from multiple models before making the final prediction.
+
+### Usage
+
+```bash
+python ensemble_predictions.py \
+  --prediction_files \
+    ./output/model1/predict_results.txt \
+    ./output/model2/predict_results.txt \
+    ./output/model3/predict_results.txt \
+  --method majority \
+  --output_file ./output/ensemble/ensemble_majority.txt
+```
+
+For weighted voting:
+
+```bash
+python ensemble_predictions.py \
+  --prediction_files \
+    ./output/model1/predict_results.txt \
+    ./output/model2/predict_results.txt \
+    ./output/model3/predict_results.txt \
+  --method weighted \
+  --weights 1.0 1.2 0.8 \
+  --output_file ./output/ensemble/ensemble_weighted.txt
+```
+
+You can also specify weights for individual labels to give more importance to certain classes:
+
+```bash
+python ensemble_predictions.py \
+  --prediction_files \
+    ./output/model1/predict_results.txt \
+    ./output/model2/predict_results.txt \
+    ./output/model3/predict_results.txt \
+  --method majority \
+  --label_weights '{"0": 1.0, "1": 2.0}' \
+  --output_file ./output/ensemble/ensemble_label_weighted.txt
+```
+
+This is particularly useful for imbalanced datasets where some labels are more important than others. The label weights can be provided as a JSON string or a path to a JSON file.
+
+For averaging probabilities:
+
+```bash
+python ensemble_predictions.py \
+  --prediction_files \
+    ./output/model1/predict_results.txt \
+    ./output/model2/predict_results.txt \
+    ./output/model3/predict_results.txt \
+  --method average \
+  --probability_files \
+    ./output/model1/probabilities.npy \
+    ./output/model2/probabilities.npy \
+    ./output/model3/probabilities.npy \
+  --output_file ./output/ensemble/ensemble_average.txt
+```
+
+### Using the Shell Script
+
+For convenience, a shell script is provided that demonstrates how to train multiple models and create ensemble predictions:
+
+```bash
+./run_ensemble.sh
+```
+
+This script:
+1. Trains three models using different training data splits
+2. Makes predictions with each model
+3. Creates ensemble predictions using majority voting and weighted voting

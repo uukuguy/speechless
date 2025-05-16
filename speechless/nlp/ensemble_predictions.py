@@ -101,12 +101,13 @@ def load_predictions(prediction_files: List[str]) -> Tuple[List[Dict], List[List
     logger.info(f"Loaded {len(all_predictions)} prediction sets with {lengths[0]} predictions each")
     return examples, all_predictions
 
-def majority_vote(predictions: List[List[Union[int, str]]]) -> List[Union[int, str]]:
+def majority_vote(predictions: List[List[Union[int, str]]], label_weights: Dict[Union[int, str], float] = None) -> List[Union[int, str]]:
     """
     Combine predictions using majority voting.
     
     Args:
         predictions: List of prediction lists from different models
+        label_weights: Dictionary mapping labels to weights (optional)
         
     Returns:
         List of ensemble predictions
@@ -116,21 +117,35 @@ def majority_vote(predictions: List[List[Union[int, str]]]) -> List[Union[int, s
     # Transpose the predictions to get all model predictions for each example
     for i in range(len(predictions[0])):
         example_preds = [preds[i] for preds in predictions]
-        # Count occurrences of each prediction
-        counter = Counter(example_preds)
-        # Get the most common prediction
-        most_common = counter.most_common(1)[0][0]
+        
+        if label_weights:
+            # Use weighted counter for labels
+            weighted_counter = {}
+            for pred in example_preds:
+                # Get weight for this label (default to 1.0 if not specified)
+                weight = label_weights.get(pred, 1.0)
+                weighted_counter[pred] = weighted_counter.get(pred, 0) + weight
+            
+            # Get the prediction with the highest weighted count
+            most_common = max(weighted_counter.items(), key=lambda x: x[1])[0]
+        else:
+            # Standard majority voting
+            counter = Counter(example_preds)
+            most_common = counter.most_common(1)[0][0]
+            
         ensemble_predictions.append(most_common)
     
     return ensemble_predictions
 
-def weighted_vote(predictions: List[List[Union[int, str]]], weights: List[float]) -> List[Union[int, str]]:
+def weighted_vote(predictions: List[List[Union[int, str]]], weights: List[float],
+                 label_weights: Dict[Union[int, str], float] = None) -> List[Union[int, str]]:
     """
     Combine predictions using weighted voting.
     
     Args:
         predictions: List of prediction lists from different models
         weights: List of weights for each model
+        label_weights: Dictionary mapping labels to weights (optional)
         
     Returns:
         List of ensemble predictions
@@ -145,8 +160,15 @@ def weighted_vote(predictions: List[List[Union[int, str]]], weights: List[float]
         example_preds = [preds[i] for preds in predictions]
         # Count weighted occurrences of each prediction
         weighted_counter = {}
-        for pred, weight in zip(example_preds, weights):
-            weighted_counter[pred] = weighted_counter.get(pred, 0) + weight
+        for pred, model_weight in zip(example_preds, weights):
+            # Apply both model weight and label weight (if provided)
+            if label_weights:
+                label_weight = label_weights.get(pred, 1.0)
+                total_weight = model_weight * label_weight
+            else:
+                total_weight = model_weight
+                
+            weighted_counter[pred] = weighted_counter.get(pred, 0) + total_weight
         
         # Get the prediction with the highest weighted count
         max_pred = max(weighted_counter.items(), key=lambda x: x[1])[0]
@@ -154,12 +176,13 @@ def weighted_vote(predictions: List[List[Union[int, str]]], weights: List[float]
     
     return ensemble_predictions
 
-def average_probabilities(probability_files: List[str]) -> List[int]:
+def average_probabilities(probability_files: List[str], label_weights: Dict[int, float] = None) -> List[int]:
     """
     Combine predictions by averaging probabilities.
     
     Args:
         probability_files: List of paths to probability files (numpy arrays)
+        label_weights: Dictionary mapping labels to weights (optional)
         
     Returns:
         List of ensemble predictions
@@ -179,8 +202,25 @@ def average_probabilities(probability_files: List[str]) -> List[int]:
     # Average probabilities
     avg_probs = np.mean(all_probs, axis=0)
     
-    # Get the class with the highest average probability for each example
-    ensemble_predictions = np.argmax(avg_probs, axis=1).tolist()
+    # Apply label weights if provided
+    if label_weights:
+        logger.info(f"Applying label weights: {label_weights}")
+        # Create a weight array with the same shape as avg_probs
+        # Default weight is 1.0 for labels not specified
+        num_classes = avg_probs.shape[1]
+        weight_array = np.ones(num_classes)
+        
+        for label, weight in label_weights.items():
+            if 0 <= label < num_classes:
+                weight_array[label] = weight
+        
+        # Apply weights to each class probability
+        weighted_probs = avg_probs * weight_array
+    else:
+        weighted_probs = avg_probs
+    
+    # Get the class with the highest weighted probability for each example
+    ensemble_predictions = np.argmax(weighted_probs, axis=1).tolist()
     
     return ensemble_predictions
 
@@ -259,6 +299,11 @@ def main():
         nargs="+",
         help="Weights for each model (required for weighted voting)",
     )
+    parser.add_argument(
+        "--label_weights",
+        type=str,
+        help="JSON string or file path with weights for each label (e.g., '{\"0\": 1.0, \"1\": 2.0}')",
+    )
     
     # Output arguments
     parser.add_argument(
@@ -280,21 +325,49 @@ def main():
     if args.method == "average" and not args.probability_files:
         raise ValueError("Probability files must be provided for averaging probabilities")
     
+    # Parse label weights if provided
+    label_weights = None
+    if args.label_weights:
+        try:
+            # Try to parse as JSON string
+            label_weights = json.loads(args.label_weights)
+        except json.JSONDecodeError:
+            # If not a valid JSON string, try to load from file
+            if os.path.exists(args.label_weights):
+                with open(args.label_weights, 'r') as f:
+                    label_weights = json.load(f)
+            else:
+                raise ValueError(f"Invalid label weights: {args.label_weights}. Must be a valid JSON string or file path.")
+        
+        # Convert string keys to int or float if possible
+        parsed_weights = {}
+        for k, v in label_weights.items():
+            try:
+                # Try to convert key to int
+                parsed_key = int(k)
+            except ValueError:
+                # If not an int, keep as string
+                parsed_key = k
+            parsed_weights[parsed_key] = float(v)
+        
+        label_weights = parsed_weights
+        logger.info(f"Using label weights: {label_weights}")
+    
     # Load predictions
     examples, predictions = load_predictions(args.prediction_files)
     
     # Apply ensemble method
     if args.method == "majority":
         logger.info("Using majority voting ensemble method")
-        ensemble_predictions = majority_vote(predictions)
+        ensemble_predictions = majority_vote(predictions, label_weights)
     
     elif args.method == "weighted":
-        logger.info(f"Using weighted voting ensemble method with weights: {args.weights}")
-        ensemble_predictions = weighted_vote(predictions, args.weights)
+        logger.info(f"Using weighted voting ensemble method with model weights: {args.weights}")
+        ensemble_predictions = weighted_vote(predictions, args.weights, label_weights)
     
     elif args.method == "average":
         logger.info("Using average probabilities ensemble method")
-        ensemble_predictions = average_probabilities(args.probability_files)
+        ensemble_predictions = average_probabilities(args.probability_files, label_weights)
     
     # Save ensemble predictions
     save_predictions(args.output_file, ensemble_predictions, examples, labels_only=args.labels_only)
