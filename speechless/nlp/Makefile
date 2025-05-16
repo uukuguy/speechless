@@ -16,7 +16,7 @@ train_apis:
 		--validation_file ${VAL_FILE_PATH} \
 		--shuffle_train_dataset \
 		--metric_name f1 \
-		--text_column_name text \
+		--text_column_names text \
 		--label_column_name label \
 		--do_train \
 		--do_eval \
@@ -45,7 +45,7 @@ run_apis_test_queries:
 		--test_file ${TEST_A_FILE_PATH} \
 		--shuffle_train_dataset \
 		--metric_name f1 \
-		--text_column_name text \
+		--text_column_names text \
 		--label_column_name label \
 		--do_predict \
 		--logging_steps 1 \
@@ -66,7 +66,7 @@ run_apis_train_queries:
 		--test_file ${TRAIN_QUERIES_FILE_PATH} \
 		--shuffle_train_dataset \
 		--metric_name f1 \
-		--text_column_name text \
+		--text_column_names text \
 		--label_column_name label \
 		--do_eval \
 		--do_predict \
