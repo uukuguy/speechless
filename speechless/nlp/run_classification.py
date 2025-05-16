@@ -367,6 +367,7 @@ def main():
                     test_extension == train_extension
                 ), "`test_file` should have the same extension (csv or json) as `train_file`."
                 data_files["test"] = data_args.test_file
+                logger.info(f"Test file path: {data_args.test_file}")
             else:
                 raise ValueError("Need either a dataset name or a test file for `do_predict`.")
 
@@ -389,6 +390,9 @@ def main():
                 cache_dir=model_args.cache_dir,
                 token=model_args.token,
             )
+            if "test" in raw_datasets:
+                logger.info(f"Initial test dataset size after loading: {len(raw_datasets['test'])}")
+                logger.info(f"Test dataset features: {raw_datasets['test'].features}")
 
     # Filter out samples with None labels
     for split in raw_datasets.keys():
@@ -639,6 +643,10 @@ def main():
             load_from_cache_file=not data_args.overwrite_cache,
             desc="Running tokenizer on dataset",
         )
+        if "test" in raw_datasets:
+            logger.info(f"Test dataset size after preprocessing: {len(raw_datasets['test'])}")
+            logger.info(f"Test dataset features after preprocessing: {raw_datasets['test'].features}")
+            logger.info(f"Test dataset example after preprocessing: {raw_datasets['test'][0] if len(raw_datasets['test']) > 0 else 'No examples'}")
 
     if training_args.do_train:
         if "train" not in raw_datasets:
@@ -769,6 +777,11 @@ def main():
         # Removing the `label` columns if exists because it might contains -1 and Trainer won't like that.
         if "label" in predict_dataset.features:
             predict_dataset = predict_dataset.remove_columns("label")
+
+        # Log final prediction dataset state
+        logger.info(f"Final prediction dataset size: {len(predict_dataset)}")
+        logger.info(f"Final prediction dataset features: {predict_dataset.features}")
+        logger.info(f"Final prediction dataset example: {predict_dataset[0] if len(predict_dataset) > 0 else 'No examples'}")
 
         # Log a sample batch from the prediction dataset
         if len(predict_dataset) > 0:
