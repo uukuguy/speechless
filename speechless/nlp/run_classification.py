@@ -619,11 +619,29 @@ def main():
         return ids
 
     def preprocess_function(examples):
+        # Add logging to debug preprocessing
+        logger.info(f"Preprocessing examples with keys: {list(examples.keys())}")
+        logger.info(f"text_column_names: {data_args.text_column_names}")
+        
         if data_args.text_column_names is not None:
             text_column_names = data_args.text_column_names.split(",")
+            logger.info(f"Split text_column_names: {text_column_names}")
+            
+            # Check if the first text column exists in examples
+            if text_column_names[0] not in examples:
+                logger.error(f"Text column '{text_column_names[0]}' not found in examples. Available columns: {list(examples.keys())}")
+                # Create an empty result to avoid errors
+                result = {"input_ids": [], "attention_mask": []}
+                if "label" in examples:
+                    result["label"] = []
+                return result
+            
             # join together text columns into "sentence" column
             examples["sentence"] = examples[text_column_names[0]]
             for column in text_column_names[1:]:
+                if column not in examples:
+                    logger.warning(f"Text column '{column}' not found in examples. Skipping.")
+                    continue
                 for i in range(len(examples[column])):
                     examples["sentence"][i] += data_args.text_column_delimiter + examples[column][i]
         # Tokenize the texts
