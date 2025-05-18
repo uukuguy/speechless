@@ -119,7 +119,7 @@ import transformers
 from dataclasses import dataclass
 
 
-def format_chat(messages, output_format, add_generation_prompt=False, include_toolcall_example=True):
+def format_chat(messages, output_format="json", add_generation_prompt=False, include_toolcall_example=True):
     """
     output_format: "json" or "toml"
     """
