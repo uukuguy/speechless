@@ -21,7 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_predictions(prediction_files: List[str]) -> Tuple[List[Dict], List[List[Union[int, str]]]]:
+def load_predictions(prediction_files: List[str], with_head=False) -> Tuple[List[Dict], List[List[Union[int, str]]]]:
     """
     Load prediction results from multiple files.
     
@@ -48,10 +48,18 @@ def load_predictions(prediction_files: List[str]) -> Tuple[List[Dict], List[List
             predictions = []
             with open(file_path, 'r') as f:
                 # Skip header line
-                next(f)
+                if with_head:
+                    next(f)
                 for line in f:
                     parts = line.strip().split('\t')
-                    if len(parts) >= 2:
+                    if len(parts) == 1:
+                        try:
+                            pred = int(parts[0])
+                        except ValueError:
+                            # If not an int, keep as string (for multi-label or text predictions)
+                            pred = parts[0]
+                        predictions.append(pred)
+                    elif len(parts) >= 2:
                         # Try to convert prediction to int if possible
                         try:
                             pred = int(parts[1])
@@ -304,6 +312,12 @@ def main():
         type=str,
         help="JSON string or file path with weights for each label (e.g., '{\"0\": 1.0, \"1\": 2.0}')",
     )
+
+    parser.add_argument(
+        "--with_head",
+        action="store_true",
+        help="Whether the prediction files have a header line",
+    )
     
     # Output arguments
     parser.add_argument(
@@ -312,6 +326,7 @@ def main():
         required=True,
         help="Path to output file for ensemble predictions",
     )
+
     
     args = parser.parse_args()
     
@@ -354,7 +369,9 @@ def main():
         logger.info(f"Using label weights: {label_weights}")
     
     # Load predictions
-    examples, predictions = load_predictions(args.prediction_files)
+    examples, predictions = load_predictions(args.prediction_files, with_head=args.with_head)
+
+    print(f"Loaded {len(predictions)} prediction sets with {len(predictions[0])} predictions each")
     
     # Apply ensemble method
     if args.method == "majority":
