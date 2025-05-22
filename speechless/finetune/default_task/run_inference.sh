@@ -3,6 +3,7 @@ SCRIPT_ROOT=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 
 source ${SCRIPT_ROOT}/task.env
+unset http_proxy
 
 TEST_FILE="test_data.jsonl"
 # replace ".jsonl" with "-inferred.jsonl"
