@@ -181,7 +181,8 @@ def format_chat(messages, output_format="json", add_generation_prompt=False, inc
                     else:
                         raise ValueError(f"Unknown output format in format_chat(): {output_format}")
 
-            formatted.append(f"<|im_start|>system\n{'\n'.join(system_parts)}<|im_end|>\n")
+            system_parts_str = "\n".join(system_parts)
+            formatted.append(f"<|im_start|>system\n{system_parts_str}<|im_end|>\n")
 
         elif role == "user":
             formatted.append(f"<|im_start|>user\n{content}<|im_end|>")
