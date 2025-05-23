@@ -202,7 +202,8 @@ def format_chat(messages, output_format="json", add_generation_prompt=False, inc
                 assistant_lines.append("</tool_call>")
             if content:
                 assistant_lines.append(content)
-            formatted.append(f"<|im_start|>assistant\n{'\n'.join(assistant_lines)}<|im_end|>")
+            assistant_lines_str = '\n'.join(assistant_lines)
+            formatted.append(f"<|im_start|>assistant\n{assistant_lines_str}<|im_end|>")
 
         elif role == "tool":
             formatted.append(f"<|im_start|>user\n<tool_response>\n{content}\n</tool_response><|im_end|>")
