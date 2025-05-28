@@ -42,73 +42,79 @@ else
   export NUM_GPUS=${#gpu_array[@]}
 fi
 
+# 10
+TOTAL_EPOCHS=1
+# 0.0001
+KL_LOSS_COEF=0.0
+# 0.001
+KL_COEF=0.0
+# 5e-7
+LEARNING_RATE=2e-6
+CLIP_RATIO=0.3
 # Default values
 TRAIN_BATCH_SIZE=16
-# VAL_BATCH_SIZE=256
-MAX_PROMPT_LENGTH=512
-MAX_RESPONSE_LENGTH=2048
-LEARNING_RATE=5e-7
+# 256 
 PPO_MINI_BATCH_SIZE=16
+ROLLOUT_N=4
 # per GPU
 PPO_MICRO_BATCH_SIZE=2
-CLIP_RATIO=0.3
-KL_LOSS_COEF=0.0001
+LOG_PROB_MICRO_BATCH_SIZE=256
+# VAL_BATCH_SIZE=256
+MAX_PROMPT_LENGTH=512
+MAX_RESPONSE_LENGTH=1024
+# per GPU
 ENTROPY_COEFFIENT=0.001
 KL_LOSS_TYPE="low_var_kl"
 TEMPERATURE=1.0
-LOG_PROB_MICRO_BATCH_SIZE=80
-ROLLOUT_N=8
-KL_COEF=0.001
-TOTAL_EPOCHS=10
 DATASET_NAME=webinstruct-verified
-ROLLOUT_GPU_MEMORY_UTIL=0.6
+ROLLOUT_GPU_MEMORY_UTIL=0.5
 ACTOR_OPTIMIZER_OFFLOAD=False
 ACTOR_PARAMETER_OFFLOAD=False
 MODEL_NAME=Qwen/Qwen3-4B
 VERIFIER_NAME=TIGER-Lab/general-verifier
 
-generate_suffix() {
-  local suffix=""
-  local dataset_provided=false
-  local model_provided=false
+# generate_suffix() {
+#   local suffix=""
+#   local dataset_provided=false
+#   local model_provided=false
 
-  while [[ "$#" -gt 0 ]]; do
-    case $1 in
-      --train_batch_size) suffix+="_batch$2"; shift 2 ;;
-      # --val_batch_size) suffix+="_valbatch$2"; shift 2 ;;
-      --max_prompt_length) suffix+="_max_prompt$2"; shift 2 ;;
-      --max_response_length) suffix+="_max_response$2"; shift 2 ;;
-      --learning_rate) suffix+="_lr$2"; shift 2 ;;
-      --ppo_mini_batch_size) suffix+="_ppomini$2"; shift 2 ;;
-      --ppo_micro_batch_size) shift 2 ;;
-      --kl_loss_coef) suffix+="_klcoef$2"; shift 2 ;;
-      --entropy_coeffient) suffix+="_entcoef$2"; shift 2 ;;
-      --clip_ratio) suffix+="_clipratio$2"; shift 2 ;;
-      --kl_loss_type) suffix+="_kltype$2"; shift 2 ;;
-      --temperature) suffix+="_temp$2"; shift 2 ;;
-      --log_prob_micro_batch_size) suffix+="_logprobbatch$2"; shift 2 ;;
-      --rollout_n) suffix+="_rollout$2"; shift 2 ;;
-      --kl_coef) suffix+="_klcontrol$2"; shift 2 ;;
-      --total_epochs) suffix+="_epochs$2"; shift 2 ;;
-      --rollout_gpu_memory_util) shift 2 ;;
-      --actor_optimizer_offload) shift 2 ;;
-      --actor_parameter_offload) shift 2 ;;
-      --dataset_name) suffix+="_$2"; dataset_provided=true; shift 2 ;;
-      --model_name) suffix+="_$2"; model_provided=true; shift 2 ;;
-      *) shift ;;
-    esac
-  done
+#   while [[ "$#" -gt 0 ]]; do
+#     case $1 in
+#       --train_batch_size) suffix+="_batch$2"; shift 2 ;;
+#       # --val_batch_size) suffix+="_valbatch$2"; shift 2 ;;
+#       --max_prompt_length) suffix+="_max_prompt$2"; shift 2 ;;
+#       --max_response_length) suffix+="_max_response$2"; shift 2 ;;
+#       --learning_rate) suffix+="_lr$2"; shift 2 ;;
+#       --ppo_mini_batch_size) suffix+="_ppomini$2"; shift 2 ;;
+#       --ppo_micro_batch_size) shift 2 ;;
+#       --kl_loss_coef) suffix+="_klcoef$2"; shift 2 ;;
+#       --entropy_coeffient) suffix+="_entcoef$2"; shift 2 ;;
+#       --clip_ratio) suffix+="_clipratio$2"; shift 2 ;;
+#       --kl_loss_type) suffix+="_kltype$2"; shift 2 ;;
+#       --temperature) suffix+="_temp$2"; shift 2 ;;
+#       --log_prob_micro_batch_size) suffix+="_logprobbatch$2"; shift 2 ;;
+#       --rollout_n) suffix+="_rollout$2"; shift 2 ;;
+#       --kl_coef) suffix+="_klcontrol$2"; shift 2 ;;
+#       --total_epochs) suffix+="_epochs$2"; shift 2 ;;
+#       --rollout_gpu_memory_util) shift 2 ;;
+#       --actor_optimizer_offload) shift 2 ;;
+#       --actor_parameter_offload) shift 2 ;;
+#       --dataset_name) suffix+="_$2"; dataset_provided=true; shift 2 ;;
+#       --model_name) suffix+="_$2"; model_provided=true; shift 2 ;;
+#       *) shift ;;
+#     esac
+#   done
 
-  if [ "$dataset_provided" = false ]; then
-    suffix+="_$DATASET_NAME"
-  fi
+#   if [ "$dataset_provided" = false ]; then
+#     suffix+="_$DATASET_NAME"
+#   fi
 
-  if [ "$model_provided" = false ]; then
-    suffix+="_$MODEL_NAME"
-  fi
+#   if [ "$model_provided" = false ]; then
+#     suffix+="_$MODEL_NAME"
+#   fi
 
-  echo "$suffix"
-}
+#   echo "$suffix"
+# }
 
 echo "Arguments received: $@"
 
@@ -182,17 +188,19 @@ PYTHONPATH=${SPEECHLESS_ROOT:-${HOME}/sandbox/LLM/speechless.ai/speechless}
 
     # data.val_batch_size=$VAL_BATCH_SIZE \
 
-HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
-    --runtime-env-json='{
-         "working_dir": "'${WORKING_DIR}'",
-         "env_vars": {
-            "http_proxy": "",
-            "https_proxy": "",
-            "PYTHONPATH": "'${PYTHONPATH}'",
-            "CUDA_VISIBLE_DEVICES": "'${CUDA_VISIBLE_DEVICES}'"
-         }
-     }' \
-    -- python -m verl.trainer.main_ppo \
+# HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir . \
+#     --runtime-env-json='{
+#          "working_dir": "'${WORKING_DIR}'",
+#          "env_vars": {
+#             "http_proxy": "",
+#             "https_proxy": "",
+#             "PYTHONPATH": "'${PYTHONPATH}'",
+#             "CUDA_VISIBLE_DEVICES": "'${CUDA_VISIBLE_DEVICES}'"
+#          }
+#      }' \
+#     -- python -m verl.trainer.main_ppo \
+
+python -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     custom_reward_function.path=./compute_score.py \
     reward_model.enable=False \
