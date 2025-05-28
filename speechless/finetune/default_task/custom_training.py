@@ -1,13 +1,48 @@
 
 from typing import List
 import torch
+from torch import nn
 from transformers import Seq2SeqTrainer, Trainer, TrainingArguments
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from datasets import load_dataset
 import toml
 
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, inputs, targets):
+        ce_loss = nn.functional.cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-ce_loss)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        else:
+            return focal_loss.sum()
+
+class FocalLossTrainer(Seq2SeqTrainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.task_loss = TaskLoss(self.tokenizer)
+        self.task_loss = FocalLoss(alpha=1, gamma=2)
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        labels = inputs.get("labels")
+        original_loss, outputs = super().compute_loss(model, inputs, return_outputs=True, num_items_in_batch=num_items_in_batch)
+        
+        # 计算自定义损失
+        _task_loss = self.task_loss(outputs, labels)
+
+        loss = _task_loss
+
+        
+        return (loss, outputs) if return_outputs else loss
+
 # 自定义损失函数
-class TaskLoss(torch.nn.Module):
+class TaskLoss(nn.Module):
     def __init__(self, tokenizer):
         super(TaskLoss, self).__init__()
         self.tokenizer = tokenizer
