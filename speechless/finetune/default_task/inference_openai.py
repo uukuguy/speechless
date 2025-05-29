@@ -66,9 +66,9 @@ def run_single(params):
         logits_processor = load_attribute_from_custom_module(logits_processor_module_file, logits_processor_class_name)
         if logits_processor is not None:
             # gen_kwargs["logits_processors"] = [logits_processor(tokenizer)]
-            gen_kwargs["extra_body"] = {
-                "logits_processors": [logits_processor(tokenizer)],
-            }
+            if "extra_body" not in gen_kwargs:
+                gen_kwargs["extra_body"] = {}
+            gen_kwargs["extra_body"]["logits_processors"] = [logits_processor(tokenizer)]
         else:
             raise ValueError(f"Logits processor {args.logits_processor_class_name} not found in {args.logits_processor_module_file}")
 
@@ -108,7 +108,9 @@ def main():
         "frequency_penalty": args.frequency_penalty,
         "stream": args.stream,
         "top_p": args.top_p,
-        "min_p": args.min_p, 
+        "extra_body": {
+            "min_p": args.min_p, 
+        },
         # "tool_choice": "auto",
     }
 
