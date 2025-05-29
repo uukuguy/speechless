@@ -45,12 +45,17 @@ fi
 # Default values
 TRAIN_BATCH_SIZE=16
 # VAL_BATCH_SIZE=256
-MAX_PROMPT_LENGTH=512
-MAX_RESPONSE_LENGTH=2048
 LEARNING_RATE=5e-7
 PPO_MINI_BATCH_SIZE=16
 # per GPU
-PPO_MICRO_BATCH_SIZE=2
+# MAX_PROMPT_LENGTH=512
+# MAX_RESPONSE_LENGTH=1024
+# PPO_MICRO_BATCH_SIZE=2
+
+MAX_PROMPT_LENGTH=1024
+MAX_RESPONSE_LENGTH=2048
+PPO_MICRO_BATCH_SIZE=1
+
 CLIP_RATIO=0.3
 KL_LOSS_COEF=0.0001
 ENTROPY_COEFFIENT=0.001
@@ -239,7 +244,7 @@ HYDRA_FULL_ERROR=1 ray job submit --address=http://${HEAD_IP}:8265 --working-dir
     trainer.experiment_name=$RUN_NAME \
     trainer.n_gpus_per_node=${NUM_GPUS} \
     trainer.nnodes=1 \
-    trainer.save_freq=10 \
-    trainer.test_freq=10 \
+    trainer.save_freq=500 \
+    trainer.test_freq=100 \
     trainer.default_local_dir=$HDFS_CHECKPOINT_PATH/$RUN_NAME \
     trainer.total_epochs=$TOTAL_EPOCHS 2>&1 | tee -a $LOG_FILE_PATH
