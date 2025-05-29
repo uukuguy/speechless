@@ -20,7 +20,8 @@ python -m speechless.finetune.default_task.inference_openai \
         --parallel_processes 4 \
         --parallel_chunk_size 16 \
         --request_batch_size 64 \
-        --temperature 0.1 \
+        --temperature 1.0 \
+        --min_p 0.2 \
         --max_tokens 512 \
         --logits_processor_module_file ${LOGITS_PROCESSOR_MODULE_FILE} \
         --logits_processor_class_name ${LOGITS_PROCESSOR_CLASS_NAME} \

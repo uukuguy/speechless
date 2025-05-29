@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-import os, json
+import os, json, re
 import random
 import torch
 from copy import deepcopy
 from loguru import logger
 from tqdm import tqdm
 from typing import Any
+# Unsloth shoud be imported before transformers to ensure all optimizations are applied correctly.
+from unsloth import FastLanguageModel, PatchFastRL
 from transformers.trainer_callback import TrainerCallback
 from transformers import TrainingArguments, TrainerState, TrainerControl
 
@@ -22,7 +24,6 @@ def is_bfloat16_supported():
 
 # -------------------- Model --------------------
 def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_rank: int = 64):
-    from unsloth import FastLanguageModel, PatchFastRL
     PatchFastRL("GRPO", FastLanguageModel)
 
     model, tokenizer = FastLanguageModel.from_pretrained(
@@ -54,339 +55,6 @@ def load_model_and_tokenizer(model_path: str, max_seq_length: int = 8192, lora_r
 import re
 from datasets import load_dataset, Dataset
 
-# # Load and prep dataset
-# SYSTEM_PROMPT = """
-# Respond in the following format:
-# <reasoning>
-# ...
-# </reasoning>
-# <answer>
-# ...
-# </answer>
-# """
-
-# XML_COT_FORMAT = """\
-# <reasoning>
-# {reasoning}
-# </reasoning>
-# <answer>
-# {answer}
-# </answer>
-# """
-# def extract_xml_answer(text: str) -> str:
-#     answer = text.split("<answer>")[-1]
-#     answer = answer.split("</answer>")[0]
-#     return answer.strip()
-
-# def extract_hash_answer(text: str) -> str | None:
-#     if "####" not in text:
-#         return None
-#     return text.split("####")[1].strip()
-
-# # uncomment middle messages for 1-shot prompting
-# def get_gsm8k_questions(split = "train") -> Dataset:
-#     data = load_dataset('openai/gsm8k', 'main')[split] # type: ignore
-#     data = data.map(lambda x: { # type: ignore
-#         'prompt': [
-#             {'role': 'system', 'content': SYSTEM_PROMPT},
-#             {'role': 'user', 'content': x['question']}
-#         ],
-#         'answer': extract_hash_answer(x['answer'])
-#     }) # type: ignore
-#     return data # type: ignore
-
-# dataset = get_gsm8k_questions()
-
-from speechless.finetune.dataset_utils.multi_rounds import format_chat
-def get_function_calling_dialogs(dataset_path):
-    ds = load_dataset("json", data_files=dataset_path, split="train")
-
-    def filter_func(example):
-        messages_str = example['messages']
-        # logger.debug(f"{messages_str=}")
-        messages = json.loads(messages_str)
-        if (len(messages) - 1) % 2 != 0:
-            return False
-        
-        if messages[-1]['role'] != 'assistant':
-            return False
-
-        return True
-
-    ds = ds.filter(filter_func)
-
-    def add_targets_func(example):
-        messages_str = example['messages']
-        # logger.debug(f"{messages_str=}")
-        messages = json.loads(messages_str)
-        assert messages[-1]['role'] == 'assistant', f"{messages=}"
-        # if messages[-1]['role'] == 'user':
-        #     messages = messages[:-1]
-
-        # logger.debug(f"{messages=}")
-        assert messages[0]['role'] == "system"
-        targets = []
-        assert (len(messages) - 1) % 2 == 0, f"(len(messages) - 1) % 2 != 0. {len(messages)=}, {messages=}"
-
-        for i in range(0, (len(messages) - 1) // 2):
-            conv = messages[1 + i*2 + 1]
-            tool_calls = conv.get("tool_calls", None)
-            if tool_calls:
-                target = [tool_calls[0]['function']]
-            else:
-                target = []
-            targets.append(target)
-                
-        messages = json.dumps(messages, ensure_ascii=False)
-        targets = json.dumps(targets, ensure_ascii=False)
-        # logger.info(f"{messages=}, {targets=}")
-        return {
-            "messages": messages,
-            "targets": targets,
-        }
-
-    ds = ds.map(add_targets_func)
-    print(f"{ds=}, {ds[0]=}")
-
-    expanded_examples = []
-    for example in tqdm(ds, desc="Building examples"):
-        messages = json.loads(example['messages'])
-        targets = json.loads(example['targets'])
-        if isinstance(targets, str):
-            targets = json_loads(targets)
-        assert len(messages) == len(targets) * 2 + 1, f"{len(messages)=}, {len(targets)=}"
-        system_message = deepcopy(messages[0])
-        messages = messages[1:]
-
-        sub_examples = []
-        for i in range(0, len(targets)):
-            sub_messages = deepcopy(messages[:i*2+1])
-            sub_targets = deepcopy(targets[:i+1])
-            sub_example = {
-                "messages": [system_message] + sub_messages,
-                "targets": sub_targets,
-            }
-            sub_examples.append(sub_example)
-
-        assert len(sub_examples) == len(targets), f"{len(sub_examples)=}, {len(targets)=}"
-
-        # example['messages'] = [system_message] + messages[:-1]
-        # example['targets'] = targets
-        # sub_examples.append(example)
-
-        selected_examples = []
-        if len(sub_examples) > 1:
-            random.shuffle(sub_examples)
-            for e in sub_examples:
-                targets = e['targets']
-                if isinstance(targets, str):
-                    targets = json_loads(targets)
-                # logger.debug(f"{targets=}")
-                if len(targets[-1]) == 0:
-                    logger.debug(f"{targets=}")
-                    # logger.debug(f"{e=}")
-                    # logger.debug(f"e['targets'][-1] == [] found")
-                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-                    selected_examples.append(e)
-                    break
-            assert len(selected_examples) == 1, f"{sub_examples=}"
-            for e in sub_examples:
-                targets = e['targets']
-                if isinstance(targets, str):
-                    targets = json_loads(targets)
-                # logger.debug(f"{targets=}")
-                if len(targets[-1]) > 0:
-                    _targets=e['targets']
-                    logger.debug(f"{targets=}")
-                    # logger.debug(f"{e=}")
-                    # logger.debug(f"e['targets'][-1] != [] found")
-                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-                    selected_examples.append(e)
-                    break
-            assert len(selected_examples) == 2, f"{sub_examples=}"
-            # print(f"{len(sub_examples)}, {sub_examples=}")
-            assert len(selected_examples) == 2, f"{len(selected_examples)}, {selected_examples=}"
-        else:
-            # e = sub_examples[0]
-            # e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-            # e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-            # selected_examples.append(e)
-            pass
-        expanded_examples.extend(selected_examples)
-
-        # if len(sub_examples) >= 1:
-        #     
-        #     sub_example = sub_examples[0]
-        #     expanded_examples.append(sub_example)
-        
-        
-
-    ds = Dataset.from_list(expanded_examples)
-    print(f"{ds=}, {ds[0]=}")
-
-    def format_chat_func(example):
-        # print(f"{example=}")
-        messages = json.loads(example['messages'])
-        # print(f"{type(messages)=}, {messages=}")
-        if isinstance(messages, str):
-            messages = json.loads(messages)
-        prompt = format_chat(messages)
-
-        return {
-            "prompt": prompt
-        }
-        
-
-    ds = ds.map(format_chat_func)
-    ds = ds.remove_columns(["messages"])
-    return ds
-
-def get_function_calling_dialogs_sft_dataset(dataset_path):
-    ds = load_dataset("json", data_files=dataset_path, split="train")
-
-    def filter_func(example):
-        messages_str = example['messages']
-        # logger.debug(f"{messages_str=}")
-        messages = json.loads(messages_str)
-        if (len(messages) - 1) % 2 != 0:
-            return False
-        
-        if messages[-1]['role'] != 'assistant':
-            return False
-
-        return True
-
-    ds = ds.filter(filter_func)
-
-    def add_targets_func(example):
-        messages_str = example['messages']
-        # logger.debug(f"{messages_str=}")
-        messages = json.loads(messages_str)
-        assert messages[-1]['role'] == 'assistant', f"{messages=}"
-        # if messages[-1]['role'] == 'user':
-        #     messages = messages[:-1]
-
-        # logger.debug(f"{messages=}")
-        assert messages[0]['role'] == "system"
-        targets = []
-        assert (len(messages) - 1) % 2 == 0, f"(len(messages) - 1) % 2 != 0. {len(messages)=}, {messages=}"
-
-        for i in range(0, (len(messages) - 1) // 2):
-            conv = messages[1 + i*2 + 1]
-            tool_calls = conv.get("tool_calls", None)
-            if tool_calls:
-                target = [tool_calls[0]['function']]
-            else:
-                target = []
-            targets.append(target)
-                
-        messages = json.dumps(messages, ensure_ascii=False)
-        targets = json.dumps(targets, ensure_ascii=False)
-        # logger.info(f"{messages=}, {targets=}")
-        return {
-            "messages": messages,
-            "targets": targets,
-        }
-
-    ds = ds.map(add_targets_func)
-    print(f"{ds=}, {ds[0]=}")
-
-    expanded_examples = []
-    for example in tqdm(ds, desc="Building examples"):
-        messages = json.loads(example['messages'])
-        targets = json.loads(example['targets'])
-        if isinstance(targets, str):
-            targets = json_loads(targets)
-        assert len(messages) == len(targets) * 2 + 1, f"{len(messages)=}, {len(targets)=}"
-        system_message = deepcopy(messages[0])
-        messages = messages[1:]
-
-        sub_examples = []
-        for i in range(0, len(targets)):
-            sub_messages = deepcopy(messages[:i*2+1])
-            sub_targets = deepcopy(targets[:i+1])
-            sub_example = {
-                "messages": [system_message] + sub_messages,
-                "targets": sub_targets,
-            }
-            sub_examples.append(sub_example)
-
-        assert len(sub_examples) == len(targets), f"{len(sub_examples)=}, {len(targets)=}"
-
-        # example['messages'] = [system_message] + messages[:-1]
-        # example['targets'] = targets
-        # sub_examples.append(example)
-
-        selected_examples = []
-        if len(sub_examples) > 1:
-            random.shuffle(sub_examples)
-            for e in sub_examples:
-                targets = e['targets']
-                if isinstance(targets, str):
-                    targets = json_loads(targets)
-                # logger.debug(f"{targets=}")
-                if len(targets[-1]) == 0:
-                    logger.debug(f"{targets=}")
-                    # logger.debug(f"{e=}")
-                    # logger.debug(f"e['targets'][-1] == [] found")
-                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-                    selected_examples.append(e)
-                    break
-            assert len(selected_examples) == 1, f"{sub_examples=}"
-            for e in sub_examples:
-                targets = e['targets']
-                if isinstance(targets, str):
-                    targets = json_loads(targets)
-                # logger.debug(f"{targets=}")
-                if len(targets[-1]) > 0:
-                    _targets=e['targets']
-                    logger.debug(f"{targets=}")
-                    # logger.debug(f"{e=}")
-                    # logger.debug(f"e['targets'][-1] != [] found")
-                    e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-                    e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-                    selected_examples.append(e)
-                    break
-            assert len(selected_examples) == 2, f"{sub_examples=}"
-            # print(f"{len(sub_examples)}, {sub_examples=}")
-            assert len(selected_examples) == 2, f"{len(selected_examples)}, {selected_examples=}"
-        else:
-            # e = sub_examples[0]
-            # e['messages'] = json.dumps(e['messages'], ensure_ascii=False)
-            # e['targets']  = json.dumps(e['targets'], ensure_ascii=False)
-            # selected_examples.append(e)
-            pass
-        expanded_examples.extend(selected_examples)
-
-        # if len(sub_examples) >= 1:
-        #     
-        #     sub_example = sub_examples[0]
-        #     expanded_examples.append(sub_example)
-        
-        
-
-    ds = Dataset.from_list(expanded_examples)
-    print(f"{ds=}, {ds[0]=}")
-
-    def format_chat_func(example):
-        # print(f"{example=}")
-        messages = json.loads(example['messages'])
-        # print(f"{type(messages)=}, {messages=}")
-        if isinstance(messages, str):
-            messages = json.loads(messages)
-        prompt = format_chat(messages)
-
-        return {
-            "prompt": prompt
-        }
-        
-
-    ds = ds.map(format_chat_func)
-    ds = ds.remove_columns(["messages"])
-    return ds
 
 
 # -------------------- Reward Functions --------------------
@@ -408,99 +76,32 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
     responses = [completion.strip() for completion in completions]
 
     scores = []
-    for prompt, generated_text, target in zip(prompts, responses, targets):
-        logger.debug(f"{prompt=}")
-        logger.debug(f"{generated_text=}")
+    for prompt, generated_text, true_target in zip(prompts, responses, targets):
+        # logger.debug(f"{prompt[:30]=}")
+        # logger.debug(f"{generated_text=}")
         score = 0.0
-        true_target = json_loads(target)
-        logger.info(f"{true_target=}")
-        if true_target[-1] == []:
-            if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
-                # 在不应调用api的轮次，调用api，重点惩罚
-                logger.warning(f"在不应调用api的轮次，调用api，重点惩罚")
-                score = -1
-            else:
-                # 在不应调用api的轮次，没有调用api，正常奖励
-                logger.info(f"在不应调用api的轮次，没有调用api，正常奖励")
-                score = 1
-        else:
-            if "<tool_call>" in generated_text and "</tool_call>" in generated_text: 
-                # 在应该调用api的轮次，触发调用api，奖励
-                logger.info(f"在应该调用api的轮次，触发调用api，奖励")
-                # if generated_text[:len("<tool_call>")] == "<tool_call>" and generated_text[-len("</tool_call>")] == "</tool_call>":
-                tool_call_text = generated_text.split("<tool_call>")[1].split("</tool_call>")[0]
-                bad_tool_call_text = False
-                try:
-                    # func = json.loads(tool_call_text)
-                    func = json_loads(tool_call_text)
-                except Exception as e:
-                    # api 不是正确的json格式，虽然触发时机正确，但不得分 
-                    bad_tool_call_text = True
-                    logger.error(f"api 不是正确的json格式，虽然触发时机正确，但不得分 0.0")
-                    score = 0.0
+        # logger.info(f"{true_target=}")
 
-                if len(re.findall(r"<tool_call>", generated_text)) == 1 and len(re.findall(r"<tool_call>", generated_text)) == 1:
-                    logger.info(f"<tool_call>对只能出现一次，符合限制条件，奖励0.5")
-                    score += 0.5
-                else:
-                    logger.error(f"<tool_call>对只能出现一次，不符合限制条件，虽然触发时机正确，但无特别奖励0.0")
-                    bad_tool_call_text = True
+        def get_boxed_value(text):
+            boxed_value=None
+            boxed_text = re.findall(r"boxed{(.*?)}", text, re.DOTALL | re.MULTILINE)
+            if len(boxed_text) > 0:
+                boxed_text = boxed_text[0]
+                if boxed_text in ["1", "0"]:
+                    boxed_value = int(boxed_text)
+            return boxed_value
 
-                if "name" in func and "arguments" in func:
-                    score += 0.5 # api 的json格式正确，格式奖励
-                    logger.info(f"api 的json格式keys('name, 'arguments)正确，格式奖励0.5")
-                else:
-                    logger.error(f"api 的json格式keys('name, 'arguments)错误，虽然触发时机正确，但无特别奖励0.0")
-                    bad_tool_call_text = True
+        true_value = get_boxed_value(true_target)
+        llm_value = get_boxed_value(generated_text)
 
-                if not bad_tool_call_text:
+        if llm_value is not None: 
+            if true_value == llm_value:
+                score = 2.0
+        if score == 0.0:
+            logger.warning(f"{generated_text=}")
+            logger.warning(f"{true_target=}")
+            
 
-
-                    func_name = func['name']
-                    func_arguments = func['arguments']
-                    true_name = true_target[-1][0]['name']
-                    true_arguments = true_target[-1][0]['arguments']
-                    if func_name == true_name:
-                        score += 1.0 # 函数名正确，
-                        logger.info(f"函数名{func_name}正确，奖励1.0")
-
-                        func_argument_keys = set(func_arguments.keys())
-                        true_argument_keys = set(true_arguments.keys())
-                        if func_argument_keys == true_argument_keys:
-                            score += 1.0 # 参数名完全一致，奖励
-                            logger.info(f"参数名完全一致，奖励1.0")
-                        else:
-                            tp = len(func_argument_keys & true_argument_keys)
-                            fp = len(func_argument_keys - true_argument_keys)
-                            fn = len(true_argument_keys - func_argument_keys)
-                            if (tp+fp) > 0 and (tp+fn) > 0:
-                                p = tp / (tp+fp)
-                                r = tp / (tp+fn)
-                                if (p+r) > 0:
-                                    f1 = 2 * p * r / (p+r)
-                                else:
-                                    f1 = 0.0
-                            else:
-                                f1 = 0.0
-                            score += f1 # 参数名命中f1, 奖励    
-                            logger.info(f"参数名命中f1, 奖励{f1:.3f}")
-
-                        num_value_exist = 0
-                        for k, v in func_arguments.items():
-                            if f"{v}" in prompt:
-                                num_value_exist += 1
-                        value_exist_acc = 0.0
-                        if len(func_arguments) > 0:
-                            value_exist_acc = num_value_exist / len(func_arguments)
-                            score += value_exist_acc
-                            logger.info(f"参数值命中率, 奖励{value_exist_acc:.3f}")
-                               
-                        # 参数值正确性先不处理
-
-            else:
-                # 在应该调用api的轮次没有调用api，重点惩罚
-                score = -1
-                logger.warning(f"在应该调用api的轮次没有调用api，重点惩罚")
         logger.debug(f"{score=}")
         scores.append(score)
 
@@ -508,10 +109,74 @@ def correctness_reward_func(prompts, completions, targets, **kwargs) -> list[flo
     logger.info(f"{scores=}")
     return scores
 
+def strict_format_reward_func(completions, **kwargs) -> list[float]:
+    """Reward function that checks if the completion has a specific format."""
+    responses = [completion for completion in completions]
+    pattern = r"<think>.*?</think>[\n\s]*\\boxed{[01]}"
+    matches = [re.match(pattern, r, re.DOTALL | re.MULTILINE) for r in responses]
+    scores = [0.5 if match else 0.0 for match in matches]
+
+    pattern = r"^<think>\n.*?\n</think>\n\\boxed{[01]}"
+    matches = [re.match(pattern, r, re.DOTALL | re.MULTILINE) for r in responses]
+    for i, match in enumerate(matches):
+        if match:
+            scores[i] += 0.5
+    return scores
+
+def soft_format_reward_func(completions, **kwargs) -> list[float]:
+    """Reward function that checks if the completion has a specific format."""
+    pattern = r"<think>.*?</think>[\n\s]*\\boxed{[01]}"
+    responses = [completion for completion in completions]
+    # matches = [re.match(pattern, r) for r in responses]
+    # return [0.5 if match else 0.0 for match in matches]
+    matches = [re.findall(pattern, r, re.DOTALL | re.MULTILINE) for r in responses]
+    scores = [] 
+    for m in matches:
+        s = 0.0
+        if len(m) >= 1:
+            s += 0.5
+            if len(m) == 1:
+                s += 0.5
+        scores.append(s)
+    return scores
+
+def think_format_reward_func(completions, **kwargs) -> list[float]:
+    """Reward function that checks if the completion has a specific format."""
+    responses = [completion for completion in completions]
+
+    pattern = r"<think>.*?</think>"
+    found = [0.5 if len(re.findall(pattern, r, re.DOTALL | re.MULTILINE)) == 1 else 0.0 for r in responses]
+    return found
+
+def boxed_format_reward_func(completions, **kwargs) -> list[float]:
+    """Reward function that checks if the completion has a specific format."""
+    responses = [completion for completion in completions]
+
+    pattern = r"\\boxed{[01]}"
+    found = [0.5 if len(re.findall(pattern, r, re.DOTALL | re.MULTILINE)) == 1 else 0.0 for r in responses]
+    return found
+
+def think_length_reward_func(completions, **kwargs) -> list[float]:
+    responses = [completion for completion in completions]
+    thinkings = [ len(r.split("<think>")[-1].split("</think>")[0]) for r in responses]
+    def get_score(length):
+        min_length = 128
+        max_length = 768
+        if length < min_length or length > max_length:
+            return 0.0
+        else:
+            return (length - min_length) / (max_length - min_length)
+            
+    return [get_score(t) for t in thinkings]
+
 reward_funcs = [
+    strict_format_reward_func,
+    soft_format_reward_func,
+    think_length_reward_func,
+    think_format_reward_func,
+    boxed_format_reward_func,
     correctness_reward_func,
 ]
-        
 
 # # Reward functions
 # def correctness_reward_func(prompts, completions, answer, **kwargs) -> list[float]:
@@ -592,11 +257,43 @@ def clean_memory():
         torch.backends.mps.rc.reset()
 
 
+from speechless.finetune.dataset_utils.multi_rounds import format_chat
 # -------------------- Train --------------------
 def train():
-    dataset_path = "./data/rft_train_data_v6_0228_2.jsonl"
+
+    from prompt_gemini import SYSTEM_PROMPT, USER_PROMPT
+
+    dataset_path = "./reserved_data_model_1.jsonl"
+    # dataset_path = "./train_data_model_1.jsonl"
     dataset = load_dataset("json", data_files=dataset_path, split="train")
     print(f"{dataset=}") 
+
+    def generate_prompt_func(example):
+        text = example['text']
+        label = example.get('label', None)
+
+        system_prompt = SYSTEM_PROMPT
+        user_prompt = USER_PROMPT.format(text=text[:1024])
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+
+        prompt = format_chat(messages)
+        if label is not None:
+            response = "<think></think>\n\\boxed{" + str(label) + "}"
+        else:
+            response = ""
+
+        return {
+            "prompt": prompt,
+            "targets": response,
+        }
+
+    dataset = dataset.map(generate_prompt_func)
+    dataset = dataset.remove_columns(['text','label'])
+    print(f"final dataset: {dataset}") 
 
     eval_size = 200
     dataset = dataset.train_test_split(test_size=eval_size)
@@ -608,7 +305,21 @@ def train():
     # 20250302
     # model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct"
     # 20250303
-    model_path="/opt/local/llm_models/huggingface.co/speechlessai/function_calling_qwen_7b_instruct-unsloth"
+    # model_path="/opt/local/llm_models/huggingface.co/speechlessai/gen-text-detector-Qwen3-4B-gemini-1"
+
+    # 20250523
+    # model_path="/opt/local/llm_models/huggingface.co/Qwen/Qwen3-4B"
+    # model_path="/opt/local/llm_models/huggingface.co/speechlessai/gen-text-detector-rft-Qwen3-4B-unsloth"
+
+    # 20250526
+    # model_path="/opt/local/llm_models/huggingface.co/speechlessai/gen-text-detector-Qwen3-4B-gemini-1"
+
+    # model_path="/opt/local/llm_models/huggingface.co/speechlessai/gen-text-detector-Qwen3-4B-eval-correct-cot"
+
+    # 20250529
+    model_path="/opt/local/llm_models/huggingface.co/speechlessai/gen-text-detector-Qwen3-4B-gemini-1"
+
+
     model, tokenizer = load_model_and_tokenizer(model_path)
 
     class CacheFlushCallback(TrainerCallback):  # Inherit from a base Callback class
@@ -639,7 +350,7 @@ def train():
     from trl import GRPOConfig, GRPOTrainer
     training_args = GRPOConfig(
         use_vllm = True, # use vLLM for fast inference!
-        learning_rate = 5e-6,
+        learning_rate = 2e-5, #5e-6,
         adam_beta1 = 0.9,
         adam_beta2 = 0.99,
         weight_decay = 0.1,
@@ -651,14 +362,16 @@ def train():
         fp16 = not is_bfloat16_supported(),
         per_device_train_batch_size = 1,
         gradient_accumulation_steps = 4, # Increase to 4 for smoother training
+        temperature=1.0,
+        min_p=0.2,
         num_generations = 4, # Decrease if out of memory
-        max_prompt_length = 256,
-        max_completion_length = 128,
-        num_train_epochs = 1, # Set to 1 for a full training run
+        max_prompt_length = 512,
+        max_completion_length = 1024,
+        num_train_epochs = 3, # Set to 1 for a full training run
         # max_steps = 250,
         do_eval = True,
         eval_steps = 10,
-        save_steps = 1000,
+        save_steps = 500,
         # save_strategy = "epoch",
         max_grad_norm = 0.1,
         report_to = "tensorboard", # Can use Weights & Biases, tensorboard, none
@@ -742,15 +455,9 @@ def inference():
 #         token = "",
 #     )
 
-def geneate_train_data():
-    dataset_path = "/Users/sujiangwen/sandbox/LLM/speechless.ai/speechless/tasks/synthesize_tools_sft/data/function_calling_dialogs_v6_0228.jsonl"
-    dataset = get_function_calling_dialogs(dataset_path)
-    dataset.to_json("./rft_train_data_v6_0228_2.jsonl", force_ascii=False)
-    
 
 def main():
     train()
-    # geneate_train_data()
     
 if __name__ == '__main__':
     main()
