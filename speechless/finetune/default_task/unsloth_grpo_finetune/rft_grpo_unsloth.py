@@ -371,7 +371,7 @@ def train():
         # max_steps = 250,
         do_eval = True,
         eval_steps = 10,
-        save_steps = 500,
+        save_steps = 1000,
         # save_strategy = "epoch",
         max_grad_norm = 0.1,
         report_to = "tensorboard", # Can use Weights & Biases, tensorboard, none
