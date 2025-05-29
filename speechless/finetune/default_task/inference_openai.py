@@ -32,6 +32,7 @@ def get_args():
     parser.add_argument("--temperature", type=float, default=0.95, help="Temperature")
     parser.add_argument("--max_tokens", type=int, default=1024, help="Max tokens")
     parser.add_argument("--top_p", type=float, default=1.0, help="Top p")
+    parser.add_argument("--min_p", type=float, default=None, help="Min p, should be 0.01 - 0.2")
     parser.add_argument("--presence_penalty", type=float, default=1.5, help="Presence penalty")
     parser.add_argument("--frequency_penalty", type=float, default=1.5, help="Frequency penalty")
     parser.add_argument("--stream", action="store_true", default=False, help="Stream")
@@ -106,6 +107,8 @@ def main():
         "presence_penalty": args.presence_penalty,
         "frequency_penalty": args.frequency_penalty,
         "stream": args.stream,
+        "top_p": args.top_p,
+        "min_p": args.min_p, 
         # "tool_choice": "auto",
     }
 
