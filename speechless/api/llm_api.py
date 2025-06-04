@@ -184,6 +184,7 @@ class OpenAI_API(LLM_API):
             if stream:
                 # async for chunk in response:
                 for chunk in llm_response:
+                    # print(f"{chunk.choices[0]=}")
                     chunk_content = chunk.choices[0].delta.content
                     if chunk_content is not None:
                         print(chunk_content, end="")

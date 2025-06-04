@@ -56,7 +56,6 @@ llm_api = OpenAI_API(base_url=args.base_url, model_name=args.model_name)
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 
 def run_single(params):
-    use_chat_template = params.get("use_chat_template")
     data = params["data"]
     gen_kwargs = deepcopy(params["gen_kwargs"])
     logits_processor_module_file = params.get("module_file")
