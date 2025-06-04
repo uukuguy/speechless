@@ -1,4 +1,14 @@
 # https://github.com/bigcode-project/starcoder/blob/main/finetune/merge_peft_adapters.py
+"""
+export MODELS_ROOT_DIR=/opt/local/llm_models/huggingface.co && \
+export BASE_MODEL_PATH=${MODELS_ROOT_DIR}/Qwen/Qwen3-4B && \
+export CHECKPOINT_DIR=adapter_model && \
+export TARGET_MODEL_PATH=model_weights && \
+python merge_peft_adapters.py \
+    --base_model_name_or_path ${BASE_MODEL_PATH} \
+    --lora_model_path ${CHECKPOINT_DIR} \
+    --merged_model_name_or_path ${TARGET_MODEL_PATH} 
+"""
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
