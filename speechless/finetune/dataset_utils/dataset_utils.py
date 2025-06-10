@@ -83,6 +83,8 @@ def local_dataset(dataset_name, args, test_size=0.02):
             full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name))
         elif dataset_name.endswith('.tsv'):
             full_dataset = Dataset.from_pandas(pd.read_csv(dataset_name, delimiter='\t'))
+        elif dataset_name.endswith('.parquet'):
+            full_dataset = load_dataset("parquet", data_files=dataset_name)
         else:
             raise ValueError(f"Unsupported dataset format: {dataset_name}")
 
