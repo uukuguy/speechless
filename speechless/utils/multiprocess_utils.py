@@ -343,4 +343,4 @@ def run_func_in_multiprocessing(*args, **kwargs):
 
 def initialize_multiprocessing(start_method="spawn"):
     import multiprocessing as mp
-    mp.set_start_method(start_method)
+    mp.set_start_method(start_method, force=True)
