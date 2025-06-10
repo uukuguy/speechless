@@ -48,6 +48,8 @@ def get_args():
     parser.add_argument("--use_chat_template", type=str, default="auto", choices=available_chat_templates, help="Use chat template")
     parser.add_argument("--use_chat_template_file", type=str, default=None, help="Use chat template file")
 
+    parser.add_argument("--n", type=int, default=1, help="Number of responses")
+
     args = parser.parse_args()
     return args
 
@@ -79,20 +81,22 @@ def run_single(params):
 
     result = {}
     if response is not None:
-        generated_text = response.generated_text
-        llm_response = response.llm_response
-        result["generated_text"] = generated_text
-        result["llm_response"] = llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json())
+        all_generated_text = response.all_generated_text
+        all_llm_response = response.all_llm_response
+        result['final_prompt'] = instruction
+        result["all_generated_text"] = all_generated_text
+        result["all_llm_response"] = [llm_response if isinstance(llm_response, dict) else json.loads(llm_response.model_dump_json()) for llm_response in all_llm_response]
 
         if args.verbose:
             # logger.info(f"Instruction: {instruction}")
             # logger.info(f"APIs: {apis}")
-            logger.info(f"[{id=}] Generated text: {generated_text}")
+            logger.info(f"[{id=}] Generated text: {all_generated_text}")
             # logger.info(f"LLM response: {llm_response}")
     else:
         result = {
-            "generated_text": "",
-            "llm_response": {},
+            "final_prompt": instruction,
+            "all_generated_text": [],
+            "all_llm_response": [],
         }
 
     return result
@@ -101,6 +105,7 @@ def main():
     test_file = args.test_file
 
     gen_kwargs = {
+        "n": args.n,
         "temperature": args.temperature,
         "max_tokens": args.max_tokens,
         "presence_penalty": args.presence_penalty,
@@ -151,15 +156,16 @@ def main():
                     use_progress_bar=True,
                     progress_bar_desc=f"Batch {i//request_batch_size}/{num_test_data//request_batch_size}",
                 )
-                for j, result in enumerate(parallel_results):
+                for j, parallel_result in enumerate(parallel_results):
                     data = batch_datas[j]
-                    if result.is_success():
-                        result = result.result
-                        data["generated_text"] = result["generated_text"]
-                        data["llm_response"] = result["llm_response"]
+                    result = parallel_result.result
+                    data["final_prompt"] = result["final_prompt"]
+                    if parallel_result.is_success():
+                        data["all_generated_text"] = result["all_generated_text"]
+                        data["all_llm_response"] = result["all_llm_response"]
                     else:
-                        data["generated_text"] = ""
-                        data["llm_response"] = {}
+                        data["all_generated_text"] = []
+                        data["all_llm_response"] = []
                     json_str = json.dumps(data, ensure_ascii=False) + "\n" 
                     fd.write(json_str)
                     fd.flush()
@@ -170,8 +176,9 @@ def main():
                 if "messages" in data and args.use_chat_template == "auto":
                     data['instruction'] = tokenizer.apply_chat_template(data['messages'], add_generation_prompt=True, tokenize=False)
                 result = run_single({"data": data, "gen_kwargs": gen_kwargs})
-                data["generated_text"] = result["generated_text"]
-                data["llm_response"] = result["llm_response"]
+                data["final_prompt"] = result["final_prompt"]
+                data["all_generated_text"] = result["all_generated_text"]
+                data["all_llm_response"] = result["all_llm_response"]
                 fd.write(json.dumps(data, ensure_ascii=False) + "\n")
                 fd.flush()
 

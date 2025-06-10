@@ -18,6 +18,8 @@ generated_text, llm_response = llm_api(prompt_or_messages=instruction, gen_kwarg
 import os
 from loguru import logger
 from abc import ABC, abstractmethod
+from typing import List
+from copy import deepcopy
 import openai
 
 # from pydantic import BaseModel
@@ -25,8 +27,8 @@ import openai
 from dataclasses import dataclass
 @dataclass
 class LLMResponse:
-    generated_text: str
-    llm_response: openai.types.Completion
+    all_generated_text: List[str]
+    all_llm_response: List[openai.types.Completion]
 
 class LLM_API(ABC):
     def __init__(self, model=None):
@@ -131,76 +133,93 @@ class OpenAI_API(LLM_API):
         }
 
     def __call__(self, prompt_or_messages, gen_kwargs=None, tools=None, verbose=False):
-        self.num_try = 0
-        generated_text = ""
-        llm_response = {}
-        while self.num_try < self.max_try + 1:
-            self.num_try += 1
+        all_generated_text = []
+        all_llm_response = []
 
-            if gen_kwargs is None:
-                gen_kwargs = self.default_gen_kwargs
-            else:
-                gen_kwargs = {**self.default_gen_kwargs, **gen_kwargs}
+        gen_kwargs = deepcopy(gen_kwargs)
 
-            stream = gen_kwargs.get("stream", False)
-
-            try:
-                is_prompt = isinstance(prompt_or_messages, str)
-                prompt = prompt_or_messages if is_prompt else ""
-                is_messages = isinstance(prompt_or_messages, list)
-                final_messages = prompt_or_messages if is_messages else []
-                if is_prompt:
-                    llm_response = self.client.completions.create(
-                        model=self.model_name,
-                        prompt=prompt,
-                        **gen_kwargs,
-                        # temperature=temperature,
-                        # max_tokens=8192,
-                        # frequency_penalty=1.5,
-                        # stream=stream,
-                    )
-                elif is_messages:
-                    llm_response = self.client.chat.completions.create(
-                        model=self.model_name,
-                        tools=tools,
-                        messages=final_messages,
-                        **gen_kwargs,
-                        # temperature=temperature,
-                        # max_tokens=8192,
-                        # frequency_penalty=1.5,
-                        # stream=stream,
-                        # tool_choice="auto",
-                    )
-
-            except Exception as e:
-                if self.num_try - 1 >= self.max_try:
-                    logger.error(f"Error: {e}. Max try ({self.max_try}) reached.")
-                    return None
-                else:
-                    logger.error(f"Error: {e}. Retry {self.num_try}/{self.max_try} ...")
-                    continue
-
+        # FIXME for llama.cpp not support n
+        # n = gen_kwargs.get("n", 1)
+        # for j in range(n):
+        if True:
+            self.num_try = 0
             generated_text = ""
-            if stream:
-                # async for chunk in response:
-                for chunk in llm_response:
-                    # print(f"{chunk.choices[0]=}")
-                    chunk_content = chunk.choices[0].delta.content
-                    if chunk_content is not None:
-                        print(chunk_content, end="")
-                        generated_text += chunk_content
-            else:
-                generated_text = llm_response.choices[0].message.content if is_messages else llm_response.choices[0].text
+            llm_response = {}
+            while self.num_try < self.max_try + 1:
+                self.num_try += 1
 
-            if verbose:
-                logger.debug(f"{generated_text=}")
+                if gen_kwargs is None:
+                    gen_kwargs = self.default_gen_kwargs
+                else:
+                    gen_kwargs = {**self.default_gen_kwargs, **gen_kwargs}
+
+                stream = gen_kwargs.get("stream", False)
+
+                # logger.debug(f"gen_kwargs={gen_kwargs}")
+
+                try:
+                    is_prompt = isinstance(prompt_or_messages, str)
+                    prompt = prompt_or_messages if is_prompt else ""
+                    is_messages = isinstance(prompt_or_messages, list)
+                    final_messages = prompt_or_messages if is_messages else []
+                    if is_prompt:
+                        llm_response = self.client.completions.create(
+                            model=self.model_name,
+                            prompt=prompt,
+                            **gen_kwargs,
+                            # temperature=temperature,
+                            # max_tokens=8192,
+                            # frequency_penalty=1.5,
+                            # stream=stream,
+                        )
+                    elif is_messages:
+                        llm_response = self.client.chat.completions.create(
+                            model=self.model_name,
+                            tools=tools,
+                            messages=final_messages,
+                            **gen_kwargs,
+                            # temperature=temperature,
+                            # max_tokens=8192,
+                            # frequency_penalty=1.5,
+                            # stream=stream,
+                            # tool_choice="auto",
+                        )
+
+                except Exception as e:
+                    if self.num_try - 1 >= self.max_try:
+                        logger.error(f"Error: {e}. Max try ({self.max_try}) reached.")
+                        return None
+                    else:
+                        logger.error(f"Error: {e}. Retry {self.num_try}/{self.max_try} ...")
+                        continue
+
+                if stream:
+                    # async for chunk in response:
+                    generated_text = ""
+                    for chunk in llm_response:
+                        # print(f"{chunk.choices[0]=}")
+                        chunk_content = chunk.choices[0].delta.content
+                        if chunk_content is not None:
+                            print(chunk_content, end="")
+                            generated_text += chunk_content
+                else:
+                    choices = llm_response.choices
+                    # logger.debug(f"len(choices)={len(choices)}")
+                    for k, choice in enumerate(choices):
+                        generated_text = choice.message.content if is_messages else choice.text
+                        all_generated_text.append(generated_text)
+                        if verbose:
+                            logger.debug(f"[{k}] {generated_text=}")
 
 
-            if self.num_try - 1 >= self.max_try:
-                break
+                if self.num_try - 1 >= self.max_try:
+                    break
 
-            # logger.warning(f"The generated text is not valid tool_call structure. Retry {self.num_try}/{self.max_try} ...")
-        return LLMResponse(generated_text=generated_text, llm_response=llm_response)
+                # logger.warning(f"The generated text is not valid tool_call structure. Retry {self.num_try}/{self.max_try} ...")
+            all_llm_response.append(llm_response)
+
+
+        return LLMResponse(all_generated_text=all_generated_text, all_llm_response=all_llm_response)
 
 
 def get_llm_api(LLM_API="ZhipuAI", model=None):
