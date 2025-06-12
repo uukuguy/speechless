@@ -209,7 +209,7 @@ class OpenAI_API(LLM_API):
                         generated_text = choice.message.content if is_messages else choice.text
                         all_generated_text.append(generated_text)
                         if verbose:
-                            logger.debug(f"[{k}] {generated_text=}")
+                            logger.debug(f"[{k}] {len(generated_text)=}, {generated_text=}")
 
 
                 if self.num_try - 1 >= self.max_try:
