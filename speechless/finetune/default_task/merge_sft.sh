@@ -11,7 +11,10 @@ CHECKPOINT_DIR=${TASK_CHECKPOINT_DIR}/latest/adapter_model
 
     # --merged_model_name_or_path ${TEST_MODEL_PATH}-${CKPT_STEPS}steps \
 
-python ${SCRIPT_ROOT}/merge_peft_adapters.py \
+# python ${SCRIPT_ROOT}/merge_peft_adapters.py \
+
+PYTHONPATH=${SPEECHLESS_ROOT} \
+python -m speechless.finetune.default_task.merge_peft_adapters \
     --base_model_name_or_path ${BASE_MODEL_PATH} \
     --lora_model_path ${CHECKPOINT_DIR} \
     --merged_model_name_or_path ${TEST_MODEL_PATH} \
