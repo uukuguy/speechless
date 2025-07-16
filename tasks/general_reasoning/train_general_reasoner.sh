@@ -5,6 +5,9 @@ set -x
 export NCCL_DEBUG=DEBUG
 export RAY_BACKEND_LOG_LEVEL=debug
 export RAY_DEDUP_LOGS=1
+# pip install --upgrade numba==0.61.2 numpy==2.2.6 pandas==2.3.0 transformers==4.51.3 mkl-service==2.4.0
+export MKL_SERVICE_FORCE_INTEL=1
+export OMP_NUM_THREADS=1
 
 export HEAD_IP=$(hostname)
 # export RAY_ADDRESS=$(hostname):8265
