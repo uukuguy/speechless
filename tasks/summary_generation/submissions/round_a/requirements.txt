@@ -1,0 +1,8 @@
+openai
+zhipuai
+loguru
+pickle
+textwrap
+nltk
+numpy
+pydantic
