@@ -7,7 +7,7 @@ Usage:
 """
 
 import re
-from data_prepare import DatasetConfig, preprocess_verl_dataset
+from data_prepare_base import DatasetConfig, generic_main
 
 def extract_gsm8k_solution(solution_str: str) -> str:
     """Default solution extractor for GSM8K format"""
@@ -17,6 +17,11 @@ def extract_gsm8k_solution(solution_str: str) -> str:
     return final_solution
 
 
+def format_gsm8k_prompt(question: str) -> str:
+    """Format GSM8K prompt with instruction"""
+    return f"{question} Let's think step by step and output the final answer after \"\"\"."
+
+
 def get_gsm8k_config() -> DatasetConfig:
     """Get configuration matching original GSM8K setup"""
     return DatasetConfig(
@@ -24,32 +29,23 @@ def get_gsm8k_config() -> DatasetConfig:
         dataset_name='main',
         input_key='question',
         output_key='answer',
-        instruction_suffix="Let's think step by step and output the final answer after \"\"\".",
         ability='math',
         reward_style='rule',
-        extract_answer_fn=extract_gsm8k_solution
+        extract_answer_fn=extract_gsm8k_solution,
+        prompt_format_fn=format_gsm8k_prompt
     )
 
 
 def gsm8k_main():
     """Main function for backward compatibility with original file"""
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('--local_dir', default='~/data/gsm8k', help='Output directory for processed datasets')
-
-    args = parser.parse_args()
-
     config = get_gsm8k_config()
-    processed = preprocess_verl_dataset(
-        config=config,
-        output_dir=args.local_dir,
-        splits=['train', 'test']
-    )
     
-    print(f"Successfully processed GSM8K datasets: {list(processed.keys())}")
+    # Define optional custom arguments specific to GSM8K
+    custom_args = {
+        'local_dir': {'default': '~/data/gsm8k', 'help': 'Output directory for GSM8K datasets'},
+    }
     
-    # Original logic stops here - no HDFS support currently
-    return processed
+    return generic_main(config, custom_args)
 
 
 if __name__ == '__main__':
