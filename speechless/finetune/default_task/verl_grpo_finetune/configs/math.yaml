@@ -1,0 +1,16 @@
+name: math
+data_source: data/hendrycks/math
+dataset_name: all
+input_key: problem
+output_key: solution
+ability: math
+reward_style: rule
+splits:
+  - train
+  - test
+output_format: parquet
+extract_answer: true
+format_prompt: true
+custom_params:
+  answer_pattern: "\\\\boxed{(.+?)}"
+  prompt_template: "Problem: {problem}\nSolution:"
