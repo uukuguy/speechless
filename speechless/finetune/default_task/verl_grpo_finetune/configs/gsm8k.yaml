@@ -1,0 +1,16 @@
+name: gsm8k
+data_source: data/openai/gsm8k
+dataset_name: main
+input_key: question
+output_key: answer
+ability: math
+reward_style: rule
+splits:
+  - train
+  - test
+output_format: parquet
+extract_answer: true
+format_prompt: true
+custom_params:
+  answer_pattern: "#### ([\\-]?[0-9\\.\\,]+)"
+  prompt_template: "{question} Let's think step by step and output the final answer after \"\"\"."
