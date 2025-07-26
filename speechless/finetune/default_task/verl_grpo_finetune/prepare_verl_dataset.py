@@ -213,7 +213,7 @@ class GenericProcessor(DataProcessor):
         # return template.format(question=question)
         template = self.config.custom_params.get(
             "prompt_template", 
-            "Let's think step by step. At the very end of the reply, please strictly provide the answer in the format $\\boxed{}$.\n\nExample of an answer:\n$\\boxed{A}.\n\n{question}"
+            "Let's think step by step. At the very end of the reply, please strictly provide the answer in the format $\\boxed{}$.\n\nExample of an answer:\n$\\boxed{A}$.\n\n{question}"
         )
         # return template.format(question=question)
         return template.replace("{question}", question)
