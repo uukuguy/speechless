@@ -98,7 +98,7 @@ class CorrectionReward(BaseReward):
         return rewards[0] if len(rewards) == 1 else rewards
 
 
-
+combined_reward = None
 
 def compute_score(data_source, solution_str, ground_truth, extra_info=None):
     """
@@ -116,18 +116,21 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None):
     Returns:
         Verification score between 0 and 1
     """
-    length_reward = LengthReward(min_length=64, max_length=1024)
-    # math_reward = MathVerifyReward()
+
+    global combined_reward
+    if combined_reward is None:
+        length_reward = LengthReward(min_length=64, max_length=1024)
+        # math_reward = MathVerifyReward()
 
 
-    tag_specs = {
-        'think': {'required': True, 'min_count': 1, 'max_count': 1}
-    }
-    think_tag_reward = TagReward(tag_specs)
-    boxed_tag_reward = BoxedTagReward()
-    correction_reward = CorrectionReward()
+        tag_specs = {
+            'think': {'required': True, 'min_count': 1, 'max_count': 1}
+        }
+        think_tag_reward = TagReward(tag_specs)
+        boxed_tag_reward = BoxedTagReward()
+        correction_reward = CorrectionReward()
 
-    combined_reward = CombinedReward(reward_functions=[length_reward, think_tag_reward, boxed_tag_reward, correction_reward])
+        combined_reward = CombinedReward(reward_functions=[length_reward, think_tag_reward, boxed_tag_reward, correction_reward])
 
     return combined_reward.compute_reward(solution_str, reference=ground_truth)
 
