@@ -24,7 +24,7 @@ class CombinedReward(BaseReward):
                  reward_functions: List[BaseReward],
                  weights: Optional[List[float]] = None,
                  name: str = "combined",
-                 max_cached_scores: int=100):
+                 max_cached_scores: int=10):
         """
         Initialize the combined reward function.
         
@@ -109,6 +109,7 @@ class CombinedReward(BaseReward):
         if len(self.cached_rewards) >= self.max_cached_scores:
             score_list_str = "|".join([f"{reward_fn_name}({weight:.2f}): {score:.3f}" for reward_fn_name, weight, score in self.cached_rewards])
             logger.info(score_list_str)
+            self.cached_rewards = []
 
         # Normalize final rewards
         # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
