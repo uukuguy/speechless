@@ -119,7 +119,7 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None):
 
     global combined_reward
     if combined_reward is None:
-        length_reward = LengthReward(min_length=64, max_length=1024)
+        length_reward = LengthReward(min_length=64, max_length=2048, optimal_length=512)
         # math_reward = MathVerifyReward()
 
 
