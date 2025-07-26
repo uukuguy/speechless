@@ -12,7 +12,6 @@ import numpy as np
 
 from .base import BaseReward
 
-cached_rewards = []
 class CombinedReward(BaseReward):
     """
     Combines multiple reward functions with weighted averaging.
@@ -53,7 +52,7 @@ class CombinedReward(BaseReward):
         if total_weight > 0:
             self.weights = [w / total_weight for w in self.weights]
 
-        # self.cached_rewards = []
+        self.cached_rewards = []
         self.max_cached_scores = max_cached_scores
     
     def compute_reward(self, 
@@ -105,12 +104,12 @@ class CombinedReward(BaseReward):
         mean_combined_score = np.mean(combined_rewards) 
         score_list.append(("combined", 1.0, mean_combined_score))
 
-        cached_rewards.append(score_list)
+        self.cached_rewards.append(score_list)
 
-        if len(cached_rewards) >= self.max_cached_scores:
+        if len(self.cached_rewards) >= self.max_cached_scores:
             score_list_str = "|".join([f"{reward_fn_name}({weight:.2f}): {score:.3f}" for reward_fn_name, weight, score in self.cached_rewards])
             logger.info(score_list_str)
-            cached_rewards.clear()
+            self.cached_rewards.clear()
 
         # Normalize final rewards
         # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
