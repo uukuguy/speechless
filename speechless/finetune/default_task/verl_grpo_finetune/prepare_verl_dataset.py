@@ -168,6 +168,7 @@ class GSM8KProcessor(DataProcessor):
         )
         return template.format(question=question)
 
+
 class MathProcessor(DataProcessor):
     """Processor for MATH dataset"""
     
@@ -208,8 +209,14 @@ class GenericProcessor(DataProcessor):
     
     def format_prompt(self, question: str) -> str:
         """Format prompt using configured template"""
-        template = self.config.custom_params.get("prompt_template", "{question}")
-        return template.format(question=question)
+        # template = self.config.custom_params.get("prompt_template", "{question}")
+        # return template.format(question=question)
+        template = self.config.custom_params.get(
+            "prompt_template", 
+            "Let's think step by step. At the very end of the reply, please strictly provide the answer in the format $\\boxed{}$.\n\nExample of an answer:\n$\\boxed{A}.\n\n{question}"
+        )
+        # return template.format(question=question)
+        return template.replace("{question}", question)
 
 
 class ProcessorFactory:
@@ -286,7 +293,9 @@ class ProcessingPipeline:
     def process_dataset(self, 
                        config_name: str, 
                        output_dir: str,
-                       splits: Optional[List[str]] = None) -> Dict[str, Any]:
+                       splits: Optional[List[str]] = None,
+                       data_source: str=None,
+                       dataset_name: str=None) -> Dict[str, Any]:
         """
         Main method to process a dataset with comprehensive error handling.
         
@@ -322,6 +331,10 @@ class ProcessingPipeline:
             processor = ProcessorFactory.create_processor(config)
             
             # Load dataset
+            if data_source is not None:
+                config.data_source = data_source
+            if dataset_name is not None:
+                config.dataset_name = dataset_name
             logger.info(f"Loading dataset: {config.data_source}")
             raw_dataset = processor.load_dataset()
 
@@ -463,7 +476,9 @@ def main():
 
     result = pipeline.process_dataset(
         config_name=config_name,
-        output_dir=output_dir
+        output_dir=output_dir,
+        data_source=args.data_source,
+        dataset_name=args.dataset_name
     )
     
     print(f"Processing result: {result}")

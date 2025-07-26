@@ -3,6 +3,7 @@ prepare_data:
 	python prepare_verl_dataset.py \
 	--config_name natural_reasoning_finance \
 	--data_source /opt/local/datasets/llm-reasoning/natural_reasoning_finance \
+	--dataset_name default \
 	--output_dir ./data/natural_reasoning_finance
 
 train_4b:
