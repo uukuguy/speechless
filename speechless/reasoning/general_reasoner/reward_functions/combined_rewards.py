@@ -12,10 +12,6 @@ import numpy as np
 
 from .base import BaseReward
 
-# Configure logging
-logger = logging.getLogger(__name__)
-
-
 class CombinedReward(BaseReward):
     """
     Combines multiple reward functions with weighted averaging.

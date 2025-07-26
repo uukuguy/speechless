@@ -58,7 +58,7 @@ MAX_RESPONSE_LENGTH=2048
 NUM_TRAIN_EPOCHS=1
 
 # ----- GPU configurations -----
-NUM_GPUS=2
+NUM_GPUS=4
 NNODES=1
 
 # ----- Rollout configurations -----
