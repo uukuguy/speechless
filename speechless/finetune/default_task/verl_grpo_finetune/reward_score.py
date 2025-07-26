@@ -14,7 +14,7 @@ from speechless.reasoning.general_reasoner.reward_functions import BaseReward, C
 
 class BoxedTagReward(BaseReward):
     def __init__(self, weight: float = 1.0):
-        super().__init__(name="tag", weight=weight)
+        super().__init__(name="boxed_tag", weight=weight)
     
     def _evaluate_tag_compliance(self, text: str) -> float:
         full_pattern = r"\$\\boxed{.*?}\$\.$"
@@ -66,9 +66,9 @@ def check_answer(ans, ref):
     return score
 
 
-class CorrectReward(BaseReward):
+class CorrectionReward(BaseReward):
     def __init__(self, weight: float = 1.0):
-        super().__init__(name="tag", weight=weight)
+        super().__init__(name="correction", weight=weight)
 
     
     def _evaluate_tag_compliance(self, text: str, ref: str) -> float:
@@ -125,9 +125,9 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None):
     }
     think_tag_reward = TagReward(tag_specs)
     boxed_tag_reward = BoxedTagReward()
-    correct_reward = CorrectReward()
+    correction_reward = CorrectionReward()
 
-    combined_reward = CombinedReward(reward_functions=[length_reward, think_tag_reward, boxed_tag_reward, correct_reward])
+    combined_reward = CombinedReward(reward_functions=[length_reward, think_tag_reward, boxed_tag_reward, correction_reward])
 
     return combined_reward.compute_reward(solution_str, reference=ground_truth)
 

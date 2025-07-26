@@ -23,7 +23,8 @@ class CombinedReward(BaseReward):
     def __init__(self, 
                  reward_functions: List[BaseReward],
                  weights: Optional[List[float]] = None,
-                 name: str = "combined"):
+                 name: str = "combined",
+                 max_cached_scores: int=100):
         """
         Initialize the combined reward function.
         
@@ -50,6 +51,9 @@ class CombinedReward(BaseReward):
         total_weight = sum(self.weights)
         if total_weight > 0:
             self.weights = [w / total_weight for w in self.weights]
+
+        self.cached_rewards = []
+        self.max_cached_scores = max_cached_scores
     
     def compute_reward(self, 
                        response: Union[str, List[str]], 
@@ -73,7 +77,7 @@ class CombinedReward(BaseReward):
         # Initialize rewards array
         combined_rewards = [0.0] * len(responses)
         
-        score_list_str = ""
+        score_list = []
         # Compute rewards for each function and combine with weights
         for i, (reward_fn, weight) in enumerate(zip(self.reward_functions, self.weights)):
             try:
@@ -89,7 +93,7 @@ class CombinedReward(BaseReward):
                         rewards = [rewards[0]] * len(responses)
                 
                 mean_score = np.mean(rewards)
-                score_list_str += " | " + f"{reward_fn.name}({weight:.1f}): {mean_score:.2f}" 
+                score_list.append((reward_fn.name, weight, mean_score))
 
                 # Add weighted rewards
                 for j in range(len(combined_rewards)):
@@ -98,7 +102,13 @@ class CombinedReward(BaseReward):
                 logger.error(f"Error in reward function {reward_fn.name}: {e}")
                 # Skip this reward function on error
         mean_combined_score = np.mean(combined_rewards) 
-        logger.info(f"Combined Reward ({len(responses)} samples): {mean_combined_score:.2f} {score_list_str}")
+        score_list.append(("combined", 1.0, mean_combined_score))
+
+        self.cached_rewards.append(score_list)
+
+        if len(self.cached_rewards) >= self.max_cached_scores:
+            score_list_str = "|".join([f"{reward_fn_name}({weight:.2f}): {score:.3f}" for reward_fn_name, weight, score in self.cached_rewards])
+            logger.info(score_list_str)
 
         # Normalize final rewards
         # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
