@@ -23,6 +23,8 @@ actor_rollout_ref.rollout.layered_summon=True \
 actor_rollout_ref.ref.fsdp_config.param_offload=True \
 actor_rollout_ref.actor.ulysses_sequence_parallel_size=1 \
 """
+SCRIPT_ROOT=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+source ${SCRIPT_ROOT}/task.env
 
 set -x # Enable debugging
 set -e # Stop on error
@@ -56,7 +58,7 @@ MAX_RESPONSE_LENGTH=2048
 NUM_TRAIN_EPOCHS=1
 
 # ----- GPU configurations -----
-NUM_GPUS=8
+NUM_GPUS=2
 NNODES=1
 
 # ----- Rollout configurations -----
@@ -75,15 +77,15 @@ PPO_MINI_BATCH_SIZE=512
 # ----- LoRA configurations -----
 # FIXME
 # https://verl.readthedocs.io/en/latest/advance/ppo_lora.html
-LORA_RANK=64
-LORA_ALPHA=64
+LORA_RANK=32
+LORA_ALPHA=32
 
 MODEL_USE_SHM=True # actor_rollout_ref.model.use_shm=True: preload the model into /dev/shm to improve model loading speed.
 ROLLOUT_LAYERED_SUMMON=True # actor_rollout_ref.rollout.layered_summon=True: this enables the actor-model to gather the FSDP shards per layers when synchronizing the LoRA Adapter to vLLM, thereby reducing GPU peak memory. Recommended if the model is very large (70B+) or the GPU memory is limited (< 48GB)
 
 
 # ----- Saving checkpoints configurations -----
-SAVE_DIR=./checkpoints/e3_4b/
+SAVE_DIR=./checkpoints/${TASK_NAME}
 SAVE_FREQ=5
 TEST_FREQ=1
 

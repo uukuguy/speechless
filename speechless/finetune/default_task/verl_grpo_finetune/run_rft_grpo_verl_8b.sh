@@ -23,6 +23,8 @@ actor_rollout_ref.rollout.layered_summon=True \
 actor_rollout_ref.ref.fsdp_config.param_offload=True \
 actor_rollout_ref.actor.ulysses_sequence_parallel_size=1 \
 """
+SCRIPT_ROOT=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+source ${SCRIPT_ROOT}/task.env
 
 set -x # Enable debugging
 set -e # Stop on error
@@ -83,7 +85,7 @@ ROLLOUT_LAYERED_SUMMON=True # actor_rollout_ref.rollout.layered_summon=True: thi
 
 
 # ----- Saving checkpoints configurations -----
-SAVE_DIR=./checkpoints/e3_4b/
+SAVE_DIR=./checkpoints/${TASK_NAME}
 SAVE_FREQ=5
 TEST_FREQ=1
 

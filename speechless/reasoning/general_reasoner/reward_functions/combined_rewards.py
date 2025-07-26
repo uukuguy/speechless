@@ -7,6 +7,8 @@ This module provides functionality for combining multiple reward functions:
 
 import logging
 from typing import List, Dict, Any, Union, Optional
+from loguru import logger
+import numpy as np
 
 from .base import BaseReward
 
@@ -75,6 +77,7 @@ class CombinedReward(BaseReward):
         # Initialize rewards array
         combined_rewards = [0.0] * len(responses)
         
+        logger.info(f"Compute reward {len(responses)} responses")
         # Compute rewards for each function and combine with weights
         for i, (reward_fn, weight) in enumerate(zip(self.reward_functions, self.weights)):
             try:
@@ -89,14 +92,18 @@ class CombinedReward(BaseReward):
                         logger.warning(f"Reward function {reward_fn.name} returned {len(rewards)} rewards for {len(responses)} responses. Using first reward for all.")
                         rewards = [rewards[0]] * len(responses)
                 
+                mean_score = np.mean(rewards)
+                logger.debug(f"{reward_fn.name}(weight:.1f): {mean_score:.4f}")
+
                 # Add weighted rewards
                 for j in range(len(combined_rewards)):
                     combined_rewards[j] += weight * rewards[j]
             except Exception as e:
                 logger.error(f"Error in reward function {reward_fn.name}: {e}")
                 # Skip this reward function on error
-        
+        mean_combined_score = np.mean(combined_rewards) 
+        logger.info(f"Combined Reward: {mean_combined_score:.4f}")
         # Normalize final rewards
-        combined_rewards = [self._normalize_score(r) for r in combined_rewards]
-        
+        # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
+
         return combined_rewards[0] if len(combined_rewards) == 1 else combined_rewards

@@ -5,7 +5,6 @@
     # prompt_logprobs: Optional[int] = None
 
 SCRIPT_ROOT=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
-PARENT_PATH=$(cd "${SCRIPT_PATH}/.." ; pwd)
 source ${SCRIPT_ROOT}/task.env
 MODEL=${TEST_MODEL_PATH}MODEL_NAME=$(basename ${MODEL})# MODEL=${OPENAI_MODEL_NAME}
 # VLLM_PORT=${OPENAI_API_PORT}
