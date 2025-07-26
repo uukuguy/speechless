@@ -30,7 +30,7 @@ class ProcessorConfig:
     # Custom processing parameters
     custom_params: Dict[str, Any] = field(default_factory=dict)
 
-    def save(self, output_dir:str, filename:str):
+    def save(self, output_dir:str, filename:str = None):
         """Save configuration to YAML file"""
         if filename is None:
             filename = self.name
@@ -255,14 +255,16 @@ class ProcessingPipeline:
         
         output_path = output_dir / f"{split_name}.parquet"
         
-        # Handle existing files
+        # # Handle existing files
+        # if output_path.exists():
+        #     if not self.config.overwrite_existing:
+        #         raise FileExistsError(
+        #             f"Output file {output_path} exists. Use --overwrite to replace."
+        #         )
+        #     else:
+        #         logger.info(f"Overwriting existing file: {output_path}")
         if output_path.exists():
-            if not self.config.overwrite_existing:
-                raise FileExistsError(
-                    f"Output file {output_path} exists. Use --overwrite to replace."
-                )
-            else:
-                self.logger.info(f"Overwriting existing file: {output_path}")
+            logger.info(f"Overwriting existing file: {output_path}")
         
         try:
             # Save with compression for efficiency
@@ -270,7 +272,7 @@ class ProcessingPipeline:
             
             # Verify the saved file
             file_size = output_path.stat().st_size
-            self.logger.info(
+            logger.info(
                 f"Saved {split_name}: {output_path} "
                 f"({len(dataset)} examples, {file_size:,} bytes)"
             )
@@ -278,7 +280,7 @@ class ProcessingPipeline:
             return str(output_path)
             
         except Exception as e:
-            self.logger.error(f"Failed to save {split_name} dataset: {e}")
+            logger.error(f"Failed to save {split_name} dataset: {e}")
             raise
         
     def process_dataset(self, 
@@ -363,7 +365,7 @@ class ProcessingPipeline:
                     'config_name': config_name,
                     'num_examples': {k:len(ds) for k, ds in processed_datasets.items()},
                     'processing_time': time.time() - start_time,
-                    **config
+                    **asdict(config)
                 }
 
                 metadata_file = f"{output_dir}/dataset_metadata.json"
@@ -425,12 +427,11 @@ class ProcessingPipeline:
         """List all available configurations"""
         return self.config_manager.list_configs()
     
-def get_args(available_configs: List[str] =None):
+def get_args():
     import argparse
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--config_name", type=str, required=True, choices=available_configs,
-                        help="Name of the configuration to use")
+    parser.add_argument("--config_name", type=str, required=True, help="Name of the configuration to use")
     parser.add_argument("--configs_dir", type=str, default=None, help="Directory containing configuration files")
     parser.add_argument("--data_source", type=str, help="Dataset name or path")
     parser.add_argument("--dataset_name", type=str, default="main", help="Dataset name")
@@ -442,7 +443,7 @@ def get_args(available_configs: List[str] =None):
 
 
 def main():
-    args = get_args(configs)
+    args = get_args()
     config_name = args.config_name
     configs_dir = args.configs_dir
     output_dir = args.output_dir or f"verl_data_processed/{config_name}"
@@ -461,7 +462,7 @@ def main():
     print(f"Available configs: {configs}")
 
     result = pipeline.process_dataset(
-        config_name="gsm8k",
+        config_name=config_name,
         output_dir=output_dir
     )
     

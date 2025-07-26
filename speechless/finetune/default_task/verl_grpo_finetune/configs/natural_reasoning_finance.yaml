@@ -1,0 +1,16 @@
+name: natural_reasoning_finance
+data_source: llm-reasoning/natural_reasoning_finance
+dataset_name: main
+input_key: question
+output_key: answer
+ability: finance
+reward_style: rule
+splits:
+  - train
+  - test
+output_format: parquet
+extract_answer: true
+format_prompt: true
+custom_params:
+  answer_pattern: "$\\boxed{(.+?)}$."
+  prompt_template: "{question}"
