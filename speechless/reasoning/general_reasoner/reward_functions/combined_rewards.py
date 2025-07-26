@@ -73,7 +73,7 @@ class CombinedReward(BaseReward):
         # Initialize rewards array
         combined_rewards = [0.0] * len(responses)
         
-        logger.info(f"Compute reward {len(responses)} responses")
+        score_list_str = ""
         # Compute rewards for each function and combine with weights
         for i, (reward_fn, weight) in enumerate(zip(self.reward_functions, self.weights)):
             try:
@@ -89,7 +89,7 @@ class CombinedReward(BaseReward):
                         rewards = [rewards[0]] * len(responses)
                 
                 mean_score = np.mean(rewards)
-                logger.debug(f"{reward_fn.name}(weight:.1f): {mean_score:.4f}")
+                score_list_str += " | " + f"{reward_fn.name}({weight:.1f}): {mean_score:.2f}" 
 
                 # Add weighted rewards
                 for j in range(len(combined_rewards)):
@@ -98,7 +98,8 @@ class CombinedReward(BaseReward):
                 logger.error(f"Error in reward function {reward_fn.name}: {e}")
                 # Skip this reward function on error
         mean_combined_score = np.mean(combined_rewards) 
-        logger.info(f"Combined Reward: {mean_combined_score:.4f}")
+        logger.info(f"Combined Reward ({len(responses)} samples): {mean_combined_score:.2f} {score_list_str}")
+
         # Normalize final rewards
         # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
 
