@@ -107,7 +107,16 @@ class CombinedReward(BaseReward):
         self.cached_rewards.append(score_list)
 
         if len(self.cached_rewards) >= self.max_cached_scores:
-            score_list_str = "|".join([f"{reward_fn_name}({weight:.2f}): {score:.3f}" for reward_fn_name, weight, score in self.cached_rewards])
+            reward_metas = [None] * (len(self.reward_functions) + 1)
+            reward_scores = [0.0] * (len(self.reward_functions) + 1)
+            for score_list in self.cached_rewards:
+                for j, (n, w, s) in enumerate(score_list):
+                    reward_scores[j] += s
+                    reward_metas[j] = (n, w)
+            for i in range(len(reward_scores)):
+                reward_scores[i] /= len(self.cached_rewards)
+
+            score_list_str = "|".join([f"{n}({w:.2f}): {s:.3f}" for (n, w), s in zip(reward_metas, reward_scores)])
             logger.info(score_list_str)
             self.cached_rewards.clear()
 
