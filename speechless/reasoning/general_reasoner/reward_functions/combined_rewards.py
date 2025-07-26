@@ -117,8 +117,10 @@ class CombinedReward(BaseReward):
                 reward_scores[i] /= len(self.cached_rewards)
 
             # score_list_str = "|".join([f"{n}({w:.2f}): {s:.3f}" for (n, w), s in zip(reward_metas, reward_scores)])
-            score_list_str = " | ".join([f"{n}: {round(s,3) if s != 0 else 0}" for (n, w), s in zip(reward_metas, reward_scores)])
-            logger.info(score_list_str)
+            # score_list_str = " | ".join([f"{n}: {round(s,3) if s != 0 else 0}" for (n, w), s in zip(reward_metas, reward_scores)])
+            # logger.info(score_list_str)
+            score_list_str = " | ".join([f"{n}: {round(s,3)}" for (n, w), s in zip(reward_metas, reward_scores)])
+            print(score_list_str)
             self.cached_rewards.clear()
 
         # Normalize final rewards
