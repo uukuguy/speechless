@@ -215,8 +215,7 @@ class MathReward(BaseReward):
             final_score = score / components if components > 0 else 0.5
             rewards.append(self._normalize_score(final_score))
         
-        return rewards[0] if len(rewards) == 1 else rewards
-
+        return rewards
 
 class MathVerifyReward(BaseReward):
     """
@@ -310,4 +309,4 @@ class MathVerifyReward(BaseReward):
             
             rewards.append(self._normalize_score(score))
         
-        return rewards[0] if len(rewards) == 1 else rewards
+        return rewards

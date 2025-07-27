@@ -293,4 +293,4 @@ class TagReward(BaseReward):
             score, _ = self._evaluate_tag_compliance(resp)
             rewards.append(self._normalize_score(score))
         
-        return rewards[0] if len(rewards) == 1 else rewards
+        return rewards

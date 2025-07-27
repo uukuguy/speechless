@@ -126,4 +126,4 @@ class CombinedReward(BaseReward):
         # Normalize final rewards
         # combined_rewards = [self._normalize_score(r) for r in combined_rewards]
 
-        return combined_rewards[0] if len(combined_rewards) == 1 else combined_rewards
+        return combined_rewards

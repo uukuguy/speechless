@@ -287,4 +287,4 @@ class TaskSpecificReward(BaseReward):
             
             rewards.append(score)
         
-        return rewards[0] if len(rewards) == 1 else rewards
+        return rewards

@@ -112,8 +112,7 @@ class LengthReward(BaseReward):
             
             rewards.append(self._normalize_score(reward))
         
-        return rewards[0] if len(rewards) == 1 else rewards
-
+        return rewards
 
 class FormatReward(BaseReward):
     """
@@ -187,6 +186,7 @@ class FormatReward(BaseReward):
                 score = 0.9
                 
             return True, score
+
         except json.JSONDecodeError:
             # Check if it's close to valid JSON (e.g., missing quotes, commas)
             if re.search(r'^\s*\{.*\}\s*$', text, re.DOTALL):
@@ -304,8 +304,7 @@ class FormatReward(BaseReward):
             # Restore original format_type
             self.format_type = original_format_type
         
-        return rewards[0] if len(rewards) == 1 else rewards
-
+        return rewards
 
 class CoherenceReward(BaseReward):
     """
@@ -542,4 +541,4 @@ class CoherenceReward(BaseReward):
             final_score = score / components if components > 0 else 0.5
             rewards.append(self._normalize_score(final_score))
         
-        return rewards[0] if len(rewards) == 1 else rewards
+        return rewards

@@ -400,4 +400,4 @@ class CodeReward(BaseReward):
             
             rewards.append(self._normalize_score(final_score))
         
-        return rewards[0] if len(rewards) == 1 else rewards
+        return rewards
